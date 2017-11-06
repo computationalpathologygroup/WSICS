@@ -42,33 +42,37 @@ namespace HE_Staining
 		/// <summary>
 		/// Applies a blur to the passed matrix.
 		/// </summary>
-		/// <param name="matrix">The matrix to blur.</param>
+		/// <param name="input_matrix">The matrix to blur.</param>
+		/// <param name="output_matrix">The matrix to hold the results.</param>
 		/// <param name="sigma">The sigma value for the blur transform.</param>
-		void ApplyBlur(cv::Mat& matrix, const uint32_t sigma);
+		void ApplyBlur(const cv::Mat& input_matrix, cv::Mat& output_matrix, const uint32_t sigma);
 		/// <summary>
 		/// Applies a Canny Edge transform to the matrix, filtering out unwanted pixels through a threshold operation.
 		/// </summary>
-		/// <param name="matrix">The matrix to apply the canny edge tranform to.</param>
+		/// <param name="input_matrix">The matrix to apply the canny edge tranform to.</param>
+		/// <param name="output_matrix">The matrix to hold the results.</param>
 		/// <param name="low_threshold">The low threshold used to for the threshold operation.</param>
 		/// <param name="high_threshold">The high threshold used to for the threshold operation.</param>
-		void ApplyCannyEdge(cv::Mat& matrix, const uint32_t low_threshold, const uint32_t high_threshold);
+		void ApplyCannyEdge(const cv::Mat& input_matrix, cv::Mat& output_matrix, const uint32_t low_threshold, const uint32_t high_threshold);
 		/// <summary>
 		/// Applies a randomized Hough Transform on a binary matrix.
 		/// </summary>
-		/// <param name="binary_matrix">A binary matrix where each point signifies part of an object. After the transformation, each point will be labeled according to the BLOB they belong to.</param>
+		/// <param name="binary_matrix">A binary matrix where each point signifies part of an object.</param>
+		/// <param name="output_matrix">The matrix to hold the results, aach pixel will be labeled according to the BLOB they belong to.</param>
 		/// <param name="transform_parameters">The parameters used to perform the Hough transform.</param>
 		/// <returns>A vector containing the ellipses.</returns>
-		std::vector<HoughTransform::Ellipse> ApplyHoughTransform(cv::Mat& binary_matrix, const HoughTransform::RandomizedHoughTransformParameters& transform_parameters);
+		std::vector<HoughTransform::Ellipse> ApplyHoughTransform(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const HoughTransform::RandomizedHoughTransformParameters& transform_parameters);
 
 		/// <summary>
 		/// Performs a blur, canny edge and randomized hough transform in order to detect ellipses on the passed matrix.
 		/// </summary>
-		/// <param name="matrix">The matrix to transform and to acquire ellipses from.</param>
+		/// <param name="input_matrix">The matrix to transform and acquire ellipses from.</param>
 		/// <param name="blur_sigma">The sigma value for the blur transform.</param>
 		/// <param name="canny_low_threshold">The low threshold used for the canny edge transform.</param>
 		/// <param name="canny_high_threshold">The high threshold used for the canny edge transform.</param>
 		/// <returns>A vector containing the ellipses.</returns>
-		std::vector<HoughTransform::Ellipse> DetectEllipses(cv::Mat& matrix,
+		std::vector<HoughTransform::Ellipse> DetectEllipses(
+			const cv::Mat& input_matrix,
 			const uint32_t blur_sigma,
 			const uint32_t canny_low_threshold,
 			const uint32_t canny_high_threshold,
@@ -82,6 +86,27 @@ namespace HE_Staining
 		/// <param name="index_percentage">The index percentage used to select the nth element.</param>
 		/// <returns></returns>
 		double AcquirePercentile(std::vector<float> mean_vector, const float index_percentage);
+
+		/// <summary>
+		/// Filters the contour vector to remove low density and faint objects, blood cells and those
+		/// with a high red value.
+		///
+		/// The original contour vector will see several elements moved amd is thus invalidated.
+		/// </summary>
+		/// <param name="contours">The contours to filter.</param>
+		/// <param name="density_mean">The density mean for each contour.</param>
+		/// <param name="red_mean">The red density mean for each contour.</param>
+		/// <param name="blue_mean">The blue density mean for each contour.</param>
+		/// <param name="density_mean_threshold">The threshold applied to the density of the contours.</param>
+		/// <param name="hema_mean_threshold">he threshold applied to the red density of the contours.</param>
+		/// <returns>A vector containing the valid contours.</returns>
+		std::vector<std::vector<cv::Point2f>> FilterContours(
+			std::vector<std::vector<cv::Point2f>> & contours,
+			const std::vector<float>& density_mean,
+			const std::vector<float>& red_mean,
+			const std::vector<float>& blue_mean,
+			const double density_mean_threshold,
+			const double hema_mean_threshold);
 
 		/// <summary>
 		/// Creates the Eosin mask as well as the corresponding training information. This is done by

@@ -32,7 +32,7 @@ namespace ASAP::Image_Processing::BLOB_Operations
 			/// <param name="window_size">The window size used to iterate over the matrix.</param>
 			/// <param name="labeled_blob_matrix">A matrix that contains labeled pixels.</param>
 			/// <param name="stats_array">A matrix containing the statistics for each labeled BLOB.</param>
-			BLOB_Window(const uint32_t window_size, const cv::Mat& labeled_blob_matrix, cv::Mat& stats_array);
+			BLOB_Window(const uint32_t window_size, const cv::Mat& labeled_blob_matrix, const cv::Mat& stats_array);
 			/// <summary>
 			/// Initializes the BLOB_Window with a binary matrix onto which a BLOB detection and labeling will be performed.
 			/// </summary>
@@ -91,12 +91,15 @@ namespace ASAP::Image_Processing::BLOB_Operations
 			void ShiftWindowToEnd(void);
 
 		private:
-			uint32_t		m_window_size_;
+			uint32_t	m_window_size_;
+			uint32_t	m_window_step_size_;
 			cv::Point2f m_window_top_left_;
 			cv::Point2f m_window_bottom_right_;
 			cv::Point2f m_matrix_bottom_right_;
 
 			std::unordered_map<size_t, BLOB>		m_labeled_blobs_;
+
+			uint32_t CalculateWindowStepSize_(const uint32_t window_size);
 	};
 };
 #endif // __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOBWINDOW_H

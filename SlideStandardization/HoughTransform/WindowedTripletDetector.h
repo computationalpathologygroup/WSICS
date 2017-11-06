@@ -60,14 +60,15 @@ namespace HoughTransform
 			/// Initializes the detector for processing by transforming a binary matrix into a labeled BLOB matrix.
 			/// </summary>
 			/// <param name="binary_matrix">The binary matrix to transform.</param>
+			/// <param name="output_matrix">The matrix to write the results towards.</param>
 			/// <param name="mask_type">The type of mask used to detect the BLOBs.</param>
-			void Initialize(cv::Mat& binary_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type);
+			void Initialize(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type);
 			/// <summary>
 			/// Initializes the detector for processing by recovering the labeled blobs from the matrix.
 			/// </summary>
 			/// <param name="labeled_blob_matrix">The matrix holding the labeled BLOBs.</param>
 			/// <param name="stats_array">An array holding the label statistics.</param>
-			void Initialize(cv::Mat& labeled_blob_matrix, cv::Mat& stats_array);
+			void Initialize(const cv::Mat& labeled_blob_matrix, const cv::Mat& stats_array);
 			/// <summary>
 			/// Checks if this object has been initialized for processing. False could indicate that the initalize method
 			/// hasn't been called, or the passed matrix contained no BLOB's that could be acquired.
@@ -132,14 +133,15 @@ namespace HoughTransform
 			/// </summary>
 			/// <param name="label">The label of the BLOB to select the point from.</param>
 			/// <returns>A pairing with the BLOB label and a pointer towards the point.</returns>
-			inline std::pair<size_t, cv::Point2f*> GetRandomLabeledPoint$(size_t label);
+			inline std::pair<size_t, cv::Point2f*> GetRandomLabeledPoint$(const size_t label);
 
 		private:
 			std::unordered_map<size_t, ASAP::Image_Processing::BLOB_Operations::BLOB*>	m_labeled_blobs_;
-			std::unordered_set<cv::Point2f*>												m_deleted_points_;
+			std::unordered_set<cv::Point2f*>											m_deleted_points_;
 			std::unordered_map<size_t, std::vector<cv::Point2f*>>						m_labeled_points_;
+			std::vector<size_t>															m_current_labels_;
 
-			ASAP::Image_Processing::BLOB_Operations::BLOB_Window							m_blob_window_;
+			ASAP::Image_Processing::BLOB_Operations::BLOB_Window						m_blob_window_;
 			size_t																		m_total_window_points_;
 
 			/// <summary>
@@ -191,7 +193,9 @@ namespace HoughTransform
 			/// <param name="position">The position to check against the center radius.</param>
 			/// <param name="radius">The radius to use for the calculation.</param>
 			/// <returns>Whether or not point is within the radius around center.</returns>
-			bool IsPositionedWithinRadius_(const cv::Point& center, cv::Point2f& position, const float radius);
+			bool IsPositionedWithinRadius_(const cv::Point2f& center, cv::Point2f& position, const float radius);
+
+			void RemoveLabeledPoint_(std::pair<size_t, cv::Point2f*>& labeled_point);
 			/// <summary>
 			/// Rebuilds the window information based on the current state of the object.
 			/// </summary>

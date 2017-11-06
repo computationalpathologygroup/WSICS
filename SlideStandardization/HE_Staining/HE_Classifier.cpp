@@ -2,7 +2,7 @@
 
 namespace HE_Staining
 {
-	HE_Classifier::HE_Classifier(uint32_t max_leaf_size, uint32_t nn) : max_leaf_size(max_leaf_size), k_value(k_value)
+	HE_Classifier::HE_Classifier(uint32_t max_leaf_size, uint32_t k_value) : max_leaf_size(max_leaf_size), k_value(k_value)
 	{
 	}
 
@@ -18,48 +18,36 @@ namespace HE_Staining
 		results.all_classes		= std::move(class_info.second);
 
 		// Counts the amount of pixels per class.
-		size_t hema_pixels			= 0;
-		size_t eosin_pixels			= 0;
-		size_t background_pixels	= 0;
+		results.hema_pixels			= 0;
+		results.eosin_pixels		= 0;
+		results.background_pixels	= 0;
 		for (int row = 0; row < results.all_classes.rows; ++row)
 		{
-			uchar* p = results.all_classes.ptr(row);
 			for (int col = 0; col < results.all_classes.cols; ++col)
 			{
-				if (*p == 1)
+				switch (results.all_classes.at<uchar>(row, col))
 				{
-					++hema_pixels;
+					case 1: ++results.hema_pixels;			break;
+					case 2: ++results.eosin_pixels;			break;
+					case 3: ++results.background_pixels;	break;
 				}
-				else if (*p == 2)
-				{
-					++eosin_pixels;
-				}
-				else if (*p == 3)
-				{
-					++background_pixels;
-				}
-				*p++;
 			}
 		}
-
-		results.hema_pixels			= hema_pixels;
-		results.eosin_pixels		= eosin_pixels;
-		results.background_pixels	= background_pixels;
 
 		return results;
 	}
 
 	std::pair<cv::Mat, cv::Mat> HE_Classifier::Apply_KNN_(
-		HSD::HSD_Model& hsd_image,
-		cv::Mat& background_mask,
-		HematoxylinMaskInformation& hema_mask_info,
-		EosinMaskInformation& eosin_mask_info,
-		TrainAndClassData& train_and_class_data)
+		const HSD::HSD_Model& hsd_image,
+		const cv::Mat& background_mask,
+		const HematoxylinMaskInformation& hema_mask_info,
+		const EosinMaskInformation& eosin_mask_info,
+		const TrainAndClassData& train_and_class_data)
 	{
-		cv::Mat& class_data(train_and_class_data.class_data);
-		cv::Mat& train_data(train_and_class_data.train_data);
-		cv::Mat& test_data(train_and_class_data.test_data);
-		std::vector<cv::Point2f> test_indices(train_and_class_data.test_indices);
+		const cv::Mat&					class_data(train_and_class_data.class_data);
+		const cv::Mat&					train_data(train_and_class_data.train_data);
+		const cv::Mat&					test_data(train_and_class_data.test_data);
+		const std::vector<cv::Point>&	test_indices(train_and_class_data.test_indices);
 
 		// Copies the train and test data into flann matrices.
 		cvflann::Matrix<float> flann_train_data(new float[train_data.rows * train_data.cols], train_data.rows, train_data.cols);
@@ -150,14 +138,14 @@ namespace HE_Staining
 		cv::Mat density_new(CalculateOneStdDevBelowMean_(hsd_image.density));
 
 		// Acquires the non-zero eosin indices. If larger than 0, 
-		std::vector<cv::Point2f> eosin_indices;
+		std::vector<cv::Point> eosin_indices;
 		cv::findNonZero(eosin_mask_info.training_mask, eosin_indices);
 		if (eosin_indices.size() > 0)
 		{
 			// Generates the training data.
 			size_t train_counter = 0;
 
-			std::vector<cv::Point2f> hema_indices;
+			std::vector<cv::Point> hema_indices;
 			cv::findNonZero(hema_mask_info.training_mask, hema_indices);
 			TrainAndClassData train_and_class_data;
 

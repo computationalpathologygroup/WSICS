@@ -76,7 +76,7 @@ namespace LevelReading
 				tiled_image.getRawRegion(x  *tiled_image.getLevelDownsample(level), y * tiled_image.getLevelDownsample(level), tile_size, tile_size, level, data);
 
 				size_t background_count = ArrayToMatrix(data, tile_image, true, is_tiff);
-				if (background_count / (tile_size * tile_size) < background_threshold)
+				if ((float)background_count / (tile_size * tile_size) < background_threshold)
 				{
 					tile_coordinates.push_back({ x, y });
 				}
@@ -105,12 +105,12 @@ namespace LevelReading
 		std::vector<cv::Point> next_level_tile_coordinates(GetNextLevelCoordinates(current_tile_coordinates, tile_size, scale_diff));
 
 		std::vector<cv::Point> tile_coordinates;
-		for (int i = 0; i < current_tile_coordinates.size(); i += skip_factor)
+		for (int i = 0; i < next_level_tile_coordinates.size(); i += skip_factor)
 		{
 			tiled_image.getRawRegion(next_level_tile_coordinates[i].x * tiled_image.getLevelDownsample(level), next_level_tile_coordinates[i].y * tiled_image.getLevelDownsample(level), tile_size, tile_size, level, data);
 
 			size_t background_count = ArrayToMatrix(data, tile_image, true, is_tiff);
-			if (background_count / (tile_size * tile_size) < background_threshold)
+			if ((float)background_count / (tile_size * tile_size) < background_threshold)
 			{
 				tile_coordinates.push_back(next_level_tile_coordinates[i]);
 			}

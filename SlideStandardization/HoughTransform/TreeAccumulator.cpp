@@ -23,7 +23,7 @@ namespace HoughTransform
 
 		if (m_averaged_centers_.empty())
 		{
-			m_averaged_centers_.push_front(LocationCell(ellipse));
+			m_averaged_centers_.push_back(LocationCell(ellipse));
 			return 1;
 		}
 
@@ -32,11 +32,13 @@ namespace HoughTransform
 			float x = ellipse.center.x - cell.GetCenter().x;
 			float y = ellipse.center.y - cell.GetCenter().y;
 
-			if ((x * x + y * y) < std::pow(m_location_threshold_, 2))
+			if (std::pow(x, 2) + std::pow(y, 2) < std::pow(m_location_threshold_, 2))
 			{
 				return cell.Add(ellipse, m_axis_threshold_);
 			}
 		}
+
+		m_averaged_centers_.push_back(LocationCell(ellipse));
 		return 1;
     }
 

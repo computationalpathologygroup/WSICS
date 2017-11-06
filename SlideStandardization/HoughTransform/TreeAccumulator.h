@@ -37,10 +37,10 @@ namespace HoughTransform
 			std::vector<Ellipse> Accumulate(void);
 
 		private:
-			float							m_axis_threshold_;
-			float							m_location_threshold_;
-			size_t							m_count_threshold_;
-			std::forward_list<LocationCell> m_averaged_centers_;
+			float						m_axis_threshold_;
+			float						m_location_threshold_;
+			size_t						m_count_threshold_;
+			std::vector<LocationCell>	m_averaged_centers_;
     };
 }
 #endif // __HOUGHTRANSFORM_TREEACCUMULATOR_H__

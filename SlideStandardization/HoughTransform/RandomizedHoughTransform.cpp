@@ -30,14 +30,14 @@ namespace HoughTransform
     // Public Member Functions
     //******************************************************************************
 
-	std::vector<Ellipse> RandomizedHoughTransform::Execute(cv::Mat& binary_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type)
+	std::vector<Ellipse> RandomizedHoughTransform::Execute(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type)
 	{
 		WindowedTripletDetector triplet_detector(m_triplet_detector_parameters_);
-		triplet_detector.Initialize(binary_matrix, mask_type);
+		triplet_detector.Initialize(binary_matrix, output_matrix, mask_type);
 		return Execute(triplet_detector);
 	}
 
-	std::vector<Ellipse> RandomizedHoughTransform::Execute(cv::Mat& labeled_matrix, cv::Mat& stats_array)
+	std::vector<Ellipse> RandomizedHoughTransform::Execute(const cv::Mat& labeled_matrix, const cv::Mat& stats_array)
 	{
 		WindowedTripletDetector triplet_detector(m_triplet_detector_parameters_);
 		triplet_detector.Initialize(labeled_matrix, stats_array);
@@ -46,20 +46,28 @@ namespace HoughTransform
 
     std::vector<Ellipse> RandomizedHoughTransform::Execute(WindowedTripletDetector& triplet_detector)
     {
-        TreeAccumulator combiner(this->parameters.ellipse_position_threshold*(int)(this->parameters.combine_threshold), this->parameters.ellipse_radii_threshold*(int)(this->parameters.combine_threshold), 0);
-
+        TreeAccumulator combiner(this->parameters.ellipse_radii_threshold*(int)(this->parameters.combine_threshold), this->parameters.ellipse_position_threshold*(int)(this->parameters.combine_threshold), 0);
+		size_t shifts = 0;
+		 ellipses_found = 0;
+		 ellipses_verified = 0;
 		bool repeat_epoch = true;
 		while (repeat_epoch || triplet_detector.Next())
 		{
+			++shifts;
 			repeat_epoch = false;
 			Ellipse best_ellipse;
 			size_t	best_ellipse_count = 0;
 
-			TreeAccumulator accumulator(this->parameters.ellipse_position_threshold, this->parameters.ellipse_radii_threshold, this->parameters.count_threshold);
+			TreeAccumulator accumulator(this->parameters.ellipse_radii_threshold, this->parameters.ellipse_position_threshold, this->parameters.count_threshold);
 			for (size_t epoch = 0; epoch < triplet_detector.Size() * this->parameters.epoch_size; ++epoch)
 			{
-				PointCollection triplet();
 				std::pair<bool, Ellipse> ellipse_result(EllipseFromTriplet_(triplet_detector.GetNextTriplet()));
+
+				if (ellipse_result.first)
+				{
+					++ellipses_found;
+				}
+
 				if (ellipse_result.first && ProcessDetectedEllipse_(ellipse_result.second, best_ellipse, best_ellipse_count, repeat_epoch, accumulator, combiner, triplet_detector))
 				{
 					epoch = 0;
@@ -67,12 +75,12 @@ namespace HoughTransform
 			}
 		}
 
-        return combiner.Accumulate();
+          return combiner.Accumulate();
     }
 
 	RandomizedHoughTransformParameters RandomizedHoughTransform::GetStandardParameters(void)
 	{
-		return { 5, 4.0f, 8.0f, 1.0f, 5.0f, 25.0f, 30.0f, MIDPOINT_CALCULATION_OPTIMAL, ELLIPSE_REMOVAL_SIMPLE, COMBINE_THRESHOLD_FACTOR2 };
+		return { 5, 4.0f, 8.0f, 1.0f, 5.0f, 25.0f, 30.0f, MIDPOINT_CALCULATION_OPTIMAL, ELLIPSE_REMOVAL_SIMPLE, COMBINE_THRESHOLD_FACTOR2, TANGENT_VERIFICATION_TRIPLE };
 	}
 
 	//******************************************************************************
@@ -109,9 +117,9 @@ namespace HoughTransform
 
 		cv::solve(matrixView, vectorView, dst, 1);
 
-		float a = (ellipse.theta = dst.at<float>(0, 0));
-		float b = (ellipse.major_axis = dst.at<float>(1, 0));
-		float c = (ellipse.minor_axis = dst.at<float>(2, 0));
+		float a = (ellipse.theta		= dst.at<float>(0, 0));
+		float b = (ellipse.major_axis	= dst.at<float>(1, 0));
+		float c = (ellipse.minor_axis	= dst.at<float>(2, 0));
 
 		if (a*c - pow(b, 2) <= 0)
 		{
@@ -150,9 +158,9 @@ namespace HoughTransform
 		new_major_axis = std::sqrt(std::cos(2 * new_theta) / (ellipse.theta - (ellipse.theta + ellipse.minor_axis) * std::pow(std::sin(new_theta), 2)));
 		new_minor_axis = new_major_axis / std::sqrt((ellipse.theta + ellipse.minor_axis) * std::pow(new_major_axis, 2) - 1);
 
-		ellipse.theta = new_theta;
-		ellipse.major_axis = new_major_axis;
-		ellipse.minor_axis = new_minor_axis;
+		ellipse.theta		= new_theta;
+		ellipse.major_axis	= new_major_axis;
+		ellipse.minor_axis	= new_minor_axis;
 	}
 
 	cv::Point2f RandomizedHoughTransform::DetermineCenter_(PointCollection& triplet)
@@ -169,52 +177,52 @@ namespace HoughTransform
 		{
 			switch (this->parameters.midpoint_calculation)
 			{
-			case(MIDPOINT_CALCULATION_DEFAULT):
-			{
-				cv::Point2f intersect_AB = triplet.points[0].second.Intersect(triplet.points[1].second);
-				cv::Point2f intersect_BC = triplet.points[1].second.Intersect(triplet.points[2].second);
-				cv::Point2f midpoint_AB = (triplet.points[0].first + triplet.points[1].first) / 2.0f;
-				cv::Point2f midpoint_BC = (triplet.points[1].first + triplet.points[2].first) / 2.0f;
-
-				Line line_AB = Line(intersect_AB, midpoint_AB);
-				Line line_BC = Line(intersect_BC, midpoint_BC);
-				return line_AB.Intersect(line_BC);
-				break;
-			}
-			case(MIDPOINT_CALCULATION_OPTIMAL):
-			{
-				cv::Point2f intersect_AB = triplet.points[0].second.Intersect(triplet.points[1].second);
-				cv::Point2f intersect_BC = triplet.points[1].second.Intersect(triplet.points[2].second);
-				cv::Point2f intersect_CA = triplet.points[2].second.Intersect(triplet.points[0].second);
-
-				cv::Point2f midpoint_AB = (triplet.points[0].first + triplet.points[1].first) / 2.0f;
-				cv::Point2f midpoint_BC = (triplet.points[1].first + triplet.points[2].first) / 2.0f;
-				cv::Point2f midpoint_CA = (triplet.points[2].first + triplet.points[0].first) / 2.0f;
-
-				float dist_AB = std::pow(intersect_AB.x - midpoint_AB.x, 2) + std::pow(intersect_AB.y - midpoint_AB.y, 2);
-				float dist_BC = std::pow(intersect_BC.x - midpoint_BC.x, 2) + std::pow(intersect_BC.y - midpoint_BC.y, 2);
-				float dist_CA = std::pow(intersect_CA.x - midpoint_CA.x, 2) + std::pow(intersect_CA.y - midpoint_CA.y, 2);
-
-				if (dist_AB < dist_BC && dist_AB < dist_CA)
+				case(MIDPOINT_CALCULATION_DEFAULT):
 				{
-					Line line_CA = Line(intersect_CA, midpoint_CA);
-					Line line_BC = Line(intersect_BC, midpoint_BC);
-					return line_CA.Intersect(line_BC);
-				}
-				else if (dist_BC < dist_AB && dist_BC < dist_CA)
-				{
-					Line line_CA = Line(intersect_CA, midpoint_CA);
-					Line line_AB = Line(intersect_AB, midpoint_AB);
-					return line_CA.Intersect(line_AB);
-				}
-				else
-				{
+					cv::Point2f intersect_AB = triplet.points[0].second.Intersect(triplet.points[1].second);
+					cv::Point2f intersect_BC = triplet.points[1].second.Intersect(triplet.points[2].second);
+					cv::Point2f midpoint_AB = (triplet.points[0].first + triplet.points[1].first) / 2.0f;
+					cv::Point2f midpoint_BC = (triplet.points[1].first + triplet.points[2].first) / 2.0f;
+
 					Line line_AB = Line(intersect_AB, midpoint_AB);
 					Line line_BC = Line(intersect_BC, midpoint_BC);
 					return line_AB.Intersect(line_BC);
+					break;
 				}
-				break;
-			}
+				case(MIDPOINT_CALCULATION_OPTIMAL):
+				{
+					cv::Point2f intersect_AB = triplet.points[0].second.Intersect(triplet.points[1].second);
+					cv::Point2f intersect_BC = triplet.points[1].second.Intersect(triplet.points[2].second);
+					cv::Point2f intersect_CA = triplet.points[2].second.Intersect(triplet.points[0].second);
+
+					cv::Point2f midpoint_AB = (triplet.points[0].first + triplet.points[1].first) / 2.0f;
+					cv::Point2f midpoint_BC = (triplet.points[1].first + triplet.points[2].first) / 2.0f;
+					cv::Point2f midpoint_CA = (triplet.points[2].first + triplet.points[0].first) / 2.0f;
+
+					float dist_AB = std::pow(intersect_AB.x - midpoint_AB.x, 2) + std::pow(intersect_AB.y - midpoint_AB.y, 2);
+					float dist_BC = std::pow(intersect_BC.x - midpoint_BC.x, 2) + std::pow(intersect_BC.y - midpoint_BC.y, 2);
+					float dist_CA = std::pow(intersect_CA.x - midpoint_CA.x, 2) + std::pow(intersect_CA.y - midpoint_CA.y, 2);
+
+					if (dist_AB < dist_BC && dist_AB < dist_CA)
+					{
+						Line line_CA = Line(intersect_CA, midpoint_CA);
+						Line line_BC = Line(intersect_BC, midpoint_BC);
+						return line_CA.Intersect(line_BC);
+					}
+					else if (dist_BC < dist_AB && dist_BC < dist_CA)
+					{
+						Line line_CA = Line(intersect_CA, midpoint_CA);
+						Line line_AB = Line(intersect_AB, midpoint_AB);
+						return line_CA.Intersect(line_AB);
+					}
+					else
+					{
+						Line line_AB = Line(intersect_AB, midpoint_AB);
+						Line line_BC = Line(intersect_BC, midpoint_BC);
+						return line_AB.Intersect(line_BC);
+					}
+					break;
+				}
 			}
 		}
 
@@ -224,16 +232,6 @@ namespace HoughTransform
 	bool RandomizedHoughTransform::HasCorrectRadius_(const Ellipse& ellipse) const
 	{
 		return ellipse.major_axis <= this->parameters.max_ellipse_radius && ellipse.minor_axis >= this->parameters.min_ellipse_radius;
-
-		/* if(ellipse_information.major_axis > mMaximumEllipseRadius)
-		{
-		return false;
-		}
-		else if(ellipse_information.minor_axis < mMinimumEllipseRadius)
-		{
-		return false;
-		}
-		return true;*/
 	}
 
 	bool RandomizedHoughTransform::FitsContours_(PointCollection& triplet, const Ellipse& ellipse) const
@@ -253,26 +251,28 @@ namespace HoughTransform
 				++valid;
 			}
 		}
-		return valid >= this->parameters.tangent_tolerance;
+		
+		return valid >= this->parameters.tangent_verification;
 	}
 
 	std::pair<bool, Ellipse> RandomizedHoughTransform::EllipseFromTriplet_(PointCollection& triplet)
 	{
-		// Compute parameters using the triplet.
-		Ellipse ellipse(DetermineCenter_(triplet), 0, 0, 0);
-		triplet -= ellipse.center;
-
-		// Use the tangents from the image and compare those with the tangents calculated from the parameters.
+		Ellipse ellipse;
 		bool valid_ellipse = false;
-		if (ComputeParameters_(triplet, ellipse) && FitsContours_(triplet, ellipse))
+
+		if (triplet.points.size() >= 3)
 		{
-			valid_ellipse = true;
-		}
-		else
-		{
-			// filter the ellipse based on the calculated radius.
-			ConvertParameters_(ellipse);
-			valid_ellipse = HasCorrectRadius_(ellipse);
+			// Compute parameters using the triplet.
+			ellipse = Ellipse(DetermineCenter_(triplet), 0, 0, 0);
+			triplet -= ellipse.center;
+
+			// Use the tangents from the image and compare those with the tangents calculated from the parameters.
+			if (ComputeParameters_(triplet, ellipse) && FitsContours_(triplet, ellipse))
+			{
+				// filter the ellipse based on the calculated radius.
+				ConvertParameters_(ellipse);
+				valid_ellipse = HasCorrectRadius_(ellipse);
+			}
 		}
 
 		return { valid_ellipse, ellipse };
@@ -316,9 +316,9 @@ namespace HoughTransform
 		{
 			if ((this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_SIMPLE || this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_EMPTY_ACCUMULATOR) && triplet_detector.Verify(ellipse))
 			{
-				triplet_detector.Simplify(ellipse);
+				//triplet_detector.Simplify(ellipse);
 				combiner.AddEllipse(ellipse);
-
+				++ellipses_verified;
 				if (this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_EMPTY_ACCUMULATOR)
 				{
 					reset_epoch = true;

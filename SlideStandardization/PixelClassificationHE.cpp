@@ -25,10 +25,10 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 	bool is_tiff,
 	std::vector<double> &spacing)
 {
-	IO::Logging::LogHandler* logger_instance(IO::Logging::LogHandler::GetInstance());
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	logger_instance->QueueCommandLineLogging("Minimum number of samples to take from the WSI: " + std::to_string(training_size), IO::Logging::NORMAL);
-	logger_instance->QueueCommandLineLogging("Minimum number of samples to take from each patch: " + std::to_string(min_training_size), IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from the WSI: " + std::to_string(training_size), IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from each patch: " + std::to_string(min_training_size), IO::Logging::NORMAL);
 
 	bool multiresolution_image = false;
 	if (!static_image.data)
@@ -56,8 +56,8 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 	std::vector<uint32_t> random_numbers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
 	for (size_t current_tile = 0; current_tile < tile_coordinates.size(); ++current_tile)
 	{
-		logger_instance->QueueCommandLineLogging(std::to_string(current_tile + 1) + " images taken as examples!", IO::Logging::NORMAL);
-		logger_instance->QueueFileLogging("=============================\nRandom image number: " + std::to_string(current_tile + 1) + "=============================", m_log_file_id_, IO::Logging::NORMAL);
+		logging_instance->QueueCommandLineLogging(std::to_string(current_tile + 1) + " images taken as examples!", IO::Logging::NORMAL);
+		logging_instance->QueueFileLogging("=============================\nRandom image number: " + std::to_string(current_tile + 1) + "=============================", m_log_file_id_, IO::Logging::NORMAL);
 
 		//===========================================================================
 		//	HSD / CxCy Color Model
@@ -101,7 +101,7 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		// Randomly pick samples and Fill in Cx-Cy-D major sample vectors	
 		if (classification_results.train_and_class_data.train_data.rows >= min_training_size)
 		{
-			if (logger_instance->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
+			if (logging_instance->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
 			{
 				cv::imwrite(m_debug_dir_ + "/debug_data/classification_result/classified" + std::to_string(selected_images_count) + ".tif", classification_results.all_classes * 100);
 			}
@@ -113,16 +113,16 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 			size_t eosin_count_real = total_eosin_count > training_size * 9 / 20 ? eosin_count_real = training_size * 9 / 20 : total_eosin_count;
 			size_t background_count_real = total_background_count > training_size * 1 / 10 ? background_count_real = training_size * 1 / 10 : total_background_count;
 
-			logger_instance->QueueCommandLineLogging(
+			logging_instance->QueueCommandLineLogging(
 				std::to_string(hema_count_real + eosin_count_real + background_count_real) +
 				" training sets are filled, out of " + std::to_string(training_size) + " required.",
 				IO::Logging::NORMAL);
 
-			logger_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(training_size),
+			logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(training_size),
 				m_log_file_id_,
 				IO::Logging::NORMAL);
 
-			logger_instance->QueueFileLogging("Hema: " + std::to_string(hema_count_real) + ", Eos: " + std::to_string(eosin_count_real) + ", BG: " + std::to_string(background_count_real),
+			logging_instance->QueueFileLogging("Hema: " + std::to_string(hema_count_real) + ", Eos: " + std::to_string(eosin_count_real) + ", BG: " + std::to_string(background_count_real),
 				m_log_file_id_,
 				IO::Logging::NORMAL);
 		}
@@ -140,8 +140,8 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		if (non_zero_class_pixels != sample_information.class_data.rows && (selected_images_count > 2 || !min_training_size))
 		{
 			std::string log_text("Could not fill all the " + std::to_string(training_size) + " samples required. Continuing with what is left...");
-			logger_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
-			logger_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
+			logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
 			sample_information = std::move(PatchTestData_(non_zero_class_pixels, sample_information));
 		}
@@ -151,53 +151,55 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 }
 
 std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationHE::Create_HE_Masks_(
-	HSD::HSD_Model& hsd_image,
-	cv::Mat& background_mask,
-	size_t min_training_size,
-	float hema_percentile,
-	float eosin_percentile,
-	std::vector<double>& spacing,
-	bool is_multiresolution)
+	const HSD::HSD_Model& hsd_image,
+	const cv::Mat& background_mask,
+	const size_t min_training_size,
+	const float hema_percentile,
+	const float eosin_percentile,
+	const std::vector<double>& spacing,
+	const bool is_multiresolution)
 {
 	// Sets the variables for the ellipse detection. 
-	HoughTransform::RandomizedHoughTransformParameters parameters;
+	HoughTransform::RandomizedHoughTransformParameters parameters(HoughTransform::RandomizedHoughTransform::GetStandardParameters());
 	parameters.min_ellipse_radius	= floor(1.94 / spacing[0]);
 	parameters.max_ellipse_radius	= ceil(4.86 / spacing[0]);
-	parameters.epoch_size				= 2;
-	parameters.count_threshold			= 5;
+	parameters.epoch_size			= 2;
+	parameters.count_threshold		= 3;
 
-	int sigma = 4;
-	int low_threshold = 45;
-	int high_threshold = 80;
+	int sigma			= 4;
+	int low_threshold	= 45;
+	int high_threshold	= 80;
+
+	// Prepares the logger and a string holding potential failure messages.
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+	std::string failure_log_message;
 
 	// Attempts to detect ellispes. Applies a blur and canny edge operation on the density matrix before detecting ellipses through a randomized Hough transform.
 	std::vector<HoughTransform::Ellipse> detected_ellipses(HE_Staining::MaskGeneration::DetectEllipses(hsd_image.density, sigma, low_threshold, high_threshold, parameters));
 
-	// Prepares the logger and a string holding potential failure messages.
-	IO::Logging::LogHandler* logger_instance(IO::Logging::LogHandler::GetInstance());
-	std::string failure_log_message;
+	logging_instance->QueueCommandLineLogging("Number of ellipses is: " + std::to_string(detected_ellipses.size()), IO::Logging::NORMAL);
 
 	std::pair<HE_Staining::HematoxylinMaskInformation, HE_Staining::EosinMaskInformation> mask_acquisition_results;
 
 	double min_detected_ellipses = hsd_image.red_density.rows * hsd_image.red_density.rows * spacing[0] * spacing[0] * (150 / 247700.0);
 	if (detected_ellipses.size() > min_detected_ellipses || (detected_ellipses.size() > 10 && !is_multiresolution))
 	{
-		logger_instance->QueueFileLogging("Passed step 1: Number of nuclei " + std::to_string(detected_ellipses.size()), m_log_file_id_, IO::Logging::NORMAL);
+ 		logging_instance->QueueFileLogging("Passed step 1: Number of nuclei " + std::to_string(detected_ellipses.size()), m_log_file_id_, IO::Logging::NORMAL);
 
-		std::pair<bool, HE_Staining::HematoxylinMaskInformation> mask_acquisition_result;
-		if (!m_consider_ink_ || (mask_acquisition_result = HE_Staining::MaskGeneration::GenerateHematoxylinMasks(hsd_image, background_mask, detected_ellipses, hema_percentile)).first)
+		std::pair<bool, HE_Staining::HematoxylinMaskInformation> hema_mask_acquisition_result;
+		if (!(hema_mask_acquisition_result = HE_Staining::MaskGeneration::GenerateHematoxylinMasks(hsd_image, background_mask, detected_ellipses, hema_percentile)).first || !m_consider_ink_)
 		{
-			logger_instance->QueueFileLogging("Skipped - May contain INK.", m_log_file_id_, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging("Skipped - May contain INK.", m_log_file_id_, IO::Logging::NORMAL);
 		}
 
 		// Creates a reference of the hema mask information, for ease of use. And copies the results into the result pairing.
-		HE_Staining::HematoxylinMaskInformation& hema_mask_info(mask_acquisition_result.second);
-		mask_acquisition_results.first = hema_mask_info;
+		mask_acquisition_results.first = std::move(hema_mask_acquisition_result.second);
+		HE_Staining::HematoxylinMaskInformation& hema_mask_info(mask_acquisition_results.first);
 
 		// Test and Train data Generator
 		if (hema_mask_info.training_pixels > min_training_size / 2)
 		{
-			logger_instance->QueueFileLogging(
+			logging_instance->QueueFileLogging(
 				"Passed step 2: Amount of Hema samples " + std::to_string(hema_mask_info.training_pixels) + ", more than the limit of " + std::to_string(min_training_size / 2),
 				m_log_file_id_,
 				IO::Logging::NORMAL);
@@ -229,21 +231,21 @@ std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationH
 
 	if (!failure_log_message.empty())
 	{
-		logger_instance->QueueFileLogging(failure_log_message, m_log_file_id_, IO::Logging::NORMAL);
+		logging_instance->QueueFileLogging(failure_log_message, m_log_file_id_, IO::Logging::NORMAL);
 	}
 
 	return mask_acquisition_results;
 }
 
 SampleInformation PixelClassificationHE::InsertTrainingData_(
-	HSD::HSD_Model& hsd_image,
-	ClassificationResults& classification_results,
-	HematoxylinMaskInformation& hema_mask_info,
-	EosinMaskInformation& eosin_mask_info,
+	const HSD::HSD_Model& hsd_image,
+	const ClassificationResults& classification_results,
+	const HematoxylinMaskInformation& hema_mask_info,
+	const EosinMaskInformation& eosin_mask_info,
 	size_t& total_hema_count,
 	size_t& total_eosin_count,
 	size_t& total_background_count,
-	size_t training_size)
+	const size_t training_size)
 {
 	// Creates a list of random values, ranging from 0 to the amount of class pixels - 1.
 	std::vector<uint32_t> hema_random_numbers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(classification_results.hema_pixels));
@@ -259,10 +261,10 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 	cv::Mat train_data_background(cv::Mat::zeros(classification_results.background_pixels, 4, CV_32FC1));
 
 	// Creates a matrix per class, holding the c_x, c_y and density channels per classified pixel.
-	cv::Mat& all_classes(classification_results.all_classes);
+	const cv::Mat& all_classes(classification_results.all_classes);
 	for (int row = 0; row < all_classes.rows; ++row)
 	{
-		uchar* Class = all_classes.ptr(row);
+		const uchar* Class = all_classes.ptr(row);
 		for (int col = 0; col < all_classes.cols; ++col)
 		{
 			if (*Class == 1)
@@ -334,7 +336,7 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 	return sample_information;
 }
 
-SampleInformation PixelClassificationHE::PatchTestData_(size_t non_zero_count, SampleInformation& current_sample_information)
+SampleInformation PixelClassificationHE::PatchTestData_(const size_t non_zero_count, const SampleInformation& current_sample_information)
 {
 	SampleInformation new_sample_information{ cv::Mat::zeros(non_zero_count, 1, CV_32FC1),
 												cv::Mat::zeros(non_zero_count, 1, CV_32FC1),

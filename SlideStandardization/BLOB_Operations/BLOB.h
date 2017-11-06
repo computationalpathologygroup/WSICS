@@ -119,7 +119,7 @@ namespace ASAP::Image_Processing::BLOB_Operations
 		private:
 			cv::Point2f					m_top_left_;
 			cv::Point2f					m_bottom_right_;
-			std::vector<cv::Point2f>		m_points_;
+			std::vector<cv::Point2f>	m_points_;
     };
 }
 #endif // __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOB_H

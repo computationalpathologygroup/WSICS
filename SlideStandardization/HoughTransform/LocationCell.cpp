@@ -4,10 +4,8 @@
 
 namespace HoughTransform
 {
-    LocationCell::LocationCell(const Ellipse& ellipse) : m_best_averaged_ellipse_(nullptr), m_center_(ellipse.center), m_count_(1)
+	LocationCell::LocationCell(const Ellipse& ellipse) : m_averaged_ellipses_({ AveragedEllipseParameters(ellipse) }), m_best_averaged_ellipse_(m_averaged_ellipses_[0]), m_center_(ellipse.center), m_count_(1)
     {
-		m_averaged_ellipses_.push_front(AveragedEllipseParameters(ellipse));
-		m_best_averaged_ellipse_ = &*m_averaged_ellipses_.begin();
     }
 
 	size_t LocationCell::Add(Ellipse& ellipse, const float threshold)
@@ -26,29 +24,30 @@ namespace HoughTransform
 			float difference_major_axis = ellipse.major_axis - averaged_ellipse_info.major_axis;
 			float difference_minor_axis = ellipse.minor_axis - averaged_ellipse_info.minor_axis;
 
-			if (std::fabs(difference_major_axis) < threshold && std::fabs(difference_minor_axis))
+			if (std::fabs(difference_major_axis) < threshold && std::fabs(difference_minor_axis) < threshold)
 			{
 				size_t count = averaged_ellipse.Add(ellipse);
-				if (averaged_ellipse.GetCount() > m_best_averaged_ellipse_->GetCount())
+				if (averaged_ellipse.GetCount() > m_best_averaged_ellipse_.GetCount())
 				{
-					m_best_averaged_ellipse_ = &averaged_ellipse;
+					m_best_averaged_ellipse_ = averaged_ellipse;
 				}
 				return count;
 			}
 		}
 
-		m_averaged_ellipses_.push_front(AveragedEllipseParameters(ellipse));
+		m_averaged_ellipses_.push_back(AveragedEllipseParameters(ellipse));
+
 		return 1;
     }
 
-	const std::forward_list<AveragedEllipseParameters>& LocationCell::GetAveragedEllipseParameterss(void) const
+	const std::vector<AveragedEllipseParameters>& LocationCell::GetAveragedEllipseParameterss(void) const
 	{
 		return m_averaged_ellipses_;
 	}
 
 	const AveragedEllipseParameters& LocationCell::GetBestAveragedEllipseParameters(void) const
 	{
-		return *m_best_averaged_ellipse_;
+		return m_best_averaged_ellipse_;
 	}
 
 	size_t LocationCell::GetCount(void) const

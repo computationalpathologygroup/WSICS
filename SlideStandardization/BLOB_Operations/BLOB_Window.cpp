@@ -7,12 +7,13 @@
 namespace ASAP::Image_Processing::BLOB_Operations
 {
 	BLOB_Window::BLOB_Window(const uint32_t window_size) :
-		m_window_size_(window_size)
+		m_window_size_(window_size), m_window_step_size_(CalculateWindowStepSize_(window_size))
 	{
 	}
 
 	BLOB_Window::BLOB_Window(const uint32_t window_size, const cv::Mat& blob_matrix) :
 		m_window_size_(window_size),
+		m_window_step_size_(CalculateWindowStepSize_(window_size)),
 		m_window_top_left_(0, 0),
 		m_window_bottom_right_(m_window_size_, m_window_size_),
 		m_matrix_bottom_right_(blob_matrix.rows - 1, blob_matrix.cols - 1),
@@ -20,8 +21,9 @@ namespace ASAP::Image_Processing::BLOB_Operations
 	{
 	}
 
-	BLOB_Window::BLOB_Window(const uint32_t window_size, const cv::Mat& labeled_blob_matrix, cv::Mat& stats_array) :
+	BLOB_Window::BLOB_Window(const uint32_t window_size, const cv::Mat& labeled_blob_matrix, const cv::Mat& stats_array) :
 		m_window_size_(window_size),
+		m_window_step_size_(CalculateWindowStepSize_(window_size)),
 		m_window_top_left_(0, 0),
 		m_window_bottom_right_(m_window_size_, m_window_size_),
 		m_matrix_bottom_right_(labeled_blob_matrix.rows - 1, labeled_blob_matrix.cols - 1),
@@ -30,7 +32,8 @@ namespace ASAP::Image_Processing::BLOB_Operations
 	}
 
 	BLOB_Window::BLOB_Window(const uint32_t window_size, const cv::Mat& binary_matrix, cv::Mat& output_matrix, const MaskType mask_type) : 
-		m_window_size_(window_size), 
+		m_window_size_(window_size),
+		m_window_step_size_(CalculateWindowStepSize_(window_size)),
 		m_window_top_left_(0, 0), 
 		m_window_bottom_right_(m_window_size_, m_window_size_), 
 		m_matrix_bottom_right_(binary_matrix.rows - 1, binary_matrix.cols - 1),
@@ -76,7 +79,8 @@ namespace ASAP::Image_Processing::BLOB_Operations
 
 	void BLOB_Window::SetWindowSize(const uint32_t window_size)
 	{
-		m_window_size_ = window_size;
+		m_window_size_		= window_size;
+		m_window_step_size_ = CalculateWindowStepSize_(window_size);
 		ShiftWindowToBegin();
 	}
 
@@ -91,13 +95,13 @@ namespace ASAP::Image_Processing::BLOB_Operations
 				return false;
 			}
 
-			m_window_top_left_.x = std::floor(m_matrix_bottom_right_.x / m_window_size_) * m_window_size_;
-			m_window_top_left_.y = m_window_top_left_.y - m_window_size_;
+			m_window_top_left_.x = std::floor(m_matrix_bottom_right_.x / m_window_step_size_) * m_window_step_size_;
+			m_window_top_left_.y = m_window_top_left_.y - m_window_step_size_;
 			
 		}
 		else
 		{
-			m_window_top_left_.x = m_window_top_left_.x - m_window_size_;
+			m_window_top_left_.x = m_window_top_left_.x - m_window_step_size_;
 			m_window_top_left_.y = m_window_top_left_.y;
 		}
 
@@ -110,14 +114,14 @@ namespace ASAP::Image_Processing::BLOB_Operations
 	bool BLOB_Window::ShiftWindowForward(void)
 	{
 		// Shifts the window towards the right.
-		cv::Point2f new_top_left(m_window_top_left_.x + m_window_size_, m_window_top_left_.y);
+		cv::Point2f new_top_left(m_window_top_left_.x + m_window_step_size_, m_window_top_left_.y);
 
 		// If the new point is beyond the x axis range of the matrix.
 		if (new_top_left.x > m_matrix_bottom_right_.x)
 		{
 			// Shifts the window towards the bottom.
 			new_top_left.x = 0;
-			new_top_left.y = m_window_top_left_.y + m_window_size_;
+			new_top_left.y = m_window_top_left_.y + m_window_step_size_;
 
 			// If the range of both the x and y axis from the matrix have been exceeded.
 			if (new_top_left.y > m_matrix_bottom_right_.y)
@@ -142,8 +146,13 @@ namespace ASAP::Image_Processing::BLOB_Operations
 
 	void BLOB_Window::ShiftWindowToEnd(void)
 	{
-		m_window_top_left_		= cv::Point2f(std::floor(m_matrix_bottom_right_.x / m_window_size_) * m_window_size_,
-											std::floor(m_matrix_bottom_right_.y / m_window_size_) * m_window_size_);
+		m_window_top_left_		= cv::Point2f(std::floor(m_matrix_bottom_right_.x / m_window_step_size_) * m_window_step_size_,
+											std::floor(m_matrix_bottom_right_.y / m_window_step_size_) * m_window_step_size_);
 		m_window_bottom_right_	= cv::Point2f(m_window_top_left_.x + m_window_size_, m_window_top_left_.y + m_window_size_);
+	}
+
+	uint32_t BLOB_Window::CalculateWindowStepSize_(const uint32_t window_size)
+	{
+		return window_size * 0.666f;
 	}
 }

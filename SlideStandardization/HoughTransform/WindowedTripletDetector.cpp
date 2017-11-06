@@ -25,13 +25,13 @@ namespace HoughTransform
     // Public Member Functions
     //******************************************************************************
 
-	void WindowedTripletDetector::Initialize(cv::Mat& binary_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type)
+	void WindowedTripletDetector::Initialize(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type)
     {
-		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), binary_matrix, binary_matrix, mask_type);
+		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), binary_matrix, output_matrix, mask_type);
 		UpdateWindowInformation_();
     }
 
-	void WindowedTripletDetector::Initialize(cv::Mat& labeled_blob_matrix, cv::Mat& stats_array)
+	void WindowedTripletDetector::Initialize(const cv::Mat& labeled_blob_matrix, const cv::Mat& stats_array)
 	{
 		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), labeled_blob_matrix, stats_array);
 		UpdateWindowInformation_();
@@ -47,7 +47,7 @@ namespace HoughTransform
 		CheckValidAccess_();
 
 		// If triplets can still be collected.
-		if (Size() - m_labeled_points_.size() > 3)
+		if (Size() - m_deleted_points_.size() > 3)
 		{
 			std::pair<size_t, cv::Point2f*> origin(GetRandomLabeledPoint$());
 			switch (this->parameters.point_selection)
@@ -68,6 +68,7 @@ namespace HoughTransform
 		m_labeled_blobs_.clear();
 		m_deleted_points_.clear();
 		m_labeled_points_.clear();
+		m_current_labels_.clear();
 		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize());
 	}
 
@@ -103,13 +104,17 @@ namespace HoughTransform
 		float outer_major_axis	= std::pow(ellipse.major_axis + this->parameters.ellipse_removal_range, 2);
 		float outer_minor_axis	= std::pow(ellipse.minor_axis + this->parameters.ellipse_removal_range, 2);
 
+		// Removes points from the BLOBs and any empty blob.
+		std::vector<size_t> blobs_to_remove;
 		for (std::pair<size_t, std::vector<cv::Point2f*>> labeled_points : m_labeled_points_)
 		{
-			std::remove_if(labeled_points.second.begin(), labeled_points.second.end(),
-				[sin_theta, cos_theta, outer_major_axis, outer_minor_axis, this](cv::Point2f* point)
+			labeled_points.second.erase(std::remove_if(labeled_points.second.begin(), labeled_points.second.end(),
+				[sin_theta, cos_theta, outer_major_axis, outer_minor_axis, ellipse, this](cv::Point2f* point)
 			{
-				float a = std::pow(point->y * sin_theta + point->x + cos_theta, 2);
-				float b = std::pow(point->y * cos_theta + point->x + sin_theta, 2);
+				cv::Point2f adjusted_point(*point - ellipse.center);
+
+				float a = std::pow(adjusted_point.y * sin_theta + adjusted_point.x * cos_theta, 2);
+				float b = std::pow(adjusted_point.y * cos_theta - adjusted_point.x * sin_theta, 2);
 				float outer_result = a / outer_major_axis + b / outer_minor_axis;
 
 				if (outer_result < 1)
@@ -118,7 +123,19 @@ namespace HoughTransform
 					return true;
 				}
 				return false;
-			});
+			}),
+			labeled_points.second.end());
+
+			if (labeled_points.second.empty())
+			{
+				blobs_to_remove.emplace_back(labeled_points.first);
+			}
+		}
+
+		for (size_t blob_id : blobs_to_remove)
+		{
+			m_labeled_points_.erase(blob_id);
+			m_current_labels_.erase(std::remove(m_current_labels_.begin(), m_current_labels_.end(), blob_id), m_current_labels_.end());
 		}
     }
 
@@ -130,7 +147,7 @@ namespace HoughTransform
     bool WindowedTripletDetector::Verify(const Ellipse& ellipse)
     {
         float major_axis = ellipse.major_axis;
-		float minor_axis = ellipse.minor_axis;;
+		float minor_axis = ellipse.minor_axis;
 
         float estimated_pixels_on_ellipse = M_PI * (3.0f * (major_axis + minor_axis) - std::sqrt((3.0f * major_axis + minor_axis) * (major_axis + 3.0f * minor_axis)));
 
@@ -192,11 +209,11 @@ namespace HoughTransform
 
 	inline std::pair<size_t, cv::Point2f*> WindowedTripletDetector::GetRandomLabeledPoint$(void)
 	{
-		size_t label = std::rand() % m_labeled_points_.size();
+		size_t label = m_current_labels_[std::rand() % m_current_labels_.size()];
 		return GetRandomLabeledPoint$(label);
 	}
 
-	inline std::pair<size_t, cv::Point2f*> WindowedTripletDetector::GetRandomLabeledPoint$(size_t label)
+	inline std::pair<size_t, cv::Point2f*> WindowedTripletDetector::GetRandomLabeledPoint$(const size_t label)
 	{
 		std::vector<cv::Point2f*>& point_vector(m_labeled_points_[label]);
 		return { label, point_vector[std::rand() % point_vector.size()] };
@@ -247,6 +264,9 @@ namespace HoughTransform
 			points_within_range.swap(GetPointsFromRadius_(*labeled_origin.second));
 		}
 
+		std::vector<std::pair<size_t, cv::Point2f*>> label_points_within_range2 = label_points_within_range;
+		std::vector<std::pair<size_t, cv::Point2f*>> points_within_range2 = points_within_range;
+
 		// Leaves the points empty if the corresponding vectors are empty.
 		std::pair<size_t, cv::Point2f*> point_a;
 		std::pair<size_t, cv::Point2f*> point_b;
@@ -254,37 +274,42 @@ namespace HoughTransform
 		// Acquires the Alpha point.
 		if ((a_from_same_label && !label_points_within_range.empty()) || (!a_from_same_label && !points_within_range.empty()))
 		{
-			point_a = a_from_same_label ? label_points_within_range[std::rand() & label_points_within_range.size()] : points_within_range[std::rand() & points_within_range.size()];
+			point_a = a_from_same_label ? label_points_within_range[std::rand() % label_points_within_range.size()] : points_within_range[std::rand() % points_within_range.size()];
 		}
 
 		// Filters the range around Alpha to ensure the remaining points are within the correct ranges and then attempts to acquire Bravo.
 		if (!label_points_within_range.empty())
 		{
-			std::remove_if(label_points_within_range.begin(), label_points_within_range.end(), [this, point_a](std::pair<size_t, cv::Point2f*>& labeled_point)
+			label_points_within_range.erase(std::remove_if(label_points_within_range.begin(), label_points_within_range.end(), [this, point_a](std::pair<size_t, cv::Point2f*>& labeled_point)
 			{
-				return IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.max_point_distance) &&
-						!IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.min_point_distance);
-			});
+				return !IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.max_point_distance) ||
+						IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.min_point_distance);
+			}),
+			label_points_within_range.end());
 		}
 		if (!points_within_range.empty())
 		{
-			std::remove_if(points_within_range.begin(), points_within_range.end(), [this, point_a](const std::pair<size_t, cv::Point2f*>& labeled_point)
+			points_within_range.erase(std::remove_if(points_within_range.begin(), points_within_range.end(), [this, point_a](const std::pair<size_t, cv::Point2f*>& labeled_point)
 			{
-				return IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.max_point_distance) &&
-					!IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.min_point_distance);
-			});
+				return !IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.max_point_distance) ||
+					IsPositionedWithinRadius_(*point_a.second, *labeled_point.second, this->parameters.min_point_distance);
+			}),
+			points_within_range.end());
 		}
 
 		// Attempts to acquire Bravo within the range of Alpha.
 		if ((b_from_same_label && !label_points_within_range.empty()) || (!b_from_same_label && !points_within_range.empty()))
 		{
-			point_b = b_from_same_label ? label_points_within_range[std::rand() & label_points_within_range.size()] : points_within_range[std::rand() & points_within_range.size()];
+			point_b = b_from_same_label ? label_points_within_range[std::rand() % label_points_within_range.size()] : points_within_range[std::rand() % points_within_range.size()];
 		}
 
 		PointCollection collection;
-		collection.points.push_back({ *labeled_origin.second, CalculateTangent_(labeled_origin) });
-		collection.points.push_back({ *point_a.second, CalculateTangent_(point_a) });
-		collection.points.push_back({ *point_b.second, CalculateTangent_(point_b) });
+		if (labeled_origin.second && point_a.second && point_b.second)
+		{
+			collection.points.push_back({ *labeled_origin.second, CalculateTangent_(labeled_origin) });
+			collection.points.push_back({ *point_a.second, CalculateTangent_(point_a) });
+			collection.points.push_back({ *point_b.second, CalculateTangent_(point_b) });
+		}
 		return collection;
 	}
 
@@ -301,6 +326,7 @@ namespace HoughTransform
 			}
 			if (points.size() == static_cast<size_t>(this->parameters.tangent_search_radius * 2))
 			{
+
 				break;
 			}
 		}
@@ -357,9 +383,23 @@ namespace HoughTransform
 	}
 
 	// TODO: Move intoa geometry type namespace.
-	bool WindowedTripletDetector::IsPositionedWithinRadius_(const cv::Point& center, cv::Point2f& position, const float radius)
+	bool WindowedTripletDetector::IsPositionedWithinRadius_(const cv::Point2f& center, cv::Point2f& position, const float radius)
 	{
-		return std::pow(center.x - position.x, 2) + std::pow(center.y - position.y, 2) <= std::pow(radius, 2);
+		return std::pow(center.x - position.x, 2) + std::pow(center.y - position.y, 2) < std::pow(radius, 2);
+	}
+
+	void WindowedTripletDetector::RemoveLabeledPoint_(std::pair<size_t, cv::Point2f*>& labeled_point)
+	{
+		m_deleted_points_.insert(labeled_point.second);
+
+		std::vector<cv::Point2f*>& labeled_points_vector(m_labeled_points_.at(labeled_point.first));
+		labeled_points_vector.erase(std::remove(labeled_points_vector.begin(), labeled_points_vector.end(), labeled_point.second), labeled_points_vector.end());
+
+		if (labeled_points_vector.empty())
+		{
+			m_labeled_points_.erase(labeled_point.first);
+			m_current_labels_.erase(std::remove(m_current_labels_.begin(), m_current_labels_.end(), labeled_point.first), m_current_labels_.end());
+		}
 	}
 
 	void WindowedTripletDetector::UpdateWindowInformation_(void)
@@ -368,6 +408,7 @@ namespace HoughTransform
 		m_total_window_points_ = 0;
 		m_deleted_points_.clear();
 		m_labeled_points_.clear();
+		m_current_labels_.clear();
 
 		// Replaces the BLOB container.
 		m_labeled_blobs_ = m_blob_window_.GetWindowBLOBs();
@@ -387,14 +428,16 @@ namespace HoughTransform
 
 		// Initializes the list of labels, which is used by the randomize function to select a random point.
 		m_labeled_points_.reserve(m_labeled_blobs_.size());
+		m_current_labels_.reserve(m_labeled_blobs_.size());
 		for (std::pair<const size_t, ASAP::Image_Processing::BLOB_Operations::BLOB*>& labeled_blob : m_labeled_blobs_)
 		{
 			m_labeled_points_.insert({ labeled_blob.first, std::vector<cv::Point2f*>() });
+			m_current_labels_.push_back(labeled_blob.first);
 
 			// Inserts pointers towards the blob points into the labeled vectors.
 			std::vector<cv::Point2f>& blob_points(labeled_blob.second->GetPoints());
 			m_labeled_points_[labeled_blob.first].reserve(blob_points.size());
-			for (cv::Point2f point : blob_points)
+			for (cv::Point2f& point : blob_points)
 			{
 				m_labeled_points_[labeled_blob.first].push_back(&point);
 			}

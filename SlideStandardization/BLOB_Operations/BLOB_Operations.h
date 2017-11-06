@@ -40,7 +40,7 @@ namespace ASAP::Image_Processing::BLOB_Operations
 	/// <param name="matrix">A matrix where each pixels value represents the label of its corresponding BLOB.</param>
 	/// <param name="stats_array">The array holding the labeled BLOB information.</param>
 	/// <returns>An unordered map containing all the labeled BLOBs.</returns>
-	std::unordered_map<size_t, BLOB> GroupLabeledPixels(const cv::Mat& matrix, cv::Mat& stats_array);
+	std::unordered_map<size_t, BLOB> GroupLabeledPixels(const cv::Mat& matrix, const cv::Mat& stats_array);
 	/// <summary>
 	/// Detects and annotates BLOBs, adding them to an unordered map that joins their label with the pixel coordinates for each.
 	/// This is an amalgation of the LabelBLOBs and GroupLabeledPixels methods.

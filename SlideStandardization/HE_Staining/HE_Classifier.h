@@ -28,7 +28,7 @@ namespace HE_Staining
 		cv::Mat class_data;
 		cv::Mat train_data;
 		cv::Mat test_data;
-		std::vector<cv::Point2f> test_indices;
+		std::vector<cv::Point> test_indices;
 	};
 
 	/// <summary>
@@ -85,11 +85,11 @@ namespace HE_Staining
 			/// <param name="train_and_class_data">The generated struct with the specific class, training and test data.</param>
 			/// <returns>A pair containing two matrices which together hold the classification information.</returns>
 			std::pair<cv::Mat, cv::Mat> Apply_KNN_(
-				HSD::HSD_Model& hsd_image,
-				cv::Mat& background_mask,
-				HematoxylinMaskInformation& hema_mask_info,
-				EosinMaskInformation& eosin_mask_info,
-				TrainAndClassData& train_and_class_data);
+				const HSD::HSD_Model& hsd_image,
+				const cv::Mat& background_mask,
+				const HematoxylinMaskInformation& hema_mask_info,
+				const EosinMaskInformation& eosin_mask_info,
+				const TrainAndClassData& train_and_class_data);
 			/// <summary>
 			/// Calculates the mean and standard deviation values for the matrix. Subtracting the latter from the former.
 			/// </summary>

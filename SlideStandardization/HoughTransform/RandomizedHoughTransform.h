@@ -49,7 +49,8 @@ namespace HoughTransform
 		float				tangent_tolerance;
 		MidpointCalculation	midpoint_calculation;
 		EllipseRemoval		ellipse_removal_method;
-		CombineThreshold		combine_threshold;
+		CombineThreshold	combine_threshold;
+		TangentVerification tangent_verification;
 	};
 
 	/// <summary>
@@ -59,7 +60,8 @@ namespace HoughTransform
     {
 		public:
 			RandomizedHoughTransformParameters parameters;
-
+			size_t ellipses_found;
+			size_t ellipses_verified;
 			/// <summary>
 			/// Constructs the RandomizedHoughTransform based with standard parameters.
 			/// </summary>
@@ -80,16 +82,17 @@ namespace HoughTransform
 			/// Performs ellipse detection on a binary matrix.
 			/// </summary>
 			/// <param name="binary_matrix">A binary matrix where each true point signifies part of an object.</param>
+			/// <param name="output_matrix">The matrix that will hold the BLOB labeling results.</param>
 			/// <param name="mask_type">The type of mask to use for the BLOB searching.</param>
 			/// <returns>The detected ellipses.<returns>
-			std::vector<Ellipse> Execute(cv::Mat& binary_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type);
+			std::vector<Ellipse> Execute(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type);
 			/// <summary>
 			/// Performs ellipse detection on a labeled BLOBs matrix.
 			/// </summary>
 			/// <param name="labeled_matrix">A matrix containing labeled BLOBs.</param>
 			/// <param name="stats_array">The corresponding statistics for each BLOB.</param>
 			/// <returns>The detected ellipses.<returns>
-			std::vector<Ellipse> Execute(cv::Mat& labeled_matrix, cv::Mat& stats_array);
+			std::vector<Ellipse> Execute(const cv::Mat& labeled_matrix, const cv::Mat& stats_array);
 			/// <summary>
 			/// Performs ellipse detection on points made available through a WindowedTripletDetector.
 			/// </summary>

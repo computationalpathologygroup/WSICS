@@ -1,50 +1,94 @@
 #include "MaskGeneration.h"
 
 #define _USE_MATH_DEFINES
-
+#include <iostream>
 #include <math.h>
 #include <random>
 
+#include "MiscMatrixOperations.h"
+
 namespace HE_Staining::MaskGeneration
 {
-	void ApplyBlur(cv::Mat& matrix, const uint32_t sigma)
+	void ApplyBlur(const cv::Mat& input_matrix, cv::Mat& output_matrix, const uint32_t sigma)
 	{
-		cv::blur(matrix, matrix, cv::Size(sigma, sigma));
+		ASAP::MiscMatrixOperations::PrepareOutputForInput(input_matrix, output_matrix);
+
+		cv::blur(output_matrix, output_matrix, cv::Size(sigma, sigma));
 	}
 
-	void ApplyCannyEdge(cv::Mat& matrix, const uint32_t low_threshold, const uint32_t high_threshold)
+	void ApplyCannyEdge(const cv::Mat& input_matrix, cv::Mat& output_matrix, const uint32_t low_threshold, const uint32_t high_threshold)
 	{
+		if (input_matrix.data != output_matrix.data)
+		{
+			input_matrix.copyTo(output_matrix);
+		}
+
 		double minimum_value, maximum_value;
-		cv::minMaxIdx(matrix, &minimum_value, &maximum_value);
+		cv::minMaxIdx(output_matrix, &minimum_value, &maximum_value);
 
-		matrix = matrix / maximum_value * 255;
-		matrix.convertTo(matrix, CV_8UC1);
-		cv::Canny(matrix, matrix, low_threshold, high_threshold, 3);
+		output_matrix = output_matrix/ maximum_value * 255;
+		output_matrix.convertTo(output_matrix, CV_8UC1);
+		cv::Canny(output_matrix, output_matrix, low_threshold, high_threshold, 3);
 	}
 
-	std::vector<HoughTransform::Ellipse> ApplyHoughTransform(cv::Mat& binary_matrix, const HoughTransform::RandomizedHoughTransformParameters& transform_parameters)
+	std::vector<HoughTransform::Ellipse> ApplyHoughTransform(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const HoughTransform::RandomizedHoughTransformParameters& transform_parameters)
 	{
 		// Prepares the Hough Transform algorithm and executes it.
 		HoughTransform::RandomizedHoughTransform hough_transform_algorithm(transform_parameters);
-		return hough_transform_algorithm.Execute(binary_matrix, ASAP::Image_Processing::BLOB_Operations::FOUR_CONNECTEDNESS);
+		return hough_transform_algorithm.Execute(binary_matrix, output_matrix, ASAP::Image_Processing::BLOB_Operations::EIGHT_CONNECTEDNESS);
 	}
 
-	std::vector<HoughTransform::Ellipse> DetectEllipses(cv::Mat& matrix,
+	std::vector<HoughTransform::Ellipse> DetectEllipses(const cv::Mat& matrix,
 		const uint32_t blur_sigma,
 		const uint32_t canny_low_threshold,
 		const uint32_t canny_high_threshold,
 		const HoughTransform::RandomizedHoughTransformParameters& transform_parameters)
 	{
-		ApplyBlur(matrix, blur_sigma);
-		ApplyCannyEdge(matrix, canny_low_threshold, canny_high_threshold);
-		return ApplyHoughTransform(matrix, transform_parameters);
+		cv::Mat temporary_matrix;
+		matrix.copyTo(temporary_matrix);
+
+		ApplyBlur(temporary_matrix, temporary_matrix, blur_sigma);
+		ApplyCannyEdge(temporary_matrix, temporary_matrix, canny_low_threshold, canny_high_threshold);
+		return ApplyHoughTransform(temporary_matrix, temporary_matrix, transform_parameters);
 	}
 
 	double AcquirePercentile(std::vector<float> mean_vector, const float index_percentage)
 	{
-		size_t mean_vector_index = mean_vector.size() * index_percentage;
+		size_t mean_vector_index = (mean_vector.size() - 1) * index_percentage;
 		std::nth_element(mean_vector.begin(), mean_vector.begin() + mean_vector_index, mean_vector.end());
 		return mean_vector[mean_vector_index];
+	}
+
+	std::vector<std::vector<cv::Point>> FilterContours(
+		std::vector<std::vector<cv::Point>> & contours, 
+		const std::vector<float>& density_mean, 
+		const std::vector<float>& red_mean, 
+		const std::vector<float>& blue_mean,
+		const double density_mean_threshold,
+		const double hema_mean_threshold)
+	{
+		if (contours.size() != density_mean.size() || contours.size() != red_mean.size() || contours.size() != blue_mean.size())
+		{
+			throw std::invalid_argument("Passed vectors do not correspond to each others sizes.");
+		}
+
+		std::vector<std::vector<cv::Point>> blue_contours;
+
+		std::vector<std::vector<cv::Point>> new_contours;
+		for (size_t contour = 0; contour < contours.size(); ++contour)
+		{
+			// first term is to remove low density faint objects - second term is to remove faint nuceli with too much red - third term is to remove blood cells
+			if (density_mean[contour] < density_mean_threshold || red_mean[contour] < hema_mean_threshold)// || 1.5 * red_mean[contour] < blue_mean[contour]) // was 2 * bluemean[i] for LN 
+			{
+				if (1.5 * red_mean[contour] < blue_mean[contour])
+				{
+					blue_contours.push_back(contours[contour]);
+				}
+
+				new_contours.push_back(std::move(contours[contour]));
+			}
+		}		
+		return new_contours;
 	}
 
 	EosinMaskInformation GenerateEosinMasks(const HSD::HSD_Model& hsd_image, const cv::Mat& background_mask, const HematoxylinMaskInformation& hema_mask_info, const float eosin_index_percentile)
@@ -78,23 +122,27 @@ namespace HE_Staining::MaskGeneration
 		// Composes the eosin mask out of the two candidates and acquires the non-zero pixels.
 		EosinMaskInformation eosin_mask_info;
 		eosin_mask_info.full_mask = eosin_mask_candidate_one.mul(eosin_mask_candidate_two);
-		std::vector<cv::Point2f> eosin_non_zero_pixels;
+		std::vector<cv::Point> eosin_non_zero_pixels;
 		cv::findNonZero(eosin_mask_info.full_mask, eosin_non_zero_pixels);
 		std::shuffle(eosin_non_zero_pixels.begin(), eosin_non_zero_pixels.end(), std::default_random_engine());
 
 		// Creates a training mask, where each non-zero eosin mask pixel is set to 1 if there are more eosin pixels than hema pixels.
+		size_t red_mask_pixels_sum = cv::sum(hema_mask_info.training_mask)[0];
 		if (cv::sum(eosin_mask_info.full_mask)[0] > cv::sum(hema_mask_info.training_mask)[0])
 		{
 			eosin_mask_info.training_mask = cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1);
-			for (cv::Point2f& pixel : eosin_non_zero_pixels)
+			for (size_t pixel = 0; pixel < red_mask_pixels_sum; ++pixel)
 			{
-				eosin_mask_info.training_mask.at<uchar>(pixel) = 1;
+				eosin_mask_info.training_mask.at<uchar>(eosin_non_zero_pixels[pixel]) = 1;
 			}
+
+			eosin_mask_info.training_pixels = red_mask_pixels_sum;
 		}
 		// If there are fewer eosin pixels compared to the hema pixels, set the eosin mask as the training mask.
 		else
 		{
-			eosin_mask_info.training_mask = eosin_mask_info.full_mask;
+			eosin_mask_info.training_mask	= eosin_mask_info.full_mask;
+			eosin_mask_info.training_pixels = eosin_non_zero_pixels.size();
 		}
 
 		return eosin_mask_info;
@@ -108,6 +156,7 @@ namespace HE_Staining::MaskGeneration
 	{
 		cv::Mat green_mask;
 		cv::threshold(hsd_image.green_density, green_mask, 1.0, 1, cv::THRESH_BINARY);
+		green_mask.convertTo(green_mask, CV_8UC1);
 
 		cv::Mat difference_red_green(hsd_image.red_density - hsd_image.green_density);
 		cv::threshold(difference_red_green, difference_red_green, 0.5, 1, cv::THRESH_BINARY);
@@ -123,75 +172,119 @@ namespace HE_Staining::MaskGeneration
 
 			// Initializes the vectors that will hold the mean values, reservering enough space to equal the amount of ellipses.
 			std::vector<float> red_mean;
-			std::vector<float> green_mean;
 			std::vector<float> blue_mean;
 			std::vector<float> density_mean;
 			red_mean.reserve(ellipses.size());
-			green_mean.reserve(ellipses.size());
 			blue_mean.reserve(ellipses.size());
 			density_mean.reserve(ellipses.size());
 
-			std::vector<std::vector<cv::Point2f>> contours;
+			std::vector<std::vector<cv::Point>> contours;
 			contours.reserve(ellipses.size());
+
+			hema_mask_info.full_mask = cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1);
 
 			// Loops through all the ellipses, calculating contour and mean values while updating the non-rejection training mask.
 			for (const HoughTransform::Ellipse& ellipse : ellipses)
 			{
-				std::vector<cv::Point2f> coordinates;
+				std::vector<std::vector<cv::Point>> coordinates(1);
 				coordinates.reserve(interval);
 
 				cv::Mat rotation_matrix = (cv::Mat_<double>(2, 2) << cos(ellipse.theta), sin(ellipse.theta), -sin(ellipse.theta), cos(ellipse.theta));
-				cv::Mat axis_matrix(2, interval, CV_64FC1);
 				for (uint16_t i = 0; i < interval; ++i)
 				{
-					coordinates.push_back
+					coordinates[0].push_back
 					(
-						cv::Point2f
+						cv::Point
 						(
-						(rotation_matrix.at<double>(0, 0) * ellipse.major_axis *  cos(phi[i]) + rotation_matrix.at<double>(0, 1) * ellipse.minor_axis * sin(phi[i])) + ellipse.center.x,
+							(rotation_matrix.at<double>(0, 0) * ellipse.major_axis *  cos(phi[i]) + rotation_matrix.at<double>(0, 1) * ellipse.minor_axis * sin(phi[i])) + ellipse.center.x,
 							(rotation_matrix.at<double>(1, 0) * ellipse.major_axis *  cos(phi[i]) + rotation_matrix.at<double>(1, 1) * ellipse.minor_axis * sin(phi[i])) + ellipse.center.y
 						)
 					);
 				}
 
 				cv::Mat all_ellipse_raw(cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1));
-				drawContours(all_ellipse_raw, coordinates, 0, 255, CV_FILLED, 8);
-				contours.push_back(std::move(coordinates));
-
-				red_mean.push_back(mean(hsd_image.red_density, all_ellipse_raw).val[0]);
-				green_mean.push_back(mean(hsd_image.green_density, all_ellipse_raw).val[0]);
-				blue_mean.push_back(mean(hsd_image.blue_density, all_ellipse_raw).val[0]);
-				density_mean.push_back(mean(hsd_image.density, all_ellipse_raw).val[0]);
-
-				hema_mask_info.full_mask = cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1);
+				cv::drawContours(all_ellipse_raw, coordinates, 0, 255, CV_FILLED, 8);
 				hema_mask_info.full_mask += all_ellipse_raw;
+
+				contours.push_back(std::move(coordinates[0]));
+				red_mean.push_back(cv::mean(hsd_image.red_density, all_ellipse_raw).val[0]);
+				blue_mean.push_back(cv::mean(hsd_image.blue_density, all_ellipse_raw).val[0]);
+				density_mean.push_back(cv::mean(hsd_image.density, all_ellipse_raw).val[0]);
 			}
 
-			// Acquires the hema and density percentiles.
-			double hema_percentile_value	= AcquirePercentile(red_mean, hema_index_percentile);
-			double density_percentile_value = AcquirePercentile(density_mean, 0.02f);
+			/*cv::imwrite("C:/Users/Karel Gerbrands/Desktop/my_detections.bmp", hema_mask_info.full_mask);
+		//	cv::imwrite("C:/Users/Karel Gerbrands/Desktop/orig.bmp", (hsd_image.red_density * 255) + hema_mask_info.full_mask);
+			cv::imwrite("C:/Users/Karel Gerbrands/Desktop/info.bmp", hsd_image.red_density * 255);
+
+			cv::Mat centers(cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1));
+
+			for (const HoughTransform::Ellipse& ellipse : ellipses)
+			{
+				cv::Point up = ellipse.center;
+				cv::Point down = ellipse.center;
+				cv::Point left = ellipse.center;
+				cv::Point right = ellipse.center;
+
+				up.x += 5;
+				down.x -= 5;
+				left.y += 5;
+				right.y -= 5;
+
+				cv::drawContours(centers, std::vector<std::vector<cv::Point>>{ { up, down, right, left } }, 0, 255, CV_FILLED, 8);
+			}
+
+			cv::Mat red(cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1));
+			for (int i = 0; i < hsd_image.red_density.rows; ++i)
+			{
+				for (int j = 0; j < hsd_image.red_density.cols; ++j)
+				{
+					red.at<uchar>(i, j) = 255 * hsd_image.red_density.at<float>(i, j);
+				}
+			}
+
+			cv::Mat other = cv::imread("C:/Users/Karel Gerbrands/Desktop/detections.bmp");
+			std::vector<cv::Mat> others;
+			cv::split(other, others);
+
+			std::vector<cv::Mat> layers;
+			layers.push_back(red);
+			layers.push_back(red);
+			layers.push_back(centers);
+
+			cv::Mat merged;
+
+
+
+			cv::merge(layers, merged);
+			cv::imwrite("C:/Users/Karel Gerbrands/Desktop/centers.bmp", merged);
+
+			layers[0] += others[0];
+			layers[1] += others[0];
+
+			cv::merge(layers, merged);
+			cv::imwrite("C:/Users/Karel Gerbrands/Desktop/centers2.bmp", merged);*/
 
 			// Initializes the training mask and removes artifacts from it.
 			hema_mask_info.full_mask		/= 255;
 			hema_mask_info.training_mask	= hema_mask_info.full_mask.clone();
-			for (size_t ellipse = 0; ellipse < ellipses.size(); ++ellipse)
-			{
-				// first term is to remove low density faint objects - second term is to remove faint nuceli with too much red - third term is to remove blood cells
-				if (density_mean[ellipse] < density_percentile_value || red_mean[ellipse] < hema_percentile_value || 1.5 * red_mean[ellipse] < blue_mean[ellipse]) // was 2 * bluemean[i] for LN 
-				{
-					drawContours(hema_mask_info.training_mask, contours[ellipse], 0, 0, CV_FILLED, 8);
-				}
-			}
-			hema_mask_info.training_mask -= hema_mask_info.training_mask.mul(background_mask);
 
+			// Acquires the hema and density percentiles.
+			double hema_mean_threshold		= AcquirePercentile(red_mean, hema_index_percentile);
+			double density_mean_threshold	= AcquirePercentile(density_mean, 0.02f);
+
+			contours = FilterContours(contours, density_mean, red_mean, blue_mean, density_mean_threshold, hema_mean_threshold);
+			cv::drawContours(hema_mask_info.training_mask, contours, -1, 0, CV_FILLED, 8);
+
+			hema_mask_info.training_mask = hema_mask_info.training_mask - hema_mask_info.training_mask.mul(background_mask);
 			hema_mask_info.training_pixels = 0;
+
 			for (int row = 0; row < hema_mask_info.training_mask.rows; ++row)
 			{
 				for (int column = 0; column < hema_mask_info.training_mask.cols; ++column)
 				{
 					if (hema_mask_info.training_mask.at<unsigned char>(row, column) == 1)
 					{
-						if (hsd_image.red_density.at<float>(row, column) < hema_percentile_value)
+						if (hsd_image.red_density.at<float>(row, column) < hema_mean_threshold)
 						{
 							hema_mask_info.training_mask.at<unsigned char>(row, column) = 0;
 						}

@@ -44,24 +44,28 @@ class PixelClassificationHE
 		std::string m_debug_dir_;
 
 		std::pair<HematoxylinMaskInformation, EosinMaskInformation> Create_HE_Masks_(
-			HSD::HSD_Model& hsd_image,
-			cv::Mat& background_mask,
-			size_t min_training_size,
-			float hema_percentile,
-			float eosin_percentile,
-			std::vector<double>& spacing,
-			bool is_multiresolution);
+			const HSD::HSD_Model& hsd_image,
+			const cv::Mat& background_mask,
+			const size_t min_training_size,
+			const float hema_percentile,
+			const float eosin_percentile,
+			const std::vector<double>& spacing,
+			const bool is_multiresolution);
 
+
+		/// <param name="total_hema_count">The current total count of the Hematoxylin pixels. Warning: This methods updates the value with newly discovered pixels.</param>
+		/// <param name="total_eosin_count">The current total count of the Eosin pixels. Warning: This methods updates the value with newly discovered pixels.</param>
+		/// <param name="total_background_count">The current total count of the background pixels. Warning: This methods updates the value with newly discovered pixels.</param>
 		SampleInformation InsertTrainingData_(
-			HSD::HSD_Model& hsd_image,
-			ClassificationResults& classification_results,
-			HematoxylinMaskInformation& hema_mask_info,
-			EosinMaskInformation& eosin_mask_info,
+			const HSD::HSD_Model& hsd_image,
+			const ClassificationResults& classification_results,
+			const HematoxylinMaskInformation& hema_mask_info,
+			const EosinMaskInformation& eosin_mask_info,
 			size_t& total_hema_count,
 			size_t& total_eosin_count,
 			size_t& total_background_count,
-			size_t training_size);
+			const size_t training_size);
 
-		SampleInformation PatchTestData_(size_t non_zero_count, SampleInformation& current_sample_information);
+		SampleInformation PatchTestData_(const size_t non_zero_count, const SampleInformation& current_sample_information);
 };
 #endif // __PixelClassificationHE_H__

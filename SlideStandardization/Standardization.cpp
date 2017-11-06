@@ -24,7 +24,8 @@
 #include "MiscFunctionality.h"
 #include <windows.h>
 #include <strsafe.h>
-Standardization::Standardization(std::string log_directory, bool is_multiresolution_image) : is_multiresolution_image(is_multiresolution_image), m_log_file_id_(0)
+
+Standardization::Standardization(std::string log_directory) : m_log_file_id_(0)
 {
 	this->SetLogDirectory(log_directory);
 }
@@ -41,81 +42,92 @@ void Standardization::CreateNormalizationLUT(
 	bool only_generate_parameters,
 	bool consider_ink)
 {
-	IO::Logging::LogHandler* logger_instance(IO::Logging::LogHandler::GetInstance());
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
 	bool RunHough = true;
 
 	//===========================================================================
 	//	Reading the image:: Identifying the tiles containing tissue using multiple magnifications
 	//===========================================================================
-	logger_instance->QueueFileLogging("=============================\n\nReading image...", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("=============================\n\nReading image...", m_log_file_id_, IO::Logging::NORMAL);
 
 	MultiResolutionImageReader reader;
-	MultiResolutionImage* tile_object = reader.open(input_file);
+	MultiResolutionImage* tiled_image = reader.open(input_file);
 
-	if (!tile_object)
+	if (!tiled_image)
 	{
 		throw std::invalid_argument("Unable to open file: " + input_file);
 	}
 
-	std::vector<double> spacing			= tile_object->getSpacing();
-	if (!spacing.empty())
+	// Acquires the type of image, the spacing and the minimum level to select tiles from.
+	bool is_multiresolution_image;
+	std::vector<double> spacing;
+	int min_level = 0;
+	
+
+	// Scopes the pair so that it can be moved into more clearly defined variables.
 	{
-		if (spacing[0] > 1)
+		std::pair<bool, std::vector<double>> resolution_and_spacing(GetResolutionTypeAndSpacing(*tiled_image));
+
+		is_multiresolution_image = resolution_and_spacing.first;
+		spacing.swap(resolution_and_spacing.second);
+
+		if (spacing[0] < 0.2)
 		{
-			this->is_multiresolution_image = false;
-			spacing.clear();
-			logger_instance->QueueFileLogging("Image is static!", m_log_file_id_, IO::Logging::NORMAL);
+			spacing[0] *= 2;
+			min_level = 1;
 		}
-		else
-		{
-			logger_instance->QueueFileLogging("Image is multi-resolution", m_log_file_id_, IO::Logging::NORMAL);
-		}	
+
+		logging_instance->QueueFileLogging("Pixel spacing = " + std::to_string(spacing[0]), m_log_file_id_, IO::Logging::NORMAL);
 	}
 
 	cv::Mat static_image;
-	if (!this->is_multiresolution_image)
+	std::vector<cv::Point> tile_coordinates;
+	if (is_multiresolution_image)
 	{
-		logger_instance->QueueCommandLineLogging("Deconvolving patch image.", IO::Logging::NORMAL);
-		static_image = cv::imread(input_file, CV_LOAD_IMAGE_COLOR);
+		tile_coordinates.swap(GetTileCoordinates_(*tiled_image, spacing, tile_size, is_tiff, min_level));
 	}
-
-	std::vector<cv::Point> tile_coordinates(GetTileCoordinates_(input_file, spacing, tile_size, is_tiff, this->is_multiresolution_image));
+	else
+	{
+		logging_instance->QueueCommandLineLogging("Deconvolving patch image.", IO::Logging::NORMAL);
+		static_image = cv::imread(input_file, CV_LOAD_IMAGE_COLOR);
+		tile_coordinates.push_back({ 0, 0 });
+	}
 
 //===========================================================================
 //	Performing Pixel Classification
 //===========================================================================
 	std::string log_text = "Number of available tiles for stain sampling: " + std::to_string(tile_coordinates.size());
-	logger_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
-	logger_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
 	PixelClassificationHE pixel_classification_he(consider_ink, m_log_file_id_, debug_directory);
 	float hema_percentile	= 0.1; // The higher the value, the more conservative the classifier becomes in picking up blue, so standardization will also be pinkish - breast 0.1
 	float eosin_percentile	= 0.2;
 	tile_size				= 2048;
 	
-	SampleInformation sample_training_info(pixel_classification_he.GenerateCxCyDSamples(*tile_object,
+	SampleInformation sample_training_info(pixel_classification_he.GenerateCxCyDSamples(*tiled_image,
 																						static_image,
 																						tile_coordinates,
 																						tile_size,
 																						training_size,
 																						min_training_size,
-																						0,
-																						is_tiff,
+																						min_level,
 																						hema_percentile,
 																						eosin_percentile,
+																						is_tiff,
 																						spacing));
 	
-	logger_instance->QueueCommandLineLogging("sampling done!", IO::Logging::NORMAL);
-	logger_instance->QueueFileLogging("=============================\nSampling done!", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("sampling done!", IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("=============================\nSampling done!", m_log_file_id_, IO::Logging::NORMAL);
 
 //===========================================================================
 //	Generating LUT Raw Matrix
 //===========================================================================
-	logger_instance->QueueFileLogging("Defining LUT\nLUT HSD", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Defining LUT\nLUT HSD", m_log_file_id_, IO::Logging::NORMAL);
 	HSD::HSD_Model hsd_lut(CalculateLutRawMat_(), HSD::CHANNEL_SHIFT);
 
-	logger_instance->QueueFileLogging("LUT BG calculation", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("LUT BG calculation", m_log_file_id_, IO::Logging::NORMAL);
 	cv::Mat background_mask(HSD::BackgroundMask::CreateBackgroundMask(hsd_lut, 0.24, 0.22));
 
 //===========================================================================
@@ -129,8 +141,8 @@ void Standardization::CreateNormalizationLUT(
 	std::string current_filepath = output_directory;
 	std::string output_filepath = current_filepath.substr(0, current_filepath.rfind("_Normalized.tif")) + "_LUT.tif";
 
-	logger_instance->QueueFileLogging("Writing LUT to: " + output_filepath + " (this might take some time).", m_log_file_id_, IO::Logging::NORMAL);
-	logger_instance->QueueCommandLineLogging("Writing LUT to: " + output_filepath + " (this might take some time).", IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Writing LUT to: " + output_filepath + " (this might take some time).", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Writing LUT to: " + output_filepath + " (this might take some time).", IO::Logging::NORMAL);
 
 	cv::imwrite(output_filepath, normalized_lut);
 
@@ -140,15 +152,15 @@ void Standardization::CreateNormalizationLUT(
 	// Don't remove! usable for looking at samples of standardization
 	if (!only_generate_parameters)
 	{
-		if (this->is_multiresolution_image)
+		if (is_multiresolution_image)
 		{
-			logger_instance->QueueFileLogging("Writing sample standardized images to: " + debug_directory, m_log_file_id_, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging("Writing sample standardized images to: " + debug_directory, m_log_file_id_, IO::Logging::NORMAL);
 			std::string filename(core::extractBaseName(input_file));
-			WriteSampleNormalizedImagesForTesting_(normalized_lut, *tile_object, tile_size, tile_coordinates, is_tiff, debug_directory, filename);
+			WriteSampleNormalizedImagesForTesting_(normalized_lut, *tiled_image, tile_size, tile_coordinates, is_tiff, debug_directory, filename);
 		}		
 		else
 		{
-			logger_instance->QueueFileLogging("Writing standardized image to: " + debug_directory, m_log_file_id_, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging("Writing standardized image to: " + debug_directory, m_log_file_id_, IO::Logging::NORMAL);
 			WriteSampleNormalizedImagesForTesting_(normalized_lut, static_image, tile_size, is_tiff, debug_directory);
 		}
 	}
@@ -273,13 +285,13 @@ cv::Mat Standardization::CalculateLutRawMat_(void)
 
 cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleInformation& sample_info, size_t training_size, std::string& parameters_filepath, bool only_generate_parameters)
 {
-	IO::Logging::LogHandler* logger_instance(IO::Logging::LogHandler::GetInstance());
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
 	//===========================================================================
 	//	Transforming Cx and Cy distributions - Initialization 1
 	//  Extracting all the parameters needed for applying the transformation
 	//===========================================================================
-	logger_instance->QueueFileLogging("Defining variables for transformation...", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Defining variables for transformation...", m_log_file_id_, IO::Logging::NORMAL);
 
 	ClassAnnotatedCxCy train_data(TransformCxCyDensity::ClassCxCyGenerator(sample_info.class_data, sample_info.training_data_c_x, sample_info.training_data_c_y));
 	
@@ -301,7 +313,7 @@ cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleI
 
 	ClassDensityRanges class_density_ranges(TransformCxCyDensity::GetDensityRanges(sample_info.class_data, sample_info.training_data_density, class_pixel_indices));
 
-	logger_instance->QueueFileLogging("Finished computing tranformation parameters for the current image", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Finished computing tranformation parameters for the current image", m_log_file_id_, IO::Logging::NORMAL);
 	//===========================================================================
 	//	Defining Template Parameters
 	//===========================================================================
@@ -334,137 +346,137 @@ cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleI
 		downsample = 50;
 	}
 
-	logger_instance->QueueFileLogging("Down sampling the data for constructing NB classifier", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Down sampling the data for constructing NB classifier", m_log_file_id_, IO::Logging::NORMAL);
 
 	SampleInformation sample_info_downsampled(DownsampleforNbClassifier_(sample_info, downsample, training_size));
 
-	logger_instance->QueueFileLogging("Generating weights with NB classifier", m_log_file_id_, IO::Logging::NORMAL);
-	logger_instance->QueueCommandLineLogging("Generating the weights, Setting dataset of size " + std::to_string(sample_info_downsampled.class_data.rows * sample_info_downsampled.class_data.cols),
+	logging_instance->QueueFileLogging("Generating weights with NB classifier", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Generating the weights, Setting dataset of size " + std::to_string(sample_info_downsampled.class_data.rows * sample_info_downsampled.class_data.cols),
 		IO::Logging::NORMAL);
 
 	cv::Ptr<cv::ml::NormalBayesClassifier> classifier(CxCyWeights::CreateNaiveBayesClassifier(	sample_info_downsampled.training_data_c_x,	
 																								sample_info_downsampled.training_data_c_y, 
 																								sample_info_downsampled.training_data_density, 
 																								sample_info_downsampled.class_data));
-	logger_instance->QueueCommandLineLogging("Training Naive Bayes Classifier fininshed...", IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Training Naive Bayes Classifier fininshed...", IO::Logging::NORMAL);
 
-	logger_instance->QueueCommandLineLogging("Generating posteriors (This will take some time...)", IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Generating posteriors (This will take some time...)", IO::Logging::NORMAL);
 	CxCyWeights::Weights weights(CxCyWeights::GenerateWeights(hsd_lut.c_x, hsd_lut.c_y, hsd_lut.density, classifier));
-	logger_instance->QueueCommandLineLogging("All weights created...", IO::Logging::NORMAL);
-	logger_instance->QueueFileLogging("Weights generated", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("All weights created...", IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Weights generated", m_log_file_id_, IO::Logging::NORMAL);
 
 	//===========================================================================
 	//	Transforming Cx and Cy distributions - Initialization
 	//===========================================================================
-	logger_instance->QueueCommandLineLogging("Transformation started...", IO::Logging::NORMAL);
-	logger_instance->QueueFileLogging("Transformation started...", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Transformation started...", IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Transformation started...", m_log_file_id_, IO::Logging::NORMAL);
 
 	std::vector<cv::Mat> lut_transformation_results(InitializeTransformation_(hsd_lut, train_data.cx_cy_merged, calculated_transform_parameters, lut_transform_parameters, class_pixel_indices));
 
 	//===========================================================================
 	//	Generating the weights for each class
 	//===========================================================================
-	logger_instance->QueueFileLogging("Applying weights...", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Applying weights...", m_log_file_id_, IO::Logging::NORMAL);
 	cv::Mat cx_cy_normalized(CxCyWeights::ApplyWeights(lut_transformation_results[0], lut_transformation_results[0], lut_transformation_results[1], weights));
 
 	//===========================================================================
 	//	Density scaling
 	//===========================================================================
 	//TransCxCyD.densityNormalization(trainDataAllD, HSD_LUT.Density, BG_Obj_LUT);
-	logger_instance->QueueFileLogging("Density transformation...", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Density transformation...", m_log_file_id_, IO::Logging::NORMAL);
 	cv::Mat density_scaling(TransformCxCyDensity::DensityNormalizationThreeScales(calculated_transform_parameters.class_density_ranges, lut_transform_parameters.class_density_ranges, hsd_lut.density, weights));
 
 	//===========================================================================
 	//	HSD reverse
 	//===========================================================================
-	logger_instance->QueueFileLogging("HSD reverse...", m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("HSD reverse...", m_log_file_id_, IO::Logging::NORMAL);
 	cv::Mat nornmalized_image_rgb;
 	HSD::CxCyToRGB(cx_cy_normalized, nornmalized_image_rgb, density_scaling);
 
 	return nornmalized_image_rgb;
 }
 
-std::vector<cv::Point> Standardization::GetTileCoordinates_(std::string& slide_directory, std::vector<double>& spacing, uint32_t tile_size, bool is_tiff, bool is_multi_resolution)
+std::pair<bool, std::vector<double>> Standardization::GetResolutionTypeAndSpacing(MultiResolutionImage& tiled_image)
+{
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+	std::pair<bool, std::vector<double>> resolution_and_spacing(true, tiled_image.getSpacing());
+
+	if (!resolution_and_spacing.second.empty())
+	{
+		if (resolution_and_spacing.second[0] > 1)
+		{
+			resolution_and_spacing.first = false;
+			resolution_and_spacing.second.clear();
+			logging_instance->QueueFileLogging("Image is static!", m_log_file_id_, IO::Logging::NORMAL);
+		}
+		else
+		{
+			logging_instance->QueueFileLogging("Image is multi-resolution", m_log_file_id_, IO::Logging::NORMAL);
+		}
+	}
+
+	if (resolution_and_spacing.second.empty())
+	{
+		logging_instance->QueueCommandLineLogging("The image does not have spacing information. Continuing with the default 0.24.", IO::Logging::NORMAL);
+		resolution_and_spacing.second.push_back(0.243);
+		logging_instance->QueueFileLogging("The image does not have spacing information. Continuing with the default 0.24. Pixel spacing set to default = " + std::to_string(resolution_and_spacing.second[0]), m_log_file_id_, IO::Logging::NORMAL);
+	}
+
+	return resolution_and_spacing;
+}
+
+std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage& tiled_image, std::vector<double>& spacing, uint32_t tile_size, bool is_tiff, int min_level)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	int min_level = 0;
-	std::vector<cv::Point> tile_coordinates;
-	if (is_multi_resolution)
+	unsigned char number_of_levels = tiled_image.getNumberOfLevels();
+	if (number_of_levels > 5)
 	{
-		MultiResolutionImageReader reader;
-		MultiResolutionImage* ReadTileObject = reader.open(slide_directory);
-		if (spacing.size() > 0)
+		number_of_levels = 5;
+	}
+
+	logging_instance->QueueFileLogging("Number of levels available = " + std::to_string(number_of_levels), m_log_file_id_, IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("detecting tissue regions...", IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging("Detecting tissue", m_log_file_id_, IO::Logging::NORMAL);
+
+	// Attempts to acquire the tile coordinates for the lowest level / highest magnification.
+	std::vector<size_t> dimensions = tiled_image.getLevelDimensions(number_of_levels - 1);
+	uint32_t skip_factor				= 1;
+	float background_tissue_threshold	= 0.9;
+	uint32_t level_scale_difference		= 1;
+
+	std::vector<cv::Point> tile_coordinates;
+	if (number_of_levels > 1)
+	{
+		logging_instance->QueueCommandLineLogging("Analyzing level: " + std::to_string(number_of_levels - 1), IO::Logging::NORMAL);
+
+		std::vector<unsigned long long> next_level_dimensions = tiled_image.getLevelDimensions(number_of_levels - 2);
+		level_scale_difference = std::pow(std::round(next_level_dimensions[0] / next_level_dimensions[0]), 2);
+
+		// Loops through each level, acquiring coordinates for each and reusing them to calculate the set of coordinates for a higher magnification.
+		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, is_tiff, number_of_levels - 1, background_tissue_threshold, skip_factor));
+		for (char level_number = number_of_levels - 2; level_number >= 0; --level_number)
 		{
-			spacing = ReadTileObject->getSpacing();
-			if (spacing[0] < 0.2)
+			if (level_number != 0)
 			{
-				spacing[0] = spacing[0] * 2;
-				min_level = 1;
+				skip_factor = 2;
+
+				std::vector<size_t> dimensions_level_low	= tiled_image.getLevelDimensions(level_number);
+				std::vector<size_t> dimensions_level_high	= tiled_image.getLevelDimensions(level_number - 1);
+				level_scale_difference = std::pow(std::floor(dimensions_level_high[0] / dimensions_level_low[0]), 2);
 			}
-			logging_instance->QueueFileLogging("Pixel spacing = " + std::to_string(spacing[0]), m_log_file_id_, IO::Logging::NORMAL);
-		}
-		else
-		{
-			logging_instance->QueueCommandLineLogging("The image does not have spacing information. Continuing with the default 0.24.", IO::Logging::NORMAL);
-			spacing.push_back(0.243);
-			logging_instance->QueueFileLogging("The image does not have spacing information. Continuing with the default 0.24. Pixel spacing set to default = " + std::to_string(spacing[0]), m_log_file_id_, IO::Logging::NORMAL);
-		}
 
-		unsigned char number_of_levels = ReadTileObject->getNumberOfLevels();
-		if (number_of_levels > 5)
-		{
-			number_of_levels = 5;
-		}
+			std::string log_text = "Analyzing level: " + std::to_string(level_number) + " - Tiles containing tissue: " + std::to_string(tile_coordinates.size());
+			logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
-		logging_instance->QueueFileLogging("Number of levels available = " + std::to_string(number_of_levels), m_log_file_id_, IO::Logging::NORMAL);
-
-		logging_instance->QueueCommandLineLogging("detecting tissue regions...", IO::Logging::NORMAL);
-		logging_instance->QueueFileLogging("Detecting tissue", m_log_file_id_, IO::Logging::NORMAL);
-
-		// Attempts to acquire the tile coordinates for the lowest level / highest magnification.
-		std::vector<size_t> dimensions = ReadTileObject->getLevelDimensions(number_of_levels - 1);
-		uint32_t skip_factor = 1;
-		float background_tissue_threshold = 0.9;
-		uint32_t level_scale_difference = 1;
-
-		if (number_of_levels > 1)
-		{
-			logging_instance->QueueCommandLineLogging("Analyzing level: " + std::to_string(number_of_levels - 1), IO::Logging::NORMAL);
-
-			std::vector<unsigned long long> next_level_dimensions = ReadTileObject->getLevelDimensions(number_of_levels - 2);
-			level_scale_difference = std::pow(std::round(next_level_dimensions[0] / next_level_dimensions[0]), 2);
-
-			// Loops through each level, acquiring coordinates for each and reusing them to calculate the set of coordinates for a higher magnification.
-			tile_coordinates.swap(LevelReading::ReadLevelTiles(*ReadTileObject, dimensions[0], dimensions[1], tile_size, is_tiff, number_of_levels - 1, background_tissue_threshold, skip_factor));
-			for (char level_number = number_of_levels - 2; level_number >= 0; --level_number)
-			{
-				if (level_number != 0)
-				{
-					skip_factor = 2;
-
-					std::vector<size_t> dimensions_level_low = ReadTileObject->getLevelDimensions(level_number);
-					std::vector<size_t> dimensions_level_high = ReadTileObject->getLevelDimensions(level_number - 1);
-					level_scale_difference = std::pow(std::floor(dimensions_level_high[0] / dimensions_level_low[0]), 2);
-				}
-
-				std::string log_text = "Analyzing level: " + std::to_string(level_number) + " - Tiles containing tissue: " + std::to_string(tile_coordinates.size());
-				logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
-				logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
-
-				background_tissue_threshold -= 0.1;
-				tile_coordinates.swap(LevelReading::ReadLevelTiles(*ReadTileObject, tile_coordinates, tile_size, is_tiff, level_number, background_tissue_threshold, skip_factor, level_scale_difference));
-			}
-		}
-		else
-		{
-			tile_coordinates.swap(LevelReading::ReadLevelTiles(*ReadTileObject, dimensions[0], dimensions[1], tile_size, is_tiff, number_of_levels - 1, 0.9, skip_factor));
+			background_tissue_threshold -= 0.1;
+			tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, tile_coordinates, tile_size, is_tiff, level_number, background_tissue_threshold, skip_factor, level_scale_difference));
 		}
 	}
 	else
 	{
-		tile_coordinates.push_back(cv::Point(0, 0));
-		spacing.push_back(0.243);
+		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, is_tiff, number_of_levels - 1, 0.9, skip_factor));
 	}
 
 	return tile_coordinates;
@@ -739,8 +751,8 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(cv::Mat& normalized
 
 	cv::imwrite(output_directory, lut_slide_image);
 
-	IO::Logging::LogHandler* logger_instance(IO::Logging::LogHandler::GetInstance());
-	logger_instance->QueueCommandLineLogging("Normalized image is written...", IO::Logging::NORMAL);
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+	logging_instance->QueueCommandLineLogging("Normalized image is written...", IO::Logging::NORMAL);
 }
 
 void Standardization::WriteSampleNormalizedImagesForTesting_(
@@ -755,9 +767,9 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(
 	boost::filesystem::path current_dir(debug_dir + "/DebugData/" + filename + "norm");
 	boost::filesystem::create_directory(current_dir);
 
-	IO::Logging::LogHandler* logger_instance(IO::Logging::LogHandler::GetInstance());
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	logger_instance->QueueCommandLineLogging("Writing sample standardized images in: " + current_dir.string(), IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Writing sample standardized images in: " + current_dir.string(), IO::Logging::NORMAL);
 
 	std::vector<cv::Mat> lut_bgr(3);
 	cv::split(lut_image, lut_bgr);
@@ -809,11 +821,11 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(
 		std::string filename_lut(current_dir.string() + "/" + std::to_string(tile) + "_Normalized.tif");
 		std::string filename_original(current_dir.string() + "/" + std::to_string(tile) + "_Original.tif");
 
-		logger_instance->QueueCommandLineLogging(filename_lut, IO::Logging::NORMAL);
+		logging_instance->QueueCommandLineLogging(filename_lut, IO::Logging::NORMAL);
 
 		cv::imwrite(filename_lut, slide_lut_image);
 		cv::imwrite(filename_original, tile_image);
 	}
 
-	logger_instance->QueueCommandLineLogging("Sample images are written...", IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Sample images are written...", IO::Logging::NORMAL);
 }

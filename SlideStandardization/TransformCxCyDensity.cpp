@@ -78,7 +78,7 @@ namespace TransformCxCyDensity
 					case 2: eosin_pixels.push_back(cv::Point(row, col));		break;
 					case 3: background_pixels.push_back(cv::Point(row, col));	break;
 				}
-				*row_ptr++;
+				++row_ptr;
 
 				cx_cy.at<float>(cx_cy_position, 0) = c_x_in.at<float>(row, col);
 				cx_cy.at<float>(cx_cy_position, 1) = c_y_in.at<float>(row, col);
@@ -195,7 +195,7 @@ namespace TransformCxCyDensity
 				case 2: eosin_mask.at<float>(eosin_count, 0) = 1; ++eosin_count; break;
 				case 3: background_mask.at<float>(background_count, 0) = 1; ++background_count; break;
 				}
-				*row_ptr++;
+				++row_ptr;
 			}
 		}
 
@@ -253,7 +253,7 @@ namespace TransformCxCyDensity
 					background_density.at<float>(background_count, 0) = Density.at<float>(row, col);
 					++background_count;
 				}
-				*row_ptr++;
+				++row_ptr;
 			}
 		}
 
@@ -272,7 +272,8 @@ namespace TransformCxCyDensity
 	std::pair<float, float> GetPercentile(float cx_percentile, float cy_percentile, cv::Mat& cx_cy)
 	{
 		cv::Mat sorted_cx_cy;
-		cv::sortIdx(cx_cy, sorted_cx_cy, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
+		cx_cy.copyTo(sorted_cx_cy);
+		cv::sortIdx(sorted_cx_cy, sorted_cx_cy, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
 
 		return std::pair<float, float>(cx_cy.at<float>(sorted_cx_cy.at<int>(sorted_cx_cy.rows / cx_percentile, 0), 0),
 									   cx_cy.at<float>(sorted_cx_cy.at<int>(sorted_cx_cy.rows / cy_percentile, 1), 1));

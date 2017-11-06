@@ -30,9 +30,7 @@ struct TransformationParameters
 class Standardization
 {
 	public:
-		bool is_multiresolution_image;
-
-		Standardization(std::string log_directory, bool is_multiresolution_image = false);
+		Standardization(std::string log_directory);
 
 		void CreateNormalizationLUT(
 			std::string& input_file,
@@ -55,7 +53,9 @@ class Standardization
 		cv::Mat CalculateLutRawMat_(void);
 		cv::Mat CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleInformation& sample_info, size_t training_size, std::string& parameters_filepath, bool only_generate_parameters);
 		SampleInformation DownsampleforNbClassifier_(SampleInformation& sample_information, uint32_t downsample, size_t training_size);
-		std::vector<cv::Point> GetTileCoordinates_(std::string& slide_directory, std::vector<double>& spacing, uint32_t tile_size, bool is_tiff, bool is_multi_resolution);
+		
+		std::pair<bool, std::vector<double>> GetResolutionTypeAndSpacing(MultiResolutionImage& tiled_image);
+		std::vector<cv::Point> GetTileCoordinates_(MultiResolutionImage& tiled_image, std::vector<double>& spacing, uint32_t tile_size, bool is_tiff, int min_level);
 
 		void HandleParameterization(TransformationParameters& calc_params, TransformationParameters& lut_params, std::string& parameters_filepath);
 

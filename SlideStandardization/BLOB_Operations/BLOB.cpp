@@ -39,10 +39,18 @@ namespace ASAP::Image_Processing::BLOB_Operations
 			return false;
 		}
 
-		m_top_left_.x		= std::min<float>(m_top_left_.x, point.x);
-		m_top_left_.y		= std::min<float>(m_top_left_.y, point.y);
-		m_bottom_right_.x	= std::max<float>(m_bottom_right_.x, point.x);
-		m_bottom_right_.y	= std::max<float>(m_bottom_right_.y, point.y);
+		if (m_points_.empty())
+		{
+			m_top_left_		= point;
+			m_bottom_right_ = point;
+		}
+		else
+		{
+			m_top_left_.x		= std::min<float>(m_top_left_.x, point.x);
+			m_top_left_.y		= std::min<float>(m_top_left_.y, point.y);
+			m_bottom_right_.x	= std::max<float>(m_bottom_right_.x, point.x);
+			m_bottom_right_.y	= std::max<float>(m_bottom_right_.y, point.y);
+		}
 
         m_points_.push_back(point);
 		return true;

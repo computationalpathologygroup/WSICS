@@ -1,7 +1,7 @@
 #ifndef __HOUGHTRANSFORM_LOCATIONCELL_H__
 #define __HOUGHTRANSFORM_LOCATIONCELL_H__
 
-#include <forward_list>
+#include <vector>
 
 #include "Ellipse.h"
 #include "AveragedEllipseParameters.h"
@@ -33,7 +33,7 @@ namespace HoughTransform
 			/// Returns a reference to the linked list of averaged ellipse parameters.
 			/// </summary>
 			/// <returns>A reference to the linked list of averaged ellipse parameters.</returns>
-			const std::forward_list<AveragedEllipseParameters>& GetAveragedEllipseParameterss(void) const;
+			const std::vector<AveragedEllipseParameters>& GetAveragedEllipseParameterss(void) const;
 			/// <summary>
 			/// Returns the averaged ellipse parameters with the highest count.
 			/// </summary>
@@ -51,10 +51,10 @@ namespace HoughTransform
 			const cv::Point2f& GetCenter(void) const;
 
 		private:
-			std::forward_list<AveragedEllipseParameters>		m_averaged_ellipses_;
-			AveragedEllipseParameters*						m_best_averaged_ellipse_;
-			cv::Point2f										m_center_;
-			size_t											m_count_;
+			std::vector<AveragedEllipseParameters>	m_averaged_ellipses_;
+			AveragedEllipseParameters				m_best_averaged_ellipse_;
+			cv::Point2f								m_center_;
+			size_t									m_count_;
     };
 }
 #endif // __HOUGHTRANSFORM_LOCATIONCELL_H__
