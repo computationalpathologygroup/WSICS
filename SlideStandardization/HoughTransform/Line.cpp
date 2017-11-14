@@ -10,7 +10,7 @@ namespace HoughTransform
     //******************************************************************************
     // Constructors / Destructors
     //******************************************************************************
-    Line::Line(void)
+    Line::Line(void) : theta(0), rho(0)
     {
     }
 
@@ -84,7 +84,8 @@ namespace HoughTransform
 			}
 			else
 			{
-				throw std::invalid_argument("Composed line is faulty.");
+				theta	= 0;
+				rho		= 0;
 			}
 		}
 		else

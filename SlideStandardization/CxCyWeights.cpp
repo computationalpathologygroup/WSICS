@@ -23,7 +23,8 @@ namespace CxCyWeights
 	cv::Ptr<cv::ml::NormalBayesClassifier> CreateNaiveBayesClassifier(cv::Mat& c_x, cv::Mat& c_y, cv::Mat& density, cv::Mat& class_data)
 	{
 		cv::Mat samples(class_data.rows *  class_data.cols, 3, CV_32F);
-		cv::Mat responses(class_data.rows *  class_data.cols, 3, CV_32F);
+		cv::Mat responses(class_data.rows *  class_data.cols, 1, CV_32S);
+
 		size_t current_sample = 0;
 		for (size_t row = 0; row < class_data.rows; ++row)
 		{
@@ -33,18 +34,18 @@ namespace CxCyWeights
 				samples.at<float>(current_sample, 1) = c_y.at<float>(row, col);
 				samples.at<float>(current_sample, 2) = density.at<float>(row, col);
 
-				switch (class_data.at<int>(row, col))
+				switch ((uchar)class_data.at<float>(row, col))
 				{
-				case 1: responses.at<float>(current_sample, 0) = 0; break;
-				case 2: responses.at<float>(current_sample, 0) = 1; break;
-				case 3: responses.at<float>(current_sample, 0) = 2; break;
+					case 1: responses.at<float>(current_sample, 0) = 1; break;
+					case 2: responses.at<float>(current_sample, 0) = 2; break;
+					case 3: responses.at<float>(current_sample, 0) = 3; break;
 				}
-
+				
 				++current_sample;
 			}
 		}
 
-		cv::Ptr<cv::ml::TrainData> train_data(cv::ml::TrainData::create(samples, cv::ml::COL_SAMPLE, responses));
+		cv::Ptr<cv::ml::TrainData> train_data(cv::ml::TrainData::create(samples, cv::ml::ROW_SAMPLE, responses));
 		cv::Ptr<cv::ml::NormalBayesClassifier> normal_bayes_classifier(cv::ml::NormalBayesClassifier::create());
 		normal_bayes_classifier->train(train_data);
 

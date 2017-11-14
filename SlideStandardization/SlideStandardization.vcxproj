@@ -44,6 +44,7 @@
     <ClCompile Include="MiscFunctionality.cpp" />
     <ClCompile Include="MiscMatrixOperations.cpp" />
     <ClCompile Include="PixelClassificationHE.cpp" />
+    <ClCompile Include="SlideStandardizationCLI.cpp" />
     <ClCompile Include="Standardization.cpp" />
     <ClCompile Include="TransformCxCyDensity.cpp" />
   </ItemGroup>
@@ -73,6 +74,7 @@
     <ClInclude Include="MiscFunctionality.h" />
     <ClInclude Include="MiscMatrixOperations.h" />
     <ClInclude Include="PixelClassificationHE.h" />
+    <ClInclude Include="SlideStandardizationCLI.h" />
     <ClInclude Include="Standardization.hpp" />
     <ClInclude Include="TransformCxCyDensity.h" />
   </ItemGroup>
@@ -169,10 +171,13 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
+      <AdditionalIncludeDirectories>D:\Libraries\Boost-1-65-1\boost_1_65_1;D:\DiagApps\ASAP\include\;D:\Libraries\opencv-33\opencv\build\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>D:\Libraries\opencv-3.3.0\build\lib\Release\opencv_world330.lib;D:\DiagApps\ASAP\lib\multiresolutionimageinterface.lib;D:\Libraries\Boost-1-65-1\boost_1_65_1\bin.v2\libs\program_options\build\msvc-14.1\release\address-model-64\link-static\threading-multi\libboost_program_options-vc141-mt-1_65_1.lib;D:\Libraries\Boost-1-65-1\boost_1_65_1\bin.v2\libs\filesystem\build\msvc-14.1\release\address-model-64\link-static\threading-multi\libboost_filesystem-vc141-mt-1_65_1.lib;D:\Libraries\Boost-1-65-1\boost_1_65_1\bin.v2\libs\system\build\msvc-14.1\release\address-model-64\link-static\threading-multi\libboost_system-vc141-mt-1_65_1.lib;D:\DiagApps\ASAP\lib\core.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

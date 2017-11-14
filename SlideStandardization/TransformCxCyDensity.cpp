@@ -69,16 +69,14 @@ namespace TransformCxCyDensity
 		std::vector<cv::Point> background_pixels;
 		for (uint32_t row = 0; row < all_tissue_classes_uchar.rows; ++row)
 		{
-			uchar* row_ptr = all_tissue_classes_uchar.ptr(row);
 			for (uint32_t col = 0; col < all_tissue_classes_uchar.cols; ++col)
 			{
-				switch (*row_ptr)
+				switch (all_tissue_classes_uchar.at<uchar>(row, col))
 				{
 					case 1: hema_pixels.push_back(cv::Point(row, col));			break;
 					case 2: eosin_pixels.push_back(cv::Point(row, col));		break;
 					case 3: background_pixels.push_back(cv::Point(row, col));	break;
 				}
-				++row_ptr;
 
 				cx_cy.at<float>(cx_cy_position, 0) = c_x_in.at<float>(row, col);
 				cx_cy.at<float>(cx_cy_position, 1) = c_y_in.at<float>(row, col);
@@ -175,10 +173,10 @@ namespace TransformCxCyDensity
 
 	ClassPixelIndices GetClassIndices(cv::Mat& all_tissue_classes)
 	{
-		int AllSize = all_tissue_classes.rows * all_tissue_classes.cols;
-		cv::Mat hema_mask = cv::Mat::zeros(AllSize, 1, CV_32FC1);
-		cv::Mat eosin_mask = cv::Mat::zeros(AllSize, 1, CV_32FC1);
-		cv::Mat background_mask = cv::Mat::zeros(AllSize, 1, CV_32FC1);
+		size_t full_size = all_tissue_classes.rows * all_tissue_classes.cols;
+		cv::Mat hema_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
+		cv::Mat eosin_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
+		cv::Mat background_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
 
 		size_t hema_count = 0;
 		size_t eosin_count = 0;
@@ -186,22 +184,16 @@ namespace TransformCxCyDensity
 
 		for (size_t row = 0; row < all_tissue_classes.rows; ++row)
 		{
-			uchar* row_ptr = all_tissue_classes.ptr(row);
 			for (size_t col = 0; col < all_tissue_classes.cols; ++col)
 			{
-				switch (*row_ptr)
+				switch ((uchar)all_tissue_classes.at<float>(row, col))
 				{
-				case 1: hema_mask.at<float>(hema_count, 0) = 1; ++hema_count; break;
-				case 2: eosin_mask.at<float>(eosin_count, 0) = 1; ++eosin_count; break;
-				case 3: background_mask.at<float>(background_count, 0) = 1; ++background_count; break;
+					case 1: hema_mask.at<uchar>(hema_count, 0)				= 1; ++hema_count;			break;
+					case 2: eosin_mask.at<uchar>(eosin_count, 0)			= 1; ++eosin_count;			break;
+					case 3: background_mask.at<uchar>(background_count, 0)	= 1; ++background_count;	break;
 				}
-				++row_ptr;
 			}
 		}
-
-		hema_mask.convertTo(hema_mask, CV_8UC1);
-		eosin_mask.convertTo(eosin_mask, CV_8UC1);
-		background_mask.convertTo(background_mask, CV_8UC1);
 
 		ClassPixelIndices class_pixel_indices;
 		cv::findNonZero(hema_mask, class_pixel_indices.hema_indices);
@@ -225,7 +217,6 @@ namespace TransformCxCyDensity
 
 	ClassDensityRanges GetDensityRanges(cv::Mat& all_tissue_classes, cv::Mat& Density, ClassPixelIndices& class_pixel_indices)
 	{
-		cv::Mat sorted_hema_density, sorted_eosin_density, sorted_background_density;
 		cv::Mat hema_density(cv::Mat::zeros(class_pixel_indices.hema_indices.size(), 1, CV_32FC1));
 		cv::Mat eosin_density(cv::Mat::zeros(class_pixel_indices.eosin_indices.size(), 1, CV_32FC1));
 		cv::Mat background_density(cv::Mat::zeros(class_pixel_indices.background_indices.size(), 1, CV_32FC1));
@@ -235,25 +226,14 @@ namespace TransformCxCyDensity
 		size_t background_count = 0;
 		for (size_t row = 0; row < all_tissue_classes.rows; ++row)
 		{
-			uchar* row_ptr = all_tissue_classes.ptr(row);
 			for (size_t col = 0; col < all_tissue_classes.cols; ++col)
 			{
-				if (*row_ptr == 1)
+				switch ((uchar)all_tissue_classes.at<float>(row, col))
 				{
-					hema_density.at<float>(hema_count, 0) = Density.at<float>(row, col);
-					++hema_count;
+					case 1: hema_density.at<float>(hema_count, 0)				= Density.at<float>(row, col);  ++hema_count;		break;
+					case 2: eosin_density.at<float>(eosin_count, 0)				= Density.at<float>(row, col);  ++eosin_count;		break;
+					case 3: background_density.at<float>(background_count, 0)	= Density.at<float>(row, col);  ++background_count; break;
 				}
-				else if (*row_ptr == 2)
-				{
-					eosin_density.at<float>(eosin_count, 0) = Density.at<float>(row, col);
-					++eosin_count;
-				}
-				else
-				{
-					background_density.at<float>(background_count, 0) = Density.at<float>(row, col);
-					++background_count;
-				}
-				++row_ptr;
 			}
 		}
 
@@ -348,7 +328,7 @@ namespace TransformCxCyDensity
 
 		for (size_t row = 0; row < rotated_input.rows; ++row)
 		{
-			for (size_t col = 0; col < rotated_input.rows; ++row)
+			for (size_t col = 0; col < rotated_input.cols; ++col)
 			{
 				if (class_scale_params.at<float>(0, col) <= rotated_input.at<float>(row, col) && rotated_input.at<float>(row, col) < class_scale_params.at<float>(1, col))
 					scaled_output.at<float>(row, col) = lut_scale_params.at<float>(0, col) + (rotated_input.at<float>(row, col) - class_scale_params.at<float>(0, col)) * (lut_scale_params.at<float>(1, col) - lut_scale_params.at<float>(0, col)) / (class_scale_params.at<float>(1, col) - class_scale_params.at<float>(0, col));
@@ -372,7 +352,7 @@ namespace TransformCxCyDensity
 
 		for (size_t row = 0; row < rotated_input.rows; ++row)
 		{
-			for (size_t col = 0; col < rotated_input.rows; ++row)
+			for (size_t col = 0; col < rotated_input.cols; ++col)
 			{
 				if (class_scale_params.at<float>(0, col) <= rotated_input.at<float>(row, col) && rotated_input.at<float>(row, col) < class_scale_params.at<float>(2, col))
 					scaled_output.at<float>(row, col) = lut_scale_params.at<float>(0, col) + (rotated_input.at<float>(row, col) - class_scale_params.at<float>(0, col)) * (lut_scale_params.at<float>(2, col) - lut_scale_params.at<float>(0, col)) / (class_scale_params.at<float>(2, col)- class_scale_params.at<float>(0, col));

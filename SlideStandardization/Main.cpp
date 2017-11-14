@@ -170,9 +170,12 @@ int main( int argc, char * argv[])
 		std::string test("D:/WSIs/test.ndpi");
 		
 
+
+
+
 		int tilesize = 512;	
 		Standardization standardization("logs");
-		standardization.CreateNormalizationLUT(test, parameter_filepath, SaveDir, DebugDIR, trainingSizeInput, MinTrainSize, tilesize, IsTiff, 0, ink);
+		standardization.CreateNormalizationLUT(test, parameter_filepath, SaveDir, DebugDIR, 20000000, 200000, tilesize, IsTiff, 0, ink);
 		//standardization.CreateStandardizationLUT(Current_Filename.c_str(), TemplateDIR, SaveDir, trainingSizeInput, tilesize, IsTiff, MinTrainSize, DefineTemplate, log_dir, ink);
 		
 		/*if (!DefineTemplate && write_std_WSI == 1 && standardizedImage.ImageIsMultiresolution)

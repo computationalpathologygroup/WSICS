@@ -61,6 +61,7 @@ class PixelClassificationHE
 			const ClassificationResults& classification_results,
 			const HematoxylinMaskInformation& hema_mask_info,
 			const EosinMaskInformation& eosin_mask_info,
+			SampleInformation& sample_information,
 			size_t& total_hema_count,
 			size_t& total_eosin_count,
 			size_t& total_background_count,

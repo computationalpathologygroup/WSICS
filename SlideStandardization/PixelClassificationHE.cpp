@@ -2,7 +2,6 @@
 
 #include <boost\filesystem.hpp>
 
-
 #include "HSD/BackgroundMask.h"
 #include "IO/Logging/LogHandler.h"
 #include "LevelReading.h"
@@ -44,14 +43,11 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 	size_t selected_images_count = 0;
 
 	// Tracks the created samples for each class.
-	size_t total_hema_count = 0;
-	size_t total_eosin_count = 0;
-	size_t total_background_count = 0;
+	size_t total_hema_count			= 0;
+	size_t total_eosin_count		= 0;
+	size_t total_background_count	= 0;
 
-	SampleInformation sample_information{ cv::Mat::zeros(training_size, 1, CV_32FC1),
-		cv::Mat::zeros(training_size, 1, CV_32FC1),
-		cv::Mat::zeros(training_size, 1, CV_32FC1),
-		cv::Mat::zeros(training_size, 1, CV_32FC1) };
+	SampleInformation sample_information{ cv::Mat::zeros(training_size, 1, CV_32FC1), cv::Mat::zeros(training_size, 1, CV_32FC1), cv::Mat::zeros(training_size, 1, CV_32FC1), cv::Mat::zeros(training_size, 1, CV_32FC1) };
 
 	std::vector<uint32_t> random_numbers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
 	for (size_t current_tile = 0; current_tile < tile_coordinates.size(); ++current_tile)
@@ -65,10 +61,9 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 
 		unsigned char* data(new unsigned char[tile_size * tile_size * 4]);
 
-		tile_reader.getRawRegion(
-		tile_coordinates[random_numbers[current_tile]].x * tile_reader.getLevelDownsample(0),
-		tile_coordinates[random_numbers[current_tile]].y * tile_reader.getLevelDownsample(0),
-		tile_size, tile_size, min_level, data);
+		tile_reader.getRawRegion(tile_coordinates[random_numbers[current_tile]].x * tile_reader.getLevelDownsample(0),
+								 tile_coordinates[random_numbers[current_tile]].y * tile_reader.getLevelDownsample(0),
+								 tile_size, tile_size, min_level, data);
 
 		cv::Mat raw_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
 		LevelReading::ArrayToMatrix(data, raw_image, false, is_tiff);
@@ -106,12 +101,12 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 				cv::imwrite(m_debug_dir_ + "/debug_data/classification_result/classified" + std::to_string(selected_images_count) + ".tif", classification_results.all_classes * 100);
 			}
 
-			sample_information = InsertTrainingData_(hsd_image, classification_results, he_masks.first, he_masks.second, total_hema_count, total_eosin_count, total_background_count, training_size);
+			InsertTrainingData_(hsd_image, classification_results, he_masks.first, he_masks.second, sample_information, total_hema_count, total_eosin_count, total_background_count, training_size);
 			++selected_images_count;
 
-			size_t hema_count_real = total_hema_count > training_size * 9 / 20 ? hema_count_real = training_size * 9 / 20 : total_hema_count;
-			size_t eosin_count_real = total_eosin_count > training_size * 9 / 20 ? eosin_count_real = training_size * 9 / 20 : total_eosin_count;
-			size_t background_count_real = total_background_count > training_size * 1 / 10 ? background_count_real = training_size * 1 / 10 : total_background_count;
+			size_t hema_count_real			= total_hema_count			> training_size * 9 / 20 ? hema_count_real			= training_size * 9 / 20 : total_hema_count;
+			size_t eosin_count_real			= total_eosin_count			> training_size * 9 / 20 ? eosin_count_real			= training_size * 9 / 20 : total_eosin_count;
+			size_t background_count_real	= total_background_count	> training_size * 1 / 10 ? background_count_real	= training_size * 1 / 10 : total_background_count;
 
 			logging_instance->QueueCommandLineLogging(
 				std::to_string(hema_count_real + eosin_count_real + background_count_real) +
@@ -143,7 +138,7 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 			logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
 			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
-			sample_information = std::move(PatchTestData_(non_zero_class_pixels, sample_information));
+			sample_information = PatchTestData_(non_zero_class_pixels, sample_information);
 		}
 	}
 
@@ -242,6 +237,7 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 	const ClassificationResults& classification_results,
 	const HematoxylinMaskInformation& hema_mask_info,
 	const EosinMaskInformation& eosin_mask_info,
+	SampleInformation& sample_information,
 	size_t& total_hema_count,
 	size_t& total_eosin_count,
 	size_t& total_background_count,
@@ -295,43 +291,43 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 		}
 	}
 
-	SampleInformation sample_information;
+	auto insert_sample_information = [](size_t class_pixel, size_t training_pixel, char class_id, SampleInformation& sample_information, cv::Mat& class_matrix)
+	{
+		sample_information.training_data_c_x.at<float>(training_pixel, 0)		= class_matrix.at<float>(class_pixel, 0);
+		sample_information.training_data_c_y.at<float>(training_pixel, 0)		= class_matrix.at<float>(class_pixel, 1);
+		sample_information.training_data_density.at<float>(training_pixel, 0)	= class_matrix.at<float>(class_pixel, 2);
+		sample_information.class_data.at<float>(training_pixel, 0)				= class_id;
+	};
 
 	for (size_t hema_pixel = 0; hema_pixel < classification_results.hema_pixels / 2; ++hema_pixel)
 	{
-		if (hema_pixel + total_hema_count < training_size * 9 / 20)
+		size_t training_pixel = hema_pixel + total_hema_count;
+		if (training_pixel < training_size * 9 / 20)
 		{
-			sample_information.training_data_c_x.at<float>(hema_pixel + total_hema_count, 0) = train_data_hema.at<float>(hema_random_numbers[hema_pixel], 0);
-			sample_information.training_data_c_y.at<float>(hema_pixel + total_hema_count, 0) = train_data_hema.at<float>(hema_random_numbers[hema_pixel], 1);
-			sample_information.training_data_density.at<float>(hema_pixel + total_hema_count, 0) = train_data_hema.at<float>(hema_random_numbers[hema_pixel], 2);
-			sample_information.class_data.at<float>(hema_pixel + total_hema_count, 0) = 1;
+			insert_sample_information(hema_random_numbers[hema_pixel], training_pixel, 1, sample_information, train_data_hema);
 		}
 	}
 	for (size_t eosin_pixel = 0; eosin_pixel < classification_results.eosin_pixels / 2; ++eosin_pixel)
 	{
-		if (eosin_pixel + total_eosin_count + training_size * 9 / 20 < training_size * 18 / 20)
+		size_t training_pixel = eosin_pixel + total_eosin_count + training_size * 9 / 20;
+		if (training_pixel < training_size * 18 / 20)
 		{
-			sample_information.training_data_c_x.at<float>(eosin_pixel + total_eosin_count + training_size * 9 / 20, 0) = train_data_eosin.at<float>(eosin_random_numbers[eosin_pixel], 0);
-			sample_information.training_data_c_y.at<float>(eosin_pixel + total_eosin_count + training_size * 9 / 20, 0) = train_data_eosin.at<float>(eosin_random_numbers[eosin_pixel], 1);
-			sample_information.training_data_density.at<float>(eosin_pixel + total_eosin_count + training_size * 9 / 20, 0) = train_data_eosin.at<float>(eosin_random_numbers[eosin_pixel], 2);
-			sample_information.class_data.at<float>(eosin_pixel + total_eosin_count + training_size * 9 / 20, 0) = 2;
+			insert_sample_information(eosin_random_numbers[eosin_pixel], training_pixel, 2, sample_information, train_data_eosin);
 		}
 	}
 	for (size_t background_pixel = 0; background_pixel < classification_results.background_pixels / 2; ++background_pixel)
 	{
-		if (background_pixel + total_background_count + training_size * 18 / 20 < training_size)
+		size_t training_pixel = background_pixel + total_background_count + training_size * 18 / 20;
+		if (training_pixel < training_size)
 		{
-			sample_information.training_data_c_x.at<float>(background_pixel + total_background_count + training_size * 18 / 20, 0) = train_data_background.at<float>(background_random_numbers[background_pixel], 0);
-			sample_information.training_data_c_y.at<float>(background_pixel + total_background_count + training_size * 18 / 20, 0) = train_data_background.at<float>(background_random_numbers[background_pixel], 1);
-			sample_information.training_data_density.at<float>(background_pixel + total_background_count + training_size * 18 / 20, 0) = train_data_background.at<float>(background_random_numbers[background_pixel], 2);
-			sample_information.class_data.at<float>(background_pixel + total_background_count + training_size * 18 / 20, 0) = 3;
+			insert_sample_information(background_random_numbers[background_pixel], training_pixel, 3, sample_information, train_data_background);
 		}
 	}
 
 	// Adds the local counts to the total count.
-	total_hema_count += local_hema_count / 2;
-	total_eosin_count += local_eosin_count / 2;
-	total_background_count += local_background_count / 2;
+	total_hema_count		+= local_hema_count / 2;
+	total_eosin_count		+= local_eosin_count / 2;
+	total_background_count	+= local_background_count / 2;
 
 	return sample_information;
 }
@@ -348,10 +344,10 @@ SampleInformation PixelClassificationHE::PatchTestData_(const size_t non_zero_co
 	{
 		if (current_sample_information.class_data.at<float>(count, 0) != 0)
 		{
-			new_sample_information.training_data_c_x.at<float>(added_samples_count, 0) = current_sample_information.training_data_c_x.at<float>(count, 0);
-			new_sample_information.training_data_c_y.at<float>(added_samples_count, 0) = current_sample_information.training_data_c_y.at<float>(count, 0);
-			new_sample_information.training_data_density.at<float>(added_samples_count, 0) = current_sample_information.training_data_density.at<float>(count, 0);
-			new_sample_information.class_data.at<float>(added_samples_count, 0) = current_sample_information.class_data.at<float>(count, 0);
+			new_sample_information.training_data_c_x.at<float>(added_samples_count, 0)		= current_sample_information.training_data_c_x.at<float>(count, 0);
+			new_sample_information.training_data_c_y.at<float>(added_samples_count, 0)		= current_sample_information.training_data_c_y.at<float>(count, 0);
+			new_sample_information.training_data_density.at<float>(added_samples_count, 0)	= current_sample_information.training_data_density.at<float>(count, 0);
+			new_sample_information.class_data.at<float>(added_samples_count, 0)				= current_sample_information.class_data.at<float>(count, 0);
 			++added_samples_count;
 		}
 	}

@@ -326,21 +326,13 @@ namespace HoughTransform
 			}
 			if (points.size() == static_cast<size_t>(this->parameters.tangent_search_radius * 2))
 			{
-
 				break;
 			}
 		}
 
 		if (points.size() >= 2)
 		{
-			try
-			{
-				return Line(*point.second, points);
-			}
-			catch (std::exception& exception)
-			{
-				return Line();
-			}
+			return Line(*point.second, points);
 		}
 		return Line();
 	}

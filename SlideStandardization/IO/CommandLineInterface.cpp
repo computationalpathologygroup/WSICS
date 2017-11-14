@@ -47,9 +47,7 @@ namespace IO
 			("log_level,l", boost::program_options::value<std::string>(), std::string("Sets the amount of log output generated. Options are: " + appended_log_levels).c_str());
 	}
 
-	void CommandLineInterface::ExecuteStandardFunctionality_(const int argc,
-																const boost::program_options::variables_map& variables,
-																const boost::program_options::options_description& options)
+	void CommandLineInterface::ExecuteStandardFunctionality_(const int argc, const boost::program_options::variables_map& variables, const boost::program_options::options_description& options)
 	{
 		if (argc == 2 || variables["help"].as<bool>())
 		{
@@ -61,7 +59,7 @@ namespace IO
 			std::string log_level(variables["log_level"].as<std::string>());
 			std::transform(log_level.begin(), log_level.end(), log_level.begin(), ::tolower);
 
-		//	SetLogLevel$(IO::Logging::GetLogLevelFromString(log_level));
+			SetLogLevel$(IO::Logging::GetLogLevelFromString(log_level));
 		}
 	}
 

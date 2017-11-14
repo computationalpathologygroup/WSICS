@@ -4,4 +4,8 @@
     <LocalDebuggerCommandArguments>-i "d:\WSIs\06011-2001A1L2STAMP II .ndpi" -d d:\WSIs</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LocalDebuggerCommandArguments>-i "d:\WSIs\06011-2001A1L2STAMP II .ndpi" -d d:\WSIs</LocalDebuggerCommandArguments>
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+  </PropertyGroup>
 </Project>

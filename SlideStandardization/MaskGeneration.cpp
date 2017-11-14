@@ -212,58 +212,6 @@ namespace HE_Staining::MaskGeneration
 				density_mean.push_back(cv::mean(hsd_image.density, all_ellipse_raw).val[0]);
 			}
 
-			/*cv::imwrite("C:/Users/Karel Gerbrands/Desktop/my_detections.bmp", hema_mask_info.full_mask);
-		//	cv::imwrite("C:/Users/Karel Gerbrands/Desktop/orig.bmp", (hsd_image.red_density * 255) + hema_mask_info.full_mask);
-			cv::imwrite("C:/Users/Karel Gerbrands/Desktop/info.bmp", hsd_image.red_density * 255);
-
-			cv::Mat centers(cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1));
-
-			for (const HoughTransform::Ellipse& ellipse : ellipses)
-			{
-				cv::Point up = ellipse.center;
-				cv::Point down = ellipse.center;
-				cv::Point left = ellipse.center;
-				cv::Point right = ellipse.center;
-
-				up.x += 5;
-				down.x -= 5;
-				left.y += 5;
-				right.y -= 5;
-
-				cv::drawContours(centers, std::vector<std::vector<cv::Point>>{ { up, down, right, left } }, 0, 255, CV_FILLED, 8);
-			}
-
-			cv::Mat red(cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1));
-			for (int i = 0; i < hsd_image.red_density.rows; ++i)
-			{
-				for (int j = 0; j < hsd_image.red_density.cols; ++j)
-				{
-					red.at<uchar>(i, j) = 255 * hsd_image.red_density.at<float>(i, j);
-				}
-			}
-
-			cv::Mat other = cv::imread("C:/Users/Karel Gerbrands/Desktop/detections.bmp");
-			std::vector<cv::Mat> others;
-			cv::split(other, others);
-
-			std::vector<cv::Mat> layers;
-			layers.push_back(red);
-			layers.push_back(red);
-			layers.push_back(centers);
-
-			cv::Mat merged;
-
-
-
-			cv::merge(layers, merged);
-			cv::imwrite("C:/Users/Karel Gerbrands/Desktop/centers.bmp", merged);
-
-			layers[0] += others[0];
-			layers[1] += others[0];
-
-			cv::merge(layers, merged);
-			cv::imwrite("C:/Users/Karel Gerbrands/Desktop/centers2.bmp", merged);*/
-
 			// Initializes the training mask and removes artifacts from it.
 			hema_mask_info.full_mask		/= 255;
 			hema_mask_info.training_mask	= hema_mask_info.full_mask.clone();
