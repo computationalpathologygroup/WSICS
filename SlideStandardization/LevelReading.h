@@ -34,24 +34,38 @@ namespace LevelReading
 	/// <param name="x_dimension">The size of the x dimension to search within.</param>
 	/// <param name="y_dimension">The size of the y dimension to search within,</param>
 	/// <param name="tile_size">The size of each tile.</param>
-	/// <param name="is_tiff">Whether or not the image is of the TIFF format.</param>
 	/// <param name="level">The level to select the coordinates for.</param>
-	/// <param name="background_threshold">The pixel value to consider background, and thus not include.</param>
 	/// <param name="skip_factor">Is added to each iterator of the coordinate search. Enabling reduction in the coherence of coordinate selection.</param>
+	/// <param name="background_threshold">The pixel value to consider background, and thus not include.</param>
+	/// <param name="is_tiff">Whether or not the image is of the TIFF format.</param>
 	/// <returns>A vector containing the selected tile coordinates.</returns>
-	std::vector<cv::Point> ReadLevelTiles(MultiResolutionImage& tiled_image, size_t x_dimension, size_t y_dimension, uint32_t tile_size, bool is_tiff, uint32_t level, float background_threshold, uint32_t skip_factor);
+	std::vector<cv::Point> ReadLevelTiles(MultiResolutionImage& tiled_image,
+		std::vector<cv::Point> current_tile_coordinates,
+		const uint32_t tile_size,
+		const uint32_t level,
+		const uint32_t skip_factor,
+		const int32_t scale_diff,
+		const float background_threshold,
+		const bool is_tiff);
 	/// <summary>
 	/// Acquires the tile coordinates based on the immediate next level.
 	/// </summary>
 	/// <param name="tiled_image">The tiled image to extract pixel information from.</param>
 	/// <param name="current_tile_coordinates">The tile coordinates for the current level.</param>
 	/// <param name="tile_size">The size of each tile.</param>
-	/// <param name="is_tiff">Whether or not the image if of the TIFF format.</param>
 	/// <param name="level">The level to select the coordinates for.</param>
-	/// <param name="background_threshold">he pixel value to consider background, and thus not include.</param>
 	/// <param name="skip_factor">Is added to each iterator of the coordinate search. Enabling reduction in the coherence of coordinate selection.</param>
 	/// <param name="scale_diff">The scale difference each level.</param>
+	/// <param name="background_threshold">he pixel value to consider background, and thus not include.</param>
+	/// <param name="is_tiff">Whether or not the image if of the TIFF format.</param>
 	/// <returns>A vector containing the selected tile coordinates.</returns>
-	std::vector<cv::Point> ReadLevelTiles(MultiResolutionImage& tiled_image, std::vector<cv::Point> current_tile_coordinates, uint32_t tile_size, bool is_tiff, uint32_t level, float background_threshold, uint32_t skip_factor, int32_t scale_diff);
+	std::vector<cv::Point> ReadLevelTiles(MultiResolutionImage& tiled_image,
+		const size_t x_dimension,
+		const size_t y_dimension,
+		const uint32_t tile_size,
+		const uint32_t level,
+		const uint32_t skip_factor,
+		const float background_threshold,
+		const bool is_tiff);
 };
 #endif //__LevelReading_H__

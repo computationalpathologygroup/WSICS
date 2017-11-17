@@ -37,16 +37,19 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 		/// Takes the commandline input and checks its validity, passing the results into the references.
 		/// </summary>
 		/// <param name="variables">The variables gathered from the command line.</param>
-		void AcquireAndSanitizeInput_(const boost::program_options::variables_map& variables,
-										std::vector<boost::filesystem::path>& files_to_process,
-										uint32_t& max_training_size,
-										uint32_t& min_training_size,
-										boost::filesystem::path& output_dir,
-										boost::filesystem::path& template_dir,
-										boost::filesystem::path& debug_dir,
-										bool& contains_ink,
-										bool& write_template,
-										bool& write_wsi);
+		void AcquireAndSanitizeInput_(
+			const boost::program_options::variables_map& variables,
+			std::vector<boost::filesystem::path>& files_to_process,
+			uint32_t& max_training_size,
+			uint32_t& min_training_size,
+			boost::filesystem::path& output_path,
+			boost::filesystem::path& template_input,
+			boost::filesystem::path& template_output,
+			boost::filesystem::path& debug_dir,
+			bool& contains_ink);
+
+		void CreateDirectories_(const boost::filesystem::path& output_path, const boost::filesystem::path& template_output, const boost::filesystem::path& debug_directory);
+
 		/// <summary>
 		/// Checks if the passed input parameter is a file or a directory, it then fills
 		/// the vector with all the files that are eligble for processing.

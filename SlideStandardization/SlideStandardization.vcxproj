@@ -75,7 +75,7 @@
     <ClInclude Include="MiscMatrixOperations.h" />
     <ClInclude Include="PixelClassificationHE.h" />
     <ClInclude Include="SlideStandardizationCLI.h" />
-    <ClInclude Include="Standardization.hpp" />
+    <ClInclude Include="Standardization.h" />
     <ClInclude Include="TransformCxCyDensity.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -2,7 +2,7 @@
 
 namespace CxCyWeights
 {
-	cv::Mat ApplyWeights(cv::Mat& c_xy_hema, cv::Mat& c_xy_eosin, cv::Mat& c_xy_background, Weights& weights)
+	cv::Mat ApplyWeights(const cv::Mat& c_xy_hema, const cv::Mat& c_xy_eosin, const cv::Mat& c_xy_background, const Weights& weights)
 	{
 		cv::Mat c_xy_normalized(c_xy_hema.rows, 2, CV_32FC1);
 
@@ -20,7 +20,7 @@ namespace CxCyWeights
 		return c_xy_normalized;
 	}
 
-	cv::Ptr<cv::ml::NormalBayesClassifier> CreateNaiveBayesClassifier(cv::Mat& c_x, cv::Mat& c_y, cv::Mat& density, cv::Mat& class_data)
+	cv::Ptr<cv::ml::NormalBayesClassifier> CreateNaiveBayesClassifier(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Mat& class_data)
 	{
 		cv::Mat samples(class_data.rows *  class_data.cols, 3, CV_32F);
 		cv::Mat responses(class_data.rows *  class_data.cols, 1, CV_32S);
@@ -52,7 +52,7 @@ namespace CxCyWeights
 		return normal_bayes_classifier;
 	}
 
-	Weights GenerateWeights(cv::Mat& c_x, cv::Mat& c_y, cv::Mat& density, cv::Ptr<cv::ml::NormalBayesClassifier>& classifier)
+	Weights GenerateWeights(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Ptr<cv::ml::NormalBayesClassifier>& classifier)
 	{
 		cv::Mat classifier_input(cv::Mat::zeros(c_x.rows, 3, CV_32F));
 		for (size_t row = 0; row < c_x.rows; ++row)

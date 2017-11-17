@@ -2,7 +2,7 @@
 
 #include <unordered_set>
 
-#include "Standardization.hpp"
+#include "Standardization.h"
 
 SlideStandardizationCLI::SlideStandardizationCLI(void)
 {
@@ -13,35 +13,52 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 	std::vector<boost::filesystem::path> files_to_process;
 	uint32_t max_training_size;
 	uint32_t min_training_size;
-	boost::filesystem::path output_dir;
-	boost::filesystem::path template_dir;
+	boost::filesystem::path output_path;
+	boost::filesystem::path template_input;
+	boost::filesystem::path template_output;
 	boost::filesystem::path debug_dir;
 	bool contains_ink;
-	bool write_template;
-	bool write_wsi;
 
-	AcquireAndSanitizeInput_(variables, files_to_process, max_training_size, min_training_size, output_dir, template_dir, debug_dir, contains_ink, write_template, write_wsi);
+	AcquireAndSanitizeInput_(variables, files_to_process, max_training_size, min_training_size, output_path, template_input, template_output, debug_dir, contains_ink);
 
-	boost::filesystem::create_directory(debug_dir);
-
-	Standardization slide_standardizer("log.txt");
-	for (const boost::filesystem::path& filepath : files_to_process)
+	bool succesfully_created_directories = true;
+	try
 	{
-		std::string extension = filepath.extension().string();
-		std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-		bool is_tiff = extension == ".tif";
+		CreateDirectories_(output_path, template_output, debug_dir);
+	}
+	catch (...)
+	{
+		IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+		succesfully_created_directories = false;
 
-		//boost::filesystem::path output_filepath(output_dir.append(filepath.stem().append("_normalized.tif")));
-
-
-
-
-		uint32_t tilesize = 512;
-		//slide_standardizer.CreateNormalizationLUT(filepath, template_path, output_path, output_path + "/debug/", max_training_size, min_training_size, tilesize, is_tiff, write_template, contains_ink);
-
-		if (write_wsi)
+		logging_instance->QueueCommandLineLogging("Unable to create directories, ending execution.", IO::Logging::SILENT);
+	}
+	
+	if (succesfully_created_directories && (!output_path.empty() || !template_output.empty()))
+	{
+		Standardization slide_standardizer(output_path.string() + "log.txt", template_input, debug_dir, min_training_size, max_training_size);
+		for (const boost::filesystem::path& filepath : files_to_process)
 		{
+			std::string extension(filepath.extension().string());
+			std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
+			bool is_tiff = extension == ".tif";
+
+			boost::filesystem::path output_file;
+			boost::filesystem::path template_output_file;
+
+			if (files_to_process.size() > 1)
+			{
+				output_file				= output_path.string() + ".tif";
+				template_output_file	= template_output.string() + ".csv";
+			}
+			else
+			{
+				output_file				= output_path.string() + filepath.stem().string() + "_normalized.tif";
+				template_output_file	= template_output.string() +filepath.stem().string() + ".csv";
+			}
+
+			slide_standardizer.Normalize(filepath, output_file, template_output_file, is_tiff, contains_ink);
 		}
 	}
 }
@@ -49,13 +66,12 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 void SlideStandardizationCLI::AddModuleOptions$(boost::program_options::options_description& options)
 {
 	options.add_options()
-		("input,i",			boost::program_options::value<std::string>(),										"Path to an image file or image directory.")
-		("template,t",		boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Only outputs the template.")
-		("output,o",		boost::program_options::value<std::string>(),										"Path to the output directory.")
+		("input,i",			boost::program_options::value<std::string>()->default_value(""),					"Path to an image file or image directory.")
+		("output,o",		boost::program_options::value<std::string>()->default_value(""),					"Path to the output file. If set, outputs the LUT and normalized WSI. Serves as a prefix if the input points towards a directory.")
 		("max_training",	boost::program_options::value<uint32_t>()->default_value(20000000),					"The maximum amount of pixels used for training the classifier.")
 		("min_training",	boost::program_options::value<uint32_t>()->default_value(200000),					"The minimum amount of pixels used for training the classifier.")
-		("write_wsi,w",		boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"If set, the normalized image will be written towards the filesystem.")
-		("template_dir",	boost::program_options::value<std::string>(),										"The directory where templates are stored and written to.")
+		("template_input",	boost::program_options::value<std::string>()->default_value(""),					"If set, applies an existing template for the normalization.")
+		("template_output", boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template.Serves as a prefix if the input points towards a directory.")
 		("ink,k",			boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Warning: Only use if ink is present on the slide. Reduces the chance of selecting a patch containing ink.");
 }
 
@@ -63,20 +79,20 @@ void SlideStandardizationCLI::Setup$(void)
 {
 }
 
-void SlideStandardizationCLI::AcquireAndSanitizeInput_(const boost::program_options::variables_map& variables,
+void SlideStandardizationCLI::AcquireAndSanitizeInput_(
+	const boost::program_options::variables_map& variables,
 	std::vector<boost::filesystem::path>& files_to_process,
 	uint32_t& max_training_size,
 	uint32_t& min_training_size,
-	boost::filesystem::path& output_dir,
-	boost::filesystem::path& template_dir,
+	boost::filesystem::path& output_path,
+	boost::filesystem::path& template_input,
+	boost::filesystem::path& template_output,
 	boost::filesystem::path& debug_dir,
-	bool& contains_ink,
-	bool& write_template,
-	bool& write_wsi)
+	bool& contains_ink)
 {
 	try
 	{
-		std::vector<boost::filesystem::path> files_to_process = GatherImageFilenames_(boost::filesystem::path(variables["input"].as<std::string>()));
+		files_to_process = GatherImageFilenames_(boost::filesystem::path(variables["input"].as<std::string>()));
 
 		if (files_to_process.empty())
 		{
@@ -93,7 +109,7 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(const boost::program_opti
 
 	if (max_training_size == 0)
 	{
-		throw std::runtime_error("The max training size requires a positive value.");
+		throw std::runtime_error("The max training size requires a value greater than 0.");
 	}
 	else if (min_training_size > max_training_size)
 	{
@@ -102,34 +118,101 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(const boost::program_opti
 		max_training_size = temp_min;
 	}
 
-	output_dir = boost::filesystem::path(variables["output"].as<std::string>());
-	template_dir = boost::filesystem::path(variables["template_dir"].as<std::string>());
+	output_path		= boost::filesystem::path(variables["output"].as<std::string>());
+	template_input	= boost::filesystem::path(variables["template_input"].as<std::string>());
+	template_output = boost::filesystem::path(variables["template_output"].as<std::string>());
 
-	if (!output_dir.empty() && !boost::filesystem::is_directory(output_dir))
+	if (!output_path.empty())
 	{
-		throw std::runtime_error("The output path points towards an invalid directory.");
+		if (output_path.has_extension() && files_to_process.size() > 1)
+		{
+			output_path = output_path.parent_path().append(output_path.stem().string());
+		}
+		else
+		{
+			output_path.append("/");
+		}
+
+		if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG)
+		{
+			if (output_path.has_filename())
+			{
+				debug_dir = output_path.parent_path().append("debug");
+			}
+			else
+			{
+				debug_dir = output_path.append("debug");
+			}
+		}
 	}
-	if (!template_dir.empty() && !boost::filesystem::is_directory(template_dir))
+	if (!template_input.empty() && !boost::filesystem::is_regular_file(template_input))
 	{
-		throw std::runtime_error("The template path points towards an invalid directory.");
+		throw std::runtime_error("The template input path points towards an invalid file.");
 	}
 
-	debug_dir = output_dir.append("debug");
+	if (!template_output.empty())
+	{
+		if (template_output.has_extension() && files_to_process.size() > 1)
+		{
+			template_output = template_output.parent_path().append(template_output.stem().string());
+		}
+		else
+		{
+			template_output.append("/");
+		}
+	}
 
-	contains_ink = variables["ink"].as<bool>();
-	write_template = variables["template"].as<bool>();
-	write_wsi = variables["write_wsi"].as<bool>();
+	contains_ink	= variables["ink"].as<bool>();
+}
+
+void SlideStandardizationCLI::CreateDirectories_(const boost::filesystem::path& output_path, const boost::filesystem::path& template_output, const boost::filesystem::path& debug_directory)
+{
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+
+	if (!output_path.empty())
+	{
+		if (output_path.has_extension())
+		{
+			boost::filesystem::create_directories(output_path.parent_path());
+			logging_instance->QueueCommandLineLogging("Created: " + output_path.parent_path().string(), IO::Logging::NORMAL);
+		}
+		else
+		{
+			boost::filesystem::create_directories(output_path);
+			logging_instance->QueueCommandLineLogging("Created: " + output_path.string(), IO::Logging::NORMAL);
+		}
+	}
+
+	if (!template_output.empty())
+	{
+		if (template_output.has_extension())
+		{
+			boost::filesystem::create_directories(template_output.parent_path());
+			logging_instance->QueueCommandLineLogging("Created: " + template_output.parent_path().string(), IO::Logging::NORMAL);
+		}
+		else
+		{
+			boost::filesystem::create_directories(template_output);
+			logging_instance->QueueCommandLineLogging("Created: " + template_output.string(), IO::Logging::NORMAL);
+		}
+	}
+
+	if (!debug_directory.empty())
+	{
+		boost::filesystem::create_directory(debug_directory);
+		logging_instance->QueueCommandLineLogging("Created: " + debug_directory.string(), IO::Logging::NORMAL);
+	}
 }
 
 std::vector<boost::filesystem::path> SlideStandardizationCLI::GatherImageFilenames_(const boost::filesystem::path input_path)
 {
 	// TODO: These should be pulled from the image loading DLL/SO.
-	std::unordered_set<std::string> files_to_accept;
-	files_to_accept.insert(".ndpi");
-	files_to_accept.insert(".tif");
-	files_to_accept.insert(".mrxs");
-	files_to_accept.insert(".svs");
-	files_to_accept.insert(".vsi");
+	std::unordered_set<std::string> filetypes_to_accept;
+	filetypes_to_accept.insert(".ndpi");
+	filetypes_to_accept.insert(".tif");
+	filetypes_to_accept.insert(".mrxs");
+	filetypes_to_accept.insert(".svs");
+	filetypes_to_accept.insert(".vsi");
 
 	std::vector<boost::filesystem::path> files;
 	if (boost::filesystem::is_directory(input_path))
@@ -140,7 +223,7 @@ std::vector<boost::filesystem::path> SlideStandardizationCLI::GatherImageFilenam
 			std::string extension = begin->path().extension().string();
 			std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-			if (files_to_accept.find(extension) != files_to_accept.end())
+			if (filetypes_to_accept.find(extension) != filetypes_to_accept.end())
 			{
 				files.push_back(begin->path());
 			}
@@ -151,7 +234,7 @@ std::vector<boost::filesystem::path> SlideStandardizationCLI::GatherImageFilenam
 		std::string extension = input_path.extension().string();
 		std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
 
-		if (files_to_accept.find(extension) != files_to_accept.end())
+		if (filetypes_to_accept.find(extension) != filetypes_to_accept.end())
 		{
 			files.push_back(input_path);
 		}

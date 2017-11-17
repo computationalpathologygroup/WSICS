@@ -21,7 +21,7 @@ namespace TransformCxCyDensity
 		return parameters;
 	}
 
-	cv::Mat CalculateScaleParameters(std::vector<cv::Point>& indices, cv::Mat& cx_cy_rotated_matrix)
+	cv::Mat CalculateScaleParameters(const std::vector<cv::Point>& indices, const cv::Mat& cx_cy_rotated_matrix)
 	{
 		cv::Mat cx_cy_values = cv::Mat::zeros(indices.size(), 2, CV_32FC1);
 
@@ -54,7 +54,7 @@ namespace TransformCxCyDensity
 		return cx_cy_params;
 	}
 
-	ClassAnnotatedCxCy ClassCxCyGenerator(cv::Mat& all_tissue_classes, cv::Mat& c_x_in, cv::Mat& c_y_in)
+	ClassAnnotatedCxCy ClassCxCyGenerator(const cv::Mat& all_tissue_classes, const cv::Mat& c_x_in, const cv::Mat& c_y_in)
 	{
 		cv::Mat all_tissue_classes_uchar;
 		all_tissue_classes.convertTo(all_tissue_classes_uchar, CV_8UC1);
@@ -111,7 +111,7 @@ namespace TransformCxCyDensity
 		return class_annotated_cx_cy;
 	}
 
-	float CovarianceCalculation(cv::Mat& samples_matrix)
+	float CovarianceCalculation(const cv::Mat& samples_matrix)
 	{
 		cv::Mat covariance_matrix;
 		cv::Mat mean_matrix;
@@ -137,7 +137,7 @@ namespace TransformCxCyDensity
 		return angle;
 	}
 
-	cv::Mat DensityNormalizationThreeScales(ClassDensityRanges& class_density_ranges, ClassDensityRanges& lut_density_ranges, cv::Mat& density_lut, CxCyWeights::Weights& weights)
+	cv::Mat DensityNormalizationThreeScales(const ClassDensityRanges& class_density_ranges, const ClassDensityRanges& lut_density_ranges, const cv::Mat& density_lut, const CxCyWeights::Weights& weights)
 	{
 		float std_ratio_hema = class_density_ranges.hema_density_standard_deviation[0] / lut_density_ranges.hema_density_standard_deviation[0];
 		float std_ratio_eosin = class_density_ranges.eosin_density_standard_deviation[0] / lut_density_ranges.eosin_density_standard_deviation[0];
@@ -171,7 +171,7 @@ namespace TransformCxCyDensity
 		return scaled_density_matrix;
 	}
 
-	ClassPixelIndices GetClassIndices(cv::Mat& all_tissue_classes)
+	ClassPixelIndices GetClassIndices(const cv::Mat& all_tissue_classes)
 	{
 		size_t full_size = all_tissue_classes.rows * all_tissue_classes.cols;
 		cv::Mat hema_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
@@ -203,7 +203,7 @@ namespace TransformCxCyDensity
 		return class_pixel_indices;
 	}
 
-	std::pair<double, double> GetCxCyMedian(cv::Mat& cx_cy_matrix)
+	std::pair<double, double> GetCxCyMedian(const cv::Mat& cx_cy_matrix)
 	{
 		cv::Mat sorted_cx_cy;
 		cv::sortIdx(cx_cy_matrix, sorted_cx_cy, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
@@ -215,7 +215,7 @@ namespace TransformCxCyDensity
 		};
 	}
 
-	ClassDensityRanges GetDensityRanges(cv::Mat& all_tissue_classes, cv::Mat& Density, ClassPixelIndices& class_pixel_indices)
+	ClassDensityRanges GetDensityRanges(const cv::Mat& all_tissue_classes, const cv::Mat& Density, const ClassPixelIndices& class_pixel_indices)
 	{
 		cv::Mat hema_density(cv::Mat::zeros(class_pixel_indices.hema_indices.size(), 1, CV_32FC1));
 		cv::Mat eosin_density(cv::Mat::zeros(class_pixel_indices.eosin_indices.size(), 1, CV_32FC1));
@@ -244,12 +244,12 @@ namespace TransformCxCyDensity
 		return class_density_ranges;
 	}
 
-	std::pair<float, float> GetPercentile(float cx_cy_percentile, cv::Mat& cx_cy)
+	std::pair<float, float> GetPercentile(const float cx_cy_percentile, const cv::Mat& cx_cy)
 	{
 		return GetPercentile(cx_cy_percentile, cx_cy_percentile, cx_cy);
 	}
 
-	std::pair<float, float> GetPercentile(float cx_percentile, float cy_percentile, cv::Mat& cx_cy)
+	std::pair<float, float> GetPercentile(const float cx_percentile, const float cy_percentile, const cv::Mat& cx_cy)
 	{
 		cv::Mat sorted_cx_cy;
 		cx_cy.copyTo(sorted_cx_cy);
@@ -259,7 +259,7 @@ namespace TransformCxCyDensity
 									   cx_cy.at<float>(sorted_cx_cy.at<int>(sorted_cx_cy.rows / cy_percentile, 1), 1));
 	}
 
-	MatrixRotationParameters RotateCxCy(cv::Mat& cx_cy, cv::Mat& output_matrix, cv::Mat& class_cx_cy)
+	MatrixRotationParameters RotateCxCy(const cv::Mat& cx_cy, cv::Mat& output_matrix, const cv::Mat& class_cx_cy)
 	{
 		if (cx_cy.data != output_matrix.data)
 		{
@@ -283,7 +283,7 @@ namespace TransformCxCyDensity
 		return { angle,	class_median_cx_cy.first, class_median_cx_cy.second };
 	}
 
-	MatrixRotationParameters RotateCxCy(cv::Mat& cx_cy, cv::Mat& output_matrix, float cx_median, float cy_median, float angle)
+	MatrixRotationParameters RotateCxCy(const cv::Mat& cx_cy, cv::Mat& output_matrix, const float cx_median, const float cy_median, const float angle)
 	{
 		if (cx_cy.data != output_matrix.data)
 		{
@@ -305,7 +305,7 @@ namespace TransformCxCyDensity
 		return { angle,	cx_median, cy_median };
 	}
 
-	void RotateCxCyBack(cv::Mat& cx_cy_input, cv::Mat& output_matrix, float angle)
+	void RotateCxCyBack(const cv::Mat& cx_cy_input, cv::Mat& output_matrix, const float angle)
 	{
 		cv::Mat rotation_matrix(2, 2, CV_32FC1);
 		rotation_matrix = (cv::Mat_<float>(2, 2) << cos(angle), sin(angle), -sin(angle), cos(angle));
@@ -322,7 +322,7 @@ namespace TransformCxCyDensity
 		}
 	}
 
-	void ScaleCxCy(const cv::Mat& rotated_input, cv::Mat& scaled_output, cv::Mat class_scale_params, cv::Mat& lut_scale_params)
+	void ScaleCxCy(const cv::Mat& rotated_input, cv::Mat& scaled_output, const cv::Mat& class_scale_params, const cv::Mat& lut_scale_params)
 	{
 		ASAP::MiscMatrixOperations::PrepareOutputForInput(rotated_input, scaled_output);
 
@@ -346,7 +346,7 @@ namespace TransformCxCyDensity
 		}
 	}
 
-	void ScaleCxCyLUT(const cv::Mat& rotated_input, cv::Mat& scaled_output, cv::Mat class_scale_params, cv::Mat& lut_scale_params)
+	void ScaleCxCyLUT(const cv::Mat& rotated_input, cv::Mat& scaled_output, const cv::Mat& class_scale_params, const cv::Mat& lut_scale_params)
 	{
 		ASAP::MiscMatrixOperations::PrepareOutputForInput(rotated_input, scaled_output);
 
@@ -366,11 +366,11 @@ namespace TransformCxCyDensity
 		}
 	}
 
-	void TranslateCxCyBack(cv::Mat& cx_cy_rotated_back_class, cv::Mat& output_matrix, std::vector<cv::Point>& indices, float transform_x_median, float transform_y_median)
+	void TranslateCxCyBack(const cv::Mat& cx_cy_rotated_back_class, cv::Mat& output_matrix, const std::vector<cv::Point>& indices, const float transform_x_median, const float transform_y_median)
 	{
 		cv::Mat class_specific_cx_cy(cv::Mat::zeros(indices.size(), 2, CV_32FC1));
 		size_t counter = 0;
-		for (cv::Point& index : indices)
+		for (const cv::Point& index : indices)
 		{
 			class_specific_cx_cy.at<float>(counter, 0) = cx_cy_rotated_back_class.at<float>(index.y, 0);
 			class_specific_cx_cy.at<float>(counter, 1) = cx_cy_rotated_back_class.at<float>(index.y, 1);

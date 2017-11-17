@@ -1,4 +1,6 @@
-#include "Standardization.hpp"
+#include "Standardization.h"
+
+#include <boost/filesystem.hpp>
 
 #define _USE_MATH_DEFINES
 
@@ -25,26 +27,29 @@
 #include <windows.h>
 #include <strsafe.h>
 
-Standardization::Standardization(std::string log_directory) : m_log_file_id_(0)
+Standardization::Standardization(
+	std::string log_directory,
+	const boost::filesystem::path& template_file,
+	const boost::filesystem::path& debug_directory,
+	const uint32_t min_training_size,
+	const uint32_t max_training_size)
+	: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(debug_directory), m_min_training_size_(min_training_size),
+		m_max_training_size_(max_training_size), m_consider_ink_(false), m_is_multiresolution_image_(false), m_is_tiff_(false)
 {
 	this->SetLogDirectory(log_directory);
 }
 
-void Standardization::CreateNormalizationLUT(
-	std::string& input_file,
-	std::string& parameters_location,
-	std::string& output_directory,
-	std::string& debug_directory,
-	size_t training_size,
-	size_t min_training_size,
-	uint32_t tile_size,
-	bool is_tiff,
-	bool only_generate_parameters,
-	bool consider_ink)
+
+void Standardization::Normalize(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const boost::filesystem::path& template_output, const bool consider_ink, const bool is_tiff)
 {
+	//===========================================================================
+	//	Sets several execution variables.
+	//===========================================================================
+
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	bool RunHough = true;
+	m_consider_ink_ = consider_ink;
+	m_is_tiff_		= is_tiff;
 
 	//===========================================================================
 	//	Reading the image:: Identifying the tiles containing tissue using multiple magnifications
@@ -52,117 +57,106 @@ void Standardization::CreateNormalizationLUT(
 	logging_instance->QueueFileLogging("=============================\n\nReading image...", m_log_file_id_, IO::Logging::NORMAL);
 
 	MultiResolutionImageReader reader;
-	MultiResolutionImage* tiled_image = reader.open(input_file);
+	MultiResolutionImage* tiled_image = reader.open(input_file.string());
 
 	if (!tiled_image)
 	{
-		throw std::invalid_argument("Unable to open file: " + input_file);
+		throw std::invalid_argument("Unable to open file: " + input_file.string());
 	}
 
 	// Acquires the type of image, the spacing and the minimum level to select tiles from.
-	bool is_multiresolution_image;
 	std::vector<double> spacing;
-	int min_level = 0;
-	
+	uint32_t min_level = 0;
 
 	// Scopes the pair so that it can be moved into more clearly defined variables.
 	{
 		std::pair<bool, std::vector<double>> resolution_and_spacing(GetResolutionTypeAndSpacing(*tiled_image));
 
-		is_multiresolution_image = resolution_and_spacing.first;
+		m_is_multiresolution_image_ = resolution_and_spacing.first;
 		spacing.swap(resolution_and_spacing.second);
-
-		if (spacing[0] < 0.2)
-		{
-			spacing[0] *= 2;
-			min_level = 1;
-		}
-
-		logging_instance->QueueFileLogging("Pixel spacing = " + std::to_string(spacing[0]), m_log_file_id_, IO::Logging::NORMAL);
 	}
 
+	if (spacing[0] < 0.2)
+	{
+		spacing[0]	*= 2;
+		min_level	= 1;
+	}
+
+	logging_instance->QueueFileLogging("Pixel spacing = " + std::to_string(spacing[0]), m_log_file_id_, IO::Logging::NORMAL);
+
+	uint32_t tile_size = 512;
 	cv::Mat static_image;
 	std::vector<cv::Point> tile_coordinates;
-	if (is_multiresolution_image)
+	if (m_is_multiresolution_image_)
 	{
-		tile_coordinates.swap(GetTileCoordinates_(*tiled_image, spacing, tile_size, is_tiff, min_level));
+		tile_coordinates.swap(GetTileCoordinates_(*tiled_image, spacing, tile_size, min_level));
 	}
 	else
 	{
 		logging_instance->QueueCommandLineLogging("Deconvolving patch image.", IO::Logging::NORMAL);
-		static_image = cv::imread(input_file, CV_LOAD_IMAGE_COLOR);
+		static_image = cv::imread(input_file.string(), CV_LOAD_IMAGE_COLOR);
 		tile_coordinates.push_back({ 0, 0 });
 	}
 
-//===========================================================================
-//	Performing Pixel Classification
-//===========================================================================
-	std::string log_text = "Number of available tiles for stain sampling: " + std::to_string(tile_coordinates.size());
-	logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
-	logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
+	TrainingSampleInformation training_samples(CollectTrainingSamples_(input_file, tile_size, *tiled_image, static_image, tile_coordinates, spacing, min_level));
 
-	PixelClassificationHE pixel_classification_he(consider_ink, m_log_file_id_, debug_directory);
-	float hema_percentile	= 0.1; // The higher the value, the more conservative the classifier becomes in picking up blue, so standardization will also be pinkish - breast 0.1
-	float eosin_percentile	= 0.2;
-	tile_size				= 2048;
-	
-	SampleInformation sample_training_info(pixel_classification_he.GenerateCxCyDSamples(*tiled_image,
-																						static_image,
-																						tile_coordinates,
-																						tile_size,
-																						training_size,
-																						min_training_size,
-																						min_level,
-																						hema_percentile,
-																						eosin_percentile,
-																						is_tiff,
-																						spacing));
-	
 	logging_instance->QueueCommandLineLogging("sampling done!", IO::Logging::NORMAL);
 	logging_instance->QueueFileLogging("=============================\nSampling done!", m_log_file_id_, IO::Logging::NORMAL);
 
-//===========================================================================
-//	Generating LUT Raw Matrix
-//===========================================================================
+	//===========================================================================
+	//	Generating LUT Raw Matrix
+	//===========================================================================
 	logging_instance->QueueFileLogging("Defining LUT\nLUT HSD", m_log_file_id_, IO::Logging::NORMAL);
 	HSD::HSD_Model hsd_lut(CalculateLutRawMat_(), HSD::CHANNEL_SHIFT);
 
 	logging_instance->QueueFileLogging("LUT BG calculation", m_log_file_id_, IO::Logging::NORMAL);
 	cv::Mat background_mask(HSD::BackgroundMask::CreateBackgroundMask(hsd_lut, 0.24, 0.22));
 
-//===========================================================================
-//	Normalizes the LUT.
-//===========================================================================
-	cv::Mat normalized_lut(CreateNormalizedImage_(hsd_lut, sample_training_info, training_size, parameters_location, only_generate_parameters));
+	//===========================================================================
+	//	Normalizes the LUT.
+	//===========================================================================
+	cv::Mat normalized_lut(CreateNormalizedImage_(hsd_lut, training_samples, output_file, template_output));
 
-//===========================================================================
-//	Writing LUT image to disk
-//===========================================================================
-	std::string current_filepath = output_directory;
-	std::string output_filepath = current_filepath.substr(0, current_filepath.rfind("_Normalized.tif")) + "_LUT.tif";
-
-	logging_instance->QueueFileLogging("Writing LUT to: " + output_filepath + " (this might take some time).", m_log_file_id_, IO::Logging::NORMAL);
-	logging_instance->QueueCommandLineLogging("Writing LUT to: " + output_filepath + " (this might take some time).", IO::Logging::NORMAL);
-
-	cv::imwrite(output_filepath, normalized_lut);
-
-//===========================================================================
-//	Write sample images to Harddisk For testing
-//===========================================================================
-	// Don't remove! usable for looking at samples of standardization
-	if (!only_generate_parameters)
+	//===========================================================================
+	//	Writing LUT image to disk
+	//===========================================================================
+	if (!output_file.empty())
 	{
-		if (is_multiresolution_image)
+		std::string current_filepath = output_file.parent_path().string() + input_file.stem().string();
+		std::string lut_output = current_filepath.substr(0, current_filepath.rfind("_normalized")) + "_lut.tif";
+
+		logging_instance->QueueFileLogging("Writing LUT to: " + lut_output + " (this might take some time).", m_log_file_id_, IO::Logging::NORMAL);
+		logging_instance->QueueCommandLineLogging("Writing LUT to: " + lut_output + " (this might take some time).", IO::Logging::NORMAL);
+
+		cv::imwrite(lut_output, normalized_lut);
+
+		//===========================================================================
+		//	Write sample images to Harddisk For testing
+		//===========================================================================
+		// Don't remove! usable for looking at samples of standardization
+		if (!m_debug_directory_.empty() && logging_instance->GetOutputLevel() == IO::Logging::DEBUG)
 		{
-			logging_instance->QueueFileLogging("Writing sample standardized images to: " + debug_directory, m_log_file_id_, IO::Logging::NORMAL);
-			std::string filename(core::extractBaseName(input_file));
-			WriteSampleNormalizedImagesForTesting_(normalized_lut, *tiled_image, tile_size, tile_coordinates, is_tiff, debug_directory, filename);
-		}		
-		else
-		{
-			logging_instance->QueueFileLogging("Writing standardized image to: " + debug_directory, m_log_file_id_, IO::Logging::NORMAL);
-			WriteSampleNormalizedImagesForTesting_(normalized_lut, static_image, tile_size, is_tiff, debug_directory);
+			logging_instance->QueueFileLogging("Writing sample standardized images to: " + m_debug_directory_.string(), m_log_file_id_, IO::Logging::NORMAL);
+
+			boost::filesystem::path current_directory(m_debug_directory_.string() + "debug_data/" + input_file.stem().string() + "_norm");
+			boost::filesystem::create_directory(current_directory);
+
+			if (m_is_multiresolution_image_)
+			{	
+				WriteSampleNormalizedImagesForTesting_(current_directory, normalized_lut, *tiled_image, tile_coordinates, tile_size);
+			}
+			else
+			{
+				current_directory.append(input_file.stem().string() + ".tif");
+				WriteSampleNormalizedImagesForTesting_(current_directory.string(), normalized_lut, static_image, tile_size);
+			}
 		}
+
+		logging_instance->QueueFileLogging("Writing the standardized WSI in progress...", m_log_file_id_, IO::Logging::NORMAL);
+		logging_instance->QueueCommandLineLogging("Writing the standardized WSI in progress...", IO::Logging::NORMAL);
+		WriteNormalizedWSI_(input_file, output_file, normalized_lut, tile_size);
+		logging_instance->QueueFileLogging("Finished writing the image.", m_log_file_id_, IO::Logging::NORMAL);
+		logging_instance->QueueCommandLineLogging("Finished writing the image.", IO::Logging::NORMAL);
 	}
 }
 
@@ -179,90 +173,25 @@ void Standardization::SetLogDirectory(std::string& filepath)
 	m_log_file_id_ = logging_instance->OpenFile(filepath, false);
 }
 
-SampleInformation Standardization::DownsampleforNbClassifier_(SampleInformation& sample_info, uint32_t downsample, size_t training_size)
+TrainingSampleInformation Standardization::DownsampleforNbClassifier_(const TrainingSampleInformation& training_samples, const uint32_t downsample)
 {
-	SampleInformation sample_info_downsampled
+	TrainingSampleInformation sample_info_downsampled
 	{
-		cv::Mat::zeros(training_size / downsample, 1, CV_32FC1),
-		cv::Mat::zeros(training_size / downsample, 1, CV_32FC1),
-		cv::Mat::zeros(training_size / downsample, 1, CV_32FC1),
-		cv::Mat::zeros(training_size / downsample, 1, CV_32FC1)
+		cv::Mat::zeros(m_max_training_size_ / downsample, 1, CV_32FC1),
+		cv::Mat::zeros(m_max_training_size_ / downsample, 1, CV_32FC1),
+		cv::Mat::zeros(m_max_training_size_ / downsample, 1, CV_32FC1),
+		cv::Mat::zeros(m_max_training_size_ / downsample, 1, CV_32FC1)
 	};
 
-	for (size_t downsampled_pixel = 0; downsampled_pixel < sample_info.class_data.rows / downsample; ++downsampled_pixel)
+	for (size_t downsampled_pixel = 0; downsampled_pixel < training_samples.class_data.rows / downsample; ++downsampled_pixel)
 	{
-		sample_info_downsampled.training_data_c_x.at<float>(downsampled_pixel, 0)		= sample_info.training_data_c_x.at<float>(downsampled_pixel * downsample, 0);
-		sample_info_downsampled.training_data_c_y.at<float>(downsampled_pixel, 0)		= sample_info.training_data_c_y.at<float>(downsampled_pixel * downsample, 0);
-		sample_info_downsampled.training_data_density.at<float>(downsampled_pixel, 0)	= sample_info.training_data_density.at<float>(downsampled_pixel * downsample, 0);
-		sample_info_downsampled.class_data.at<float>(downsampled_pixel, 0)				= sample_info.class_data.at<float>(downsampled_pixel * downsample, 0);
+		sample_info_downsampled.training_data_c_x.at<float>(downsampled_pixel, 0)		= training_samples.training_data_c_x.at<float>(downsampled_pixel * downsample, 0);
+		sample_info_downsampled.training_data_c_y.at<float>(downsampled_pixel, 0)		= training_samples.training_data_c_y.at<float>(downsampled_pixel * downsample, 0);
+		sample_info_downsampled.training_data_density.at<float>(downsampled_pixel, 0)	= training_samples.training_data_density.at<float>(downsampled_pixel * downsample, 0);
+		sample_info_downsampled.class_data.at<float>(downsampled_pixel, 0)				= training_samples.class_data.at<float>(downsampled_pixel * downsample, 0);
 	}
 
 	return sample_info_downsampled;
-}
-
-void Standardization::WriteNormalizedWSI(std::string& slide_directory, cv::Mat& normalized_lut, uint32_t tile_size, bool is_tiff, std::string& output_filepath)
-{
-	std::vector<cv::Mat> lut_bgr(3);
-	cv::split(normalized_lut, lut_bgr);
-
-	cv::Mat lut_blue	= lut_bgr[0];
-	cv::Mat lut_green	= lut_bgr[1]; 
-	cv::Mat lut_red		= lut_bgr[2]; 
-
-	lut_blue.convertTo(lut_blue, CV_8UC1);
-	lut_green.convertTo(lut_green, CV_8UC1);
-	lut_red.convertTo(lut_red, CV_8UC1);
-
-	MultiResolutionImageWriter image_writer;
-	image_writer.openFile(output_filepath);
-	image_writer.setTileSize(tile_size);
-	image_writer.setCompression(pathology::LZW);
-	image_writer.setDataType(pathology::UChar);
-	image_writer.setColorType(pathology::RGB);
-	image_writer.writeImageInformation(tile_size * 4, tile_size * 4);
-
-	MultiResolutionImageReader reader;
-	MultiResolutionImage* tiled_object	= reader.open(slide_directory);
-	std::vector<size_t> dimensions		= tiled_object->getLevelDimensions(0);
-	image_writer.writeImageInformation(dimensions[0], dimensions[1]);
-	
-	uint64_t y_amount_of_tiles		= std::ceil((float)dimensions[0] / (float)tile_size);
-	uint64_t x_amount_of_tiles		= std::ceil((float)dimensions[1] / (float)tile_size);
-	uint64_t total_amount_of_tiles	= x_amount_of_tiles * y_amount_of_tiles;
-
-	std::vector<uint64_t> x_values, y_values;
-
-	for (uint64_t x_tile = 0; x_tile < x_amount_of_tiles; ++x_tile)
-	{
-		for (uint64_t y_tile = 0; y_tile < y_amount_of_tiles; ++y_tile)
-		{
-			y_values.push_back(tile_size*y_tile);
-			x_values.push_back(tile_size*x_tile);
-		}
-	}
-
-	for (uint64_t tile = 0; tile < total_amount_of_tiles; ++tile)
-	{   
-		std::vector<unsigned char> data(tile_size * tile_size * 4);
-		unsigned char* data_ptr(&data[0]);
-		tiled_object->getRawRegion(y_values[tile] * tiled_object->getLevelDownsample(0), x_values[tile] * tiled_object->getLevelDownsample(0), tile_size, tile_size, 0, data_ptr);
-		
-		std::vector<unsigned char> modified_data(tile_size * tile_size * 3);
-		unsigned char* modified_data_ptr(&data[0]);
-
-		size_t data_index			= 0;
-		size_t modified_data_index	= 0;
-		for (size_t pixel = 0; pixel < tile_size * tile_size; ++pixel)
-		{
-			size_t index = 256 * 256 * data[data_index] + 256 * data[data_index + 1] + data[data_index + 2];
-			modified_data[++modified_data_index] = lut_red.at<unsigned char>(index, 0);
-			modified_data[++modified_data_index] = lut_green.at<unsigned char>(index, 0);
-			modified_data[++modified_data_index] = lut_blue.at<unsigned char>(index, 0);
-			data_index = data_index + 3;
-		}
-		image_writer.writeBaseImagePart((void*)modified_data_ptr);
-	}
-	image_writer.finishImage();
 }
 
 cv::Mat Standardization::CalculateLutRawMat_(void)
@@ -283,7 +212,53 @@ cv::Mat Standardization::CalculateLutRawMat_(void)
 	return raw_lut;
 }
 
-cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleInformation& sample_info, size_t training_size, std::string& parameters_filepath, bool only_generate_parameters)
+TrainingSampleInformation Standardization::CollectTrainingSamples_(
+	const boost::filesystem::path& input_file,
+	uint32_t tile_size,
+	MultiResolutionImage& tiled_image,
+	cv::Mat static_image,
+	const std::vector<cv::Point>& tile_coordinates,
+	const std::vector<double>& spacing,
+	const uint32_t min_level)
+{
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+
+	//===========================================================================
+	//	Performing Pixel Classification
+	//===========================================================================
+	std::string log_text = "Number of available tiles for stain sampling: " + std::to_string(tile_coordinates.size());
+	logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
+	logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
+
+	PixelClassificationHE pixel_classification_he(m_consider_ink_, m_log_file_id_, m_debug_directory_.string());
+	float hema_percentile = 0.1; // The higher the value, the more conservative the classifier becomes in picking up blue, so standardization will also be pinkish - breast 0.1
+	float eosin_percentile = 0.2;
+	tile_size = 2048;
+
+	uint32_t min_training_size = 0;
+	if (m_is_multiresolution_image_)
+	{
+		min_training_size = m_min_training_size_;
+	}
+
+	TrainingSampleInformation training_samples(pixel_classification_he.GenerateCxCyDSamples(
+		tiled_image,
+		static_image,
+		tile_coordinates,
+		spacing,
+		tile_size,
+		min_training_size,
+		m_max_training_size_,
+		min_level,
+		hema_percentile,
+		eosin_percentile,
+		m_is_multiresolution_image_,
+		m_is_tiff_));
+
+	return training_samples;
+}
+
+cv::Mat Standardization::CreateNormalizedImage_(const HSD::HSD_Model& hsd_lut, const TrainingSampleInformation& training_samples, const boost::filesystem::path& output_file, const boost::filesystem::path& template_output)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
@@ -293,7 +268,7 @@ cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleI
 	//===========================================================================
 	logging_instance->QueueFileLogging("Defining variables for transformation...", m_log_file_id_, IO::Logging::NORMAL);
 
-	ClassAnnotatedCxCy train_data(TransformCxCyDensity::ClassCxCyGenerator(sample_info.class_data, sample_info.training_data_c_x, sample_info.training_data_c_y));
+	ClassAnnotatedCxCy train_data(TransformCxCyDensity::ClassCxCyGenerator(training_samples.class_data, training_samples.training_data_c_x, training_samples.training_data_c_y));
 	
 	// Rotates the cx_cy matrice per class and stores the parameters used.
 	cv::Mat cx_cy_hema_rotated;
@@ -304,14 +279,14 @@ cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleI
 	MatrixRotationParameters eosin_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_eosin_rotated, train_data.eosin_cx_cy));
 	MatrixRotationParameters background_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_background_Rotated, train_data.background_cx_cy));
 
-	ClassPixelIndices class_pixel_indices(TransformCxCyDensity::GetClassIndices(sample_info.class_data));
+	ClassPixelIndices class_pixel_indices(TransformCxCyDensity::GetClassIndices(training_samples.class_data));
 
 	// Calculates the scale parameters per class.
 	cv::Mat hema_scale_parameters(TransformCxCyDensity::CalculateScaleParameters(class_pixel_indices.hema_indices, cx_cy_hema_rotated));
 	cv::Mat eosin_scale_parameters(TransformCxCyDensity::CalculateScaleParameters(class_pixel_indices.eosin_indices, cx_cy_eosin_rotated));
 	cv::Mat background_scale_parameters(TransformCxCyDensity::CalculateScaleParameters(class_pixel_indices.background_indices, cx_cy_background_Rotated));
 
-	ClassDensityRanges class_density_ranges(TransformCxCyDensity::GetDensityRanges(sample_info.class_data, sample_info.training_data_density, class_pixel_indices));
+	ClassDensityRanges class_density_ranges(TransformCxCyDensity::GetDensityRanges(training_samples.class_data, training_samples.training_data_density, class_pixel_indices));
 
 	logging_instance->QueueFileLogging("Finished computing tranformation parameters for the current image", m_log_file_id_, IO::Logging::NORMAL);
 	//===========================================================================
@@ -321,9 +296,10 @@ cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleI
 	TransformationParameters calculated_transform_parameters{ hema_rotation_info, eosin_rotation_info, background_rotation_info, hema_scale_parameters, eosin_scale_parameters, class_density_ranges };
 	TransformationParameters lut_transform_parameters(calculated_transform_parameters);
 
-	HandleParameterization(calculated_transform_parameters, lut_transform_parameters, parameters_filepath);
+	HandleParameterization_(calculated_transform_parameters, lut_transform_parameters, template_output);
 
-	if (only_generate_parameters)
+	// If no output directory is set, assume only template generation is required.
+	if (output_file.empty())
 	{
 		return cv::Mat();
 	}
@@ -333,22 +309,22 @@ cv::Mat Standardization::CreateNormalizedImage_(HSD::HSD_Model& hsd_lut, SampleI
 	//===========================================================================
 	// Downsample the number of samples for NB classifier
 	uint32_t downsample = 20;
-	if (training_size > 10000000 && training_size < 20000000)
+	if (m_max_training_size_ > 10000000 && m_max_training_size_ < 20000000)
 	{
 		downsample = 30;
 	}
-	else if (training_size >= 20000000 && training_size < 30000000)
+	else if (m_max_training_size_ >= 20000000 && m_max_training_size_ < 30000000)
 	{
 		downsample = 40;
 	}
-	else if (training_size >= 30000000)
+	else if (m_max_training_size_ >= 30000000)
 	{
 		downsample = 50;
 	}
 
 	logging_instance->QueueFileLogging("Down sampling the data for constructing NB classifier", m_log_file_id_, IO::Logging::NORMAL);
 
-	SampleInformation sample_info_downsampled(DownsampleforNbClassifier_(sample_info, downsample, training_size));
+	TrainingSampleInformation sample_info_downsampled(DownsampleforNbClassifier_(training_samples, downsample));
 
 	logging_instance->QueueFileLogging("Generating weights with NB classifier", m_log_file_id_, IO::Logging::NORMAL);
 	logging_instance->QueueCommandLineLogging("Generating the weights, Setting dataset of size " + std::to_string(sample_info_downsampled.class_data.rows * sample_info_downsampled.class_data.cols),
@@ -425,7 +401,7 @@ std::pair<bool, std::vector<double>> Standardization::GetResolutionTypeAndSpacin
 	return resolution_and_spacing;
 }
 
-std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage& tiled_image, std::vector<double>& spacing, uint32_t tile_size, bool is_tiff, int min_level)
+std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage& tiled_image, const std::vector<double>& spacing, const uint32_t tile_size, const uint32_t min_level)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
@@ -440,7 +416,7 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 	logging_instance->QueueFileLogging("Detecting tissue", m_log_file_id_, IO::Logging::NORMAL);
 
 	// Attempts to acquire the tile coordinates for the lowest level / highest magnification.
-	std::vector<size_t> dimensions = tiled_image.getLevelDimensions(number_of_levels - 1);
+	std::vector<size_t> dimensions		= tiled_image.getLevelDimensions(number_of_levels - 1);
 	uint32_t skip_factor				= 1;
 	float background_tissue_threshold	= 0.9;
 	uint32_t level_scale_difference		= 1;
@@ -454,7 +430,7 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 		level_scale_difference = std::pow(std::round(next_level_dimensions[0] / next_level_dimensions[0]), 2);
 
 		// Loops through each level, acquiring coordinates for each and reusing them to calculate the set of coordinates for a higher magnification.
-		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, is_tiff, number_of_levels - 1, background_tissue_threshold, skip_factor));
+		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, number_of_levels - 1, skip_factor, background_tissue_threshold, m_is_tiff_));
 		for (char level_number = number_of_levels - 2; level_number >= 0; --level_number)
 		{
 			if (level_number != 0)
@@ -471,26 +447,26 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
 			background_tissue_threshold -= 0.1;
-			tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, tile_coordinates, tile_size, is_tiff, level_number, background_tissue_threshold, skip_factor, level_scale_difference));
+			tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, tile_coordinates, tile_size, level_number, skip_factor, level_scale_difference, background_tissue_threshold, m_is_tiff_));
 		}
 	}
 	else
 	{
-		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, is_tiff, number_of_levels - 1, 0.9, skip_factor));
+		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, m_is_tiff_, number_of_levels - 1, 0.9, skip_factor));
 	}
 
 	return tile_coordinates;
 }
 
-void Standardization::HandleParameterization(TransformationParameters& calc_params, TransformationParameters& lut_params, std::string& parameters_filepath)
+void Standardization::HandleParameterization_(const TransformationParameters& calc_params, TransformationParameters& lut_params, const boost::filesystem::path& template_output)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	if (!parameters_filepath.empty())
+	if (!m_template_file_.empty())
 	{
 		logging_instance->QueueFileLogging("Loading Template parameters...", m_log_file_id_, IO::Logging::NORMAL);
 		std::ifstream csv_input_stream;
-		csv_input_stream.open(parameters_filepath);
+		csv_input_stream.open(m_template_file_.string());
 		if (!csv_input_stream)
 		{
 			logging_instance->QueueCommandLineLogging("Could not read CSV file!", IO::Logging::NORMAL);
@@ -504,18 +480,18 @@ void Standardization::HandleParameterization(TransformationParameters& calc_para
 			csv_input_stream.close();
 		}
 	}
-	else
+	else if (!template_output.empty())
 	{
 		logging_instance->QueueFileLogging("Saving Template parameters...", m_log_file_id_, IO::Logging::NORMAL);
 		std::ofstream csv_output_stream;
-		csv_output_stream.open(parameters_filepath);
+		csv_output_stream.open(template_output.string());
 		if (csv_output_stream)
 		{
 			PrintParameters_(csv_output_stream, calc_params, true);
 			csv_output_stream.close();
 
 			logging_instance->QueueCommandLineLogging("Done", IO::Logging::NORMAL);
-			logging_instance->QueueFileLogging("Template Parameters written to: " + parameters_filepath, m_log_file_id_, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging("Template Parameters written to: " + template_output.string(), m_log_file_id_, IO::Logging::NORMAL);
 		}
 		else
 		{
@@ -526,11 +502,11 @@ void Standardization::HandleParameterization(TransformationParameters& calc_para
 }
 
 std::vector<cv::Mat> Standardization::InitializeTransformation_(
-	HSD::HSD_Model& hsd_lut,
-	cv::Mat& cx_cy_train_data,
-	TransformationParameters& params,
-	TransformationParameters& transform_params,
-	ClassPixelIndices& class_pixel_indices)
+	const HSD::HSD_Model& hsd_lut,
+	const cv::Mat& cx_cy_train_data,
+	const TransformationParameters& params,
+	const TransformationParameters& transform_params,
+	const ClassPixelIndices& class_pixel_indices)
 {
 	// Merges the c_x and c_y channels.
 	cv::Mat cx_cy;
@@ -585,7 +561,7 @@ std::vector<cv::Mat> Standardization::InitializeTransformation_(
 	return { lut_hema_matrix, lut_eosin_matrix, lut_background_matrix };
 }
 
-void Standardization::PrintParameters_(std::ofstream& output_stream, TransformationParameters& transform_param,	bool write_csv)
+void Standardization::PrintParameters_(std::ofstream& output_stream, const TransformationParameters& transform_param, const bool write_csv)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
@@ -594,8 +570,8 @@ void Standardization::PrintParameters_(std::ofstream& output_stream, Transformat
 	logging_instance->QueueCommandLineLogging("Background CxCy: "		+ std::to_string(transform_param.background_rotation_params.x_median)	+ ", " + std::to_string(transform_param.background_rotation_params.y_median)	+ "\n", IO::Logging::NORMAL);
 	
 
-	cv::Mat& hema_scale_param(transform_param.hema_scale_params);
-	cv::Mat& eosin_scale_param(transform_param.eosin_scale_params);
+	const cv::Mat& hema_scale_param(transform_param.hema_scale_params);
+	const cv::Mat& eosin_scale_param(transform_param.eosin_scale_params);
 
 	logging_instance->QueueCommandLineLogging("Hema Cx values", IO::Logging::NORMAL);
 	logging_instance->QueueCommandLineLogging(std::to_string(hema_scale_param.at<float>(0, 0)) + std::to_string(hema_scale_param.at<float>(1, 0)) + std::to_string(hema_scale_param.at<float>(2, 0)) +
@@ -712,7 +688,83 @@ TransformationParameters Standardization::ReadParameters_(std::istream &input)
 	return parameters;
 }
 
-void Standardization::WriteSampleNormalizedImagesForTesting_(cv::Mat& normalized_lut, cv::Mat& tile_image, uint32_t tile_size, bool is_tiff, std::string& output_directory)
+void Standardization::WriteNormalizedWSI_(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const cv::Mat& normalized_lut, const uint32_t tile_size)
+{
+	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
+
+	std::vector<cv::Mat> lut_bgr(3);
+	cv::split(normalized_lut, lut_bgr);
+
+	cv::Mat lut_blue	= lut_bgr[0];
+	cv::Mat lut_green	= lut_bgr[1];
+	cv::Mat lut_red		= lut_bgr[2];
+
+	lut_blue.convertTo(lut_blue, CV_8UC1);
+	lut_green.convertTo(lut_green, CV_8UC1);
+	lut_red.convertTo(lut_red, CV_8UC1);
+
+	MultiResolutionImageWriter image_writer;
+	image_writer.openFile(output_file.string());
+	image_writer.setTileSize(tile_size);
+	image_writer.setCompression(pathology::LZW);
+	image_writer.setDataType(pathology::UChar);
+	image_writer.setColorType(pathology::RGB);
+	image_writer.writeImageInformation(tile_size * 4, tile_size * 4);
+
+	MultiResolutionImageReader reader;
+	MultiResolutionImage* tiled_object	= reader.open(input_file.string());
+	std::vector<size_t> dimensions		= tiled_object->getLevelDimensions(0);
+	image_writer.writeImageInformation(dimensions[0], dimensions[1]);
+
+	uint64_t y_amount_of_tiles = std::ceil((float)dimensions[0] / (float)tile_size);
+	uint64_t x_amount_of_tiles = std::ceil((float)dimensions[1] / (float)tile_size);
+	uint64_t total_amount_of_tiles = x_amount_of_tiles * y_amount_of_tiles;
+
+	std::vector<uint64_t> x_values, y_values;
+
+	for (uint64_t x_tile = 0; x_tile < x_amount_of_tiles; ++x_tile)
+	{
+		for (uint64_t y_tile = 0; y_tile < y_amount_of_tiles; ++y_tile)
+		{
+			y_values.push_back(tile_size*y_tile);
+			x_values.push_back(tile_size*x_tile);
+		}
+	}
+
+	size_t response_integer = total_amount_of_tiles / 20;
+	for (uint64_t tile = 0; tile < total_amount_of_tiles; ++tile)
+	{
+		if (tile % response_integer == 0)
+		{
+			logging_instance->QueueCommandLineLogging("Completed: " + std::to_string(tile / response_integer) + "%", IO::Logging::NORMAL);
+		}
+
+		unsigned char* data( new unsigned char[tile_size * tile_size * 4]);
+		tiled_object->getRawRegion(y_values[tile] * tiled_object->getLevelDownsample(0), x_values[tile] * tiled_object->getLevelDownsample(0), tile_size, tile_size, 0, data);
+
+		std::vector<unsigned char> modified_data(tile_size * tile_size * 3);
+		unsigned char* modified_data_ptr(&data[0]);
+
+		size_t data_index = 0;
+		size_t modified_data_index = 0;
+		for (size_t pixel = 0; pixel < tile_size * tile_size; ++pixel)
+		{
+			size_t index = 256 * 256 * data[data_index] + 256 * data[data_index + 1] + data[data_index + 2];
+			modified_data[++modified_data_index] = lut_red.at<unsigned char>(index, 0);
+			modified_data[++modified_data_index] = lut_green.at<unsigned char>(index, 0);
+			modified_data[++modified_data_index] = lut_blue.at<unsigned char>(index, 0);
+			data_index = data_index + 3;
+		}
+		image_writer.writeBaseImagePart((void*)modified_data_ptr);
+
+		delete[] data;
+	}
+
+	logging_instance->QueueCommandLineLogging("Finalizing images", IO::Logging::NORMAL);
+	image_writer.finishImage();
+}
+
+void Standardization::WriteSampleNormalizedImagesForTesting_(const std::string output_filename, const cv::Mat& normalized_lut, const cv::Mat& tile_image, const uint32_t tile_size)
 {
 	std::vector<cv::Mat> rgb;
 	cv::split(normalized_lut, rgb);
@@ -749,34 +801,29 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(cv::Mat& normalized
 	cv::Mat lut_slide_image;
 	cv::merge(channels_in_tile, lut_slide_image);
 
-	cv::imwrite(output_directory, lut_slide_image);
+	cv::imwrite(output_filename, lut_slide_image);
 
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 	logging_instance->QueueCommandLineLogging("Normalized image is written...", IO::Logging::NORMAL);
 }
 
 void Standardization::WriteSampleNormalizedImagesForTesting_(
-	cv::Mat& lut_image,
+	const boost::filesystem::path& output_directory, 
+	const cv::Mat& lut_image,
 	MultiResolutionImage& tiled_image,
-	uint32_t tile_size,
-	std::vector<cv::Point>& tile_coordinates,
-	bool is_tiff,
-	std::string& debug_dir,
-	std::string& filename)
+	const std::vector<cv::Point>& tile_coordinates,
+	const uint32_t tile_size)
 {
-	boost::filesystem::path current_dir(debug_dir + "/DebugData/" + filename + "norm");
-	boost::filesystem::create_directory(current_dir);
-
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	logging_instance->QueueCommandLineLogging("Writing sample standardized images in: " + current_dir.string(), IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Writing sample standardized images in: " + output_directory.string(), IO::Logging::NORMAL);
 
 	std::vector<cv::Mat> lut_bgr(3);
 	cv::split(lut_image, lut_bgr);
 
-	cv::Mat& lut_blue = lut_bgr[0];
-	cv::Mat& lut_green = lut_bgr[1];
-	cv::Mat& lut_red = lut_bgr[2];
+	cv::Mat& lut_blue	= lut_bgr[0];
+	cv::Mat& lut_green	= lut_bgr[1];
+	cv::Mat& lut_red	= lut_bgr[2];
 
 	lut_red.convertTo(lut_red, CV_8UC1);
 	lut_green.convertTo(lut_green, CV_8UC1);
@@ -794,32 +841,32 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(
 		tiled_image.getRawRegion(tile_coordinates[random_integers[tile]].x * tiled_image.getLevelDownsample(0), tile_coordinates[random_integers[tile]].y * tiled_image.getLevelDownsample(0), tile_size, tile_size, 0, data_ptr);
 
 		cv::Mat tile_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
-		LevelReading::ArrayToMatrix(data_ptr, tile_image, 0, is_tiff);
+		LevelReading::ArrayToMatrix(data_ptr, tile_image, 0, m_is_tiff_);
 
 		// get the RGB channels of tile image
 		std::vector<cv::Mat> tiled_bgr(3);
 		cv::split(tile_image, tiled_bgr);
 
-		cv::Mat& tiled_red = tiled_bgr[2];
-		cv::Mat& tiled_green = tiled_bgr[1];
-		cv::Mat& tiled_blue = tiled_bgr[0];
+		cv::Mat& tiled_red		= tiled_bgr[2];
+		cv::Mat& tiled_green	= tiled_bgr[1];
+		cv::Mat& tiled_blue		= tiled_bgr[0];
 
 		for (size_t row = 1; row < tile_image.rows; ++row)
 		{
 			for (size_t col = 1; col < tile_image.cols; ++col)
 			{
-				size_t index = 256 * 256 * tiled_red.at<unsigned char>(row, col) + 256 * tiled_green.at<unsigned char>(row, col) + tiled_blue.at<unsigned char>(row, col);
-				tiled_blue.at<unsigned char>(row, col) = lut_blue.at<unsigned char>(index, 0);
+				size_t index							= 256 * 256 * tiled_red.at<unsigned char>(row, col) + 256 * tiled_green.at<unsigned char>(row, col) + tiled_blue.at<unsigned char>(row, col);
+				tiled_blue.at<unsigned char>(row, col)	= lut_blue.at<unsigned char>(index, 0);
 				tiled_green.at<unsigned char>(row, col) = lut_green.at<unsigned char>(index, 0);
-				tiled_red.at<unsigned char>(row, col) = lut_red.at<unsigned char>(index, 0);
+				tiled_red.at<unsigned char>(row, col)	= lut_red.at<unsigned char>(index, 0);
 			}
 		}
 
 		cv::Mat slide_lut_image;
 		cv::merge(tiled_bgr, slide_lut_image);
 
-		std::string filename_lut(current_dir.string() + "/" + std::to_string(tile) + "_Normalized.tif");
-		std::string filename_original(current_dir.string() + "/" + std::to_string(tile) + "_Original.tif");
+		std::string filename_lut(output_directory.string() + "/" + std::to_string(tile) + "_normalized.tif");
+		std::string filename_original(output_directory.string() + "/" + std::to_string(tile) + "_original.tif");
 
 		logging_instance->QueueCommandLineLogging(filename_lut, IO::Logging::NORMAL);
 

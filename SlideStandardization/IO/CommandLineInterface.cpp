@@ -4,7 +4,7 @@
 
 namespace IO
 {
-	CommandLineInterface::CommandLineInterface(void) : m_log_handler_(IO::Logging::SILENT)
+	CommandLineInterface::CommandLineInterface(void) : m_log_handler_(IO::Logging::NORMAL)
 	{
 	}
 
@@ -18,12 +18,25 @@ namespace IO
 		AddStandardOptions_(options);
 		AddModuleOptions$(options);
 
-		boost::program_options::variables_map variables_map;
-		boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(options).run(), variables_map);
-		boost::program_options::notify(variables_map);
+		bool encountered_error = false;
 
-		ExecuteStandardFunctionality_(argc, variables_map, options);
-		ExecuteModuleFunctionality$(variables_map);
+		boost::program_options::variables_map variables_map;
+		try
+		{
+			boost::program_options::store(boost::program_options::command_line_parser(argc, argv).options(options).run(), variables_map);
+			boost::program_options::notify(variables_map);
+		}
+		catch (...)
+		{
+			ListOptions_(options);
+			encountered_error = true;
+		}
+		
+		if (!encountered_error)
+		{
+			ExecuteStandardFunctionality_(argc, variables_map, options);
+			ExecuteModuleFunctionality$(variables_map);
+		}
 	}
 
 	void CommandLineInterface::SetLogLevel$(const IO::Logging::LogLevel level)
@@ -43,7 +56,7 @@ namespace IO
 		appended_log_levels = appended_log_levels.substr(0, appended_log_levels.size() - 2);
 
 		options.add_options()
-			("help,h", "Shows the usage of the program, as well as the available input parameters.")
+			("help,h", boost::program_options::value<bool>()->default_value(false)->implicit_value(true), "Shows the usage of the program, as well as the available input parameters.")
 			("log_level,l", boost::program_options::value<std::string>(), std::string("Sets the amount of log output generated. Options are: " + appended_log_levels).c_str());
 	}
 

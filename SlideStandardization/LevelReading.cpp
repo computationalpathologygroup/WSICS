@@ -35,7 +35,7 @@ namespace LevelReading
 					++background_count;
 				}
 
-				base_index += is_tiff ? 3 : 4;
+				base_index += is_tiff ? 4 : 3;
 			}
 		}
 
@@ -62,9 +62,17 @@ namespace LevelReading
 		return next_level_tile_coordinates;
 	}
 
-	std::vector<cv::Point> ReadLevelTiles(MultiResolutionImage& tiled_image, size_t x_dimension, size_t y_dimension, uint32_t tile_size, bool is_tiff, uint32_t level, float background_threshold, uint32_t skip_factor)
+	std::vector<cv::Point> ReadLevelTiles(
+		MultiResolutionImage& tiled_image,
+		const size_t x_dimension,
+		const size_t y_dimension,
+		const uint32_t tile_size,
+		const uint32_t level,		
+		const uint32_t skip_factor,
+		const float background_threshold,
+		const bool is_tiff)
 	{
-		unsigned char* data(new unsigned char[tile_size * tile_size * 4]);
+		unsigned char* data(nullptr);
 
 		cv::Mat tile_image(cv::Mat::zeros(tile_size, tile_size, CV_8UC3));
 
@@ -91,14 +99,14 @@ namespace LevelReading
 	std::vector<cv::Point> ReadLevelTiles(
 		MultiResolutionImage& tiled_image,
 		std::vector<cv::Point> current_tile_coordinates,
-		uint32_t tile_size,
-		bool is_tiff,
-		uint32_t level,
-		float background_threshold,
-		uint32_t skip_factor,
-		int32_t scale_diff)
+		const uint32_t tile_size,
+		const uint32_t level,
+		const uint32_t skip_factor,
+		const int32_t scale_diff,
+		const float background_threshold,
+		const bool is_tiff)
 	{
-		unsigned char* data(new unsigned char[tile_size * tile_size * 4]);
+		unsigned char* data(nullptr);
 
 		cv::Mat tile_image(cv::Mat::zeros(tile_size, tile_size, CV_8UC3));
 

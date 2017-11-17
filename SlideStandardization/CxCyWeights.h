@@ -1,10 +1,5 @@
-//===========================================================================
-// This class is for refining the rigid transfromation of CxCy values
-// The weights are applied based on the amount of stain for each pixel
-//===========================================================================
 #ifndef __CXYWEIGHTS_H__
 #define __CXYWEIGHTS_H__
-
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -24,15 +19,15 @@ namespace CxCyWeights
 	};
 
 	// applies the already calculated weights on the transformes CxCy values
-	cv::Mat ApplyWeights(cv::Mat& c_xy_hema, cv::Mat& c_xy_eosin, cv::Mat& c_xy_background, Weights& weights);
+	cv::Mat ApplyWeights(const cv::Mat& c_xy_hema, const cv::Mat& c_xy_eosin, const cv::Mat& c_xy_background, const Weights& weights);
 
 	/// <summary>
 	/// Creates and trains a NaiveBayesClassifier.
 	/// </summary>
-	cv::Ptr<cv::ml::NormalBayesClassifier> CreateNaiveBayesClassifier(cv::Mat& c_x, cv::Mat& c_y, cv::Mat& density, cv::Mat& all_tissue_classes);
+	cv::Ptr<cv::ml::NormalBayesClassifier> CreateNaiveBayesClassifier(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Mat& all_tissue_classes);
 
 	// Generates weights for the case that test data of Cx,Cy,D are different from training data
 	// This is in particular used for the case of generating waits for Look up table values
-	Weights GenerateWeights(cv::Mat& c_x, cv::Mat& c_y, cv::Mat& density, cv::Ptr<cv::ml::NormalBayesClassifier>& classifier);
+	Weights GenerateWeights(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Ptr<cv::ml::NormalBayesClassifier>& classifier);
 };
 #endif // __CXYWEIGHTS_H__

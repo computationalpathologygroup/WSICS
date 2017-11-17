@@ -12,7 +12,7 @@ typedef HE_Staining::ClassificationResults ClassificationResults;
 typedef HE_Staining::EosinMaskInformation EosinMaskInformation;
 typedef HE_Staining::HematoxylinMaskInformation HematoxylinMaskInformation;
 
-struct SampleInformation
+struct TrainingSampleInformation
 {
 	cv::Mat training_data_c_x;
 	cv::Mat training_data_c_y;
@@ -23,20 +23,21 @@ struct SampleInformation
 class PixelClassificationHE
 {
 	public:
-		PixelClassificationHE(bool consider_ink, size_t log_file_id, std::string& debug_dir);
+		PixelClassificationHE(bool consider_ink, size_t log_file_id, std::string debug_dir);
 
-		SampleInformation GenerateCxCyDSamples(
-			MultiResolutionImage& tile_reader,
-			cv::Mat& static_image,
-			std::vector<cv::Point>& tile_coordinates,
-			uint32_t tile_size,
-			size_t training_size,
-			size_t min_training_size,
-			uint32_t min_level,
-			float hema_percentile,
-			float eosin_percentile,
-			bool is_tiff,
-			std::vector<double>& spacing);
+		TrainingSampleInformation GenerateCxCyDSamples(
+			MultiResolutionImage& tiled_image,
+			const cv::Mat& static_image,
+			const std::vector<cv::Point>& tile_coordinates,
+			const std::vector<double>& spacing,
+			const uint32_t tile_size,
+			const uint32_t min_training_size,
+			const uint32_t max_training_size,
+			const uint32_t min_level,
+			const float hema_percentile,
+			const float eosin_percentile,
+			const bool is_multiresolution_image,
+			const bool is_tiff);
 
 	private:
 		bool		m_consider_ink_;
@@ -46,7 +47,7 @@ class PixelClassificationHE
 		std::pair<HematoxylinMaskInformation, EosinMaskInformation> Create_HE_Masks_(
 			const HSD::HSD_Model& hsd_image,
 			const cv::Mat& background_mask,
-			const size_t min_training_size,
+			const uint32_t max_training_size,
 			const float hema_percentile,
 			const float eosin_percentile,
 			const std::vector<double>& spacing,
@@ -56,17 +57,17 @@ class PixelClassificationHE
 		/// <param name="total_hema_count">The current total count of the Hematoxylin pixels. Warning: This methods updates the value with newly discovered pixels.</param>
 		/// <param name="total_eosin_count">The current total count of the Eosin pixels. Warning: This methods updates the value with newly discovered pixels.</param>
 		/// <param name="total_background_count">The current total count of the background pixels. Warning: This methods updates the value with newly discovered pixels.</param>
-		SampleInformation InsertTrainingData_(
+		TrainingSampleInformation InsertTrainingData_(
 			const HSD::HSD_Model& hsd_image,
 			const ClassificationResults& classification_results,
 			const HematoxylinMaskInformation& hema_mask_info,
 			const EosinMaskInformation& eosin_mask_info,
-			SampleInformation& sample_information,
+			TrainingSampleInformation& sample_information,
 			size_t& total_hema_count,
 			size_t& total_eosin_count,
 			size_t& total_background_count,
-			const size_t training_size);
+			const uint32_t max_training_size);
 
-		SampleInformation PatchTestData_(const size_t non_zero_count, const SampleInformation& current_sample_information);
+		TrainingSampleInformation PatchTestData_(const size_t non_zero_count, const TrainingSampleInformation& current_sample_information);
 };
 #endif // __PixelClassificationHE_H__

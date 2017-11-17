@@ -101,9 +101,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Standardization.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TransformCxCyDensity.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -183,6 +180,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="SlideStandardizationCLI.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Standardization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

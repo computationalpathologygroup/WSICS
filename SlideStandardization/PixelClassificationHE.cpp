@@ -7,48 +7,40 @@
 #include "LevelReading.h"
 #include "MiscFunctionality.h"
 
-PixelClassificationHE::PixelClassificationHE(bool consider_ink, size_t log_file_id, std::string& debug_dir) : m_consider_ink_(consider_ink), m_log_file_id_(log_file_id), m_debug_dir_(debug_dir)
+PixelClassificationHE::PixelClassificationHE(bool consider_ink, size_t log_file_id, std::string debug_dir) : m_consider_ink_(consider_ink), m_log_file_id_(log_file_id), m_debug_dir_(debug_dir)
 {
 }
 
-SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
-	MultiResolutionImage& tile_reader,
-	cv::Mat& static_image,
-	std::vector<cv::Point>& tile_coordinates,
-	uint32_t tile_size,
-	size_t training_size,
-	size_t min_training_size,
-	uint32_t min_level,
-	float hema_percentile,
-	float eosin_percentile,
-	bool is_tiff,
-	std::vector<double> &spacing)
+TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
+	MultiResolutionImage& tiled_image,
+	const cv::Mat& static_image,
+	const std::vector<cv::Point>& tile_coordinates,
+	const std::vector<double>& spacing,
+	const uint32_t tile_size,
+	const uint32_t min_training_size,
+	const uint32_t max_training_size,
+	const uint32_t min_level,
+	const float hema_percentile,
+	const float eosin_percentile,
+	const bool is_multiresolution_image,
+	const bool is_tiff)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from the WSI: " + std::to_string(training_size), IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from the WSI: " + std::to_string(max_training_size), IO::Logging::NORMAL);
 	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from each patch: " + std::to_string(min_training_size), IO::Logging::NORMAL);
-
-	bool multiresolution_image = false;
-	if (!static_image.data)
-	{
-		multiresolution_image = true;
-	}
-	//int MinTrainSize = 0;// was 100000
-	else
-	{
-		min_training_size = 0;
-	}
-
-	size_t selected_images_count = 0;
 
 	// Tracks the created samples for each class.
 	size_t total_hema_count			= 0;
 	size_t total_eosin_count		= 0;
 	size_t total_background_count	= 0;
 
-	SampleInformation sample_information{ cv::Mat::zeros(training_size, 1, CV_32FC1), cv::Mat::zeros(training_size, 1, CV_32FC1), cv::Mat::zeros(training_size, 1, CV_32FC1), cv::Mat::zeros(training_size, 1, CV_32FC1) };
+	TrainingSampleInformation sample_information{ cv::Mat::zeros(max_training_size, 1, CV_32FC1),
+													cv::Mat::zeros(max_training_size, 1, CV_32FC1),
+													cv::Mat::zeros(max_training_size, 1, CV_32FC1),
+													cv::Mat::zeros(max_training_size, 1, CV_32FC1) };
 
+	size_t selected_images_count = 0;
 	std::vector<uint32_t> random_numbers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
 	for (size_t current_tile = 0; current_tile < tile_coordinates.size(); ++current_tile)
 	{
@@ -59,10 +51,11 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		//	HSD / CxCy Color Model
 		//===========================================================================
 
-		unsigned char* data(new unsigned char[tile_size * tile_size * 4]);
+		//unsigned char* data(new unsigned char[tile_size * tile_size * 4]);
+		unsigned char* data(nullptr);
 
-		tile_reader.getRawRegion(tile_coordinates[random_numbers[current_tile]].x * tile_reader.getLevelDownsample(0),
-								 tile_coordinates[random_numbers[current_tile]].y * tile_reader.getLevelDownsample(0),
+		tiled_image.getRawRegion(tile_coordinates[random_numbers[current_tile]].x * tiled_image.getLevelDownsample(0),
+								 tile_coordinates[random_numbers[current_tile]].y * tiled_image.getLevelDownsample(0),
 								 tile_size, tile_size, min_level, data);
 
 		cv::Mat raw_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
@@ -77,7 +70,7 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 			cv::imwrite(original_name, raw_image);
 		}
 
-		HSD::HSD_Model hsd_image = multiresolution_image ? HSD::HSD_Model(raw_image, HSD::CHANNEL_SHIFT) : HSD::HSD_Model(static_image, HSD::CHANNEL_SHIFT);
+		HSD::HSD_Model hsd_image = is_multiresolution_image ? HSD::HSD_Model(raw_image, HSD::CHANNEL_SHIFT) : HSD::HSD_Model(static_image, HSD::CHANNEL_SHIFT);
 
 		//===========================================================================
 		//	Background Mask
@@ -88,7 +81,7 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		// Sample extraction with Hough Transform
 		//*************************************************************************
 			// Attempts to acquire the HE stain masks, followed by the classification of the image. Which results in tissue, class, train and test data.
-		std::pair<HematoxylinMaskInformation, EosinMaskInformation> he_masks(Create_HE_Masks_(hsd_image, background_mask, min_training_size, hema_percentile, eosin_percentile, spacing, multiresolution_image));
+		std::pair<HematoxylinMaskInformation, EosinMaskInformation> he_masks(Create_HE_Masks_(hsd_image, background_mask, min_training_size, hema_percentile, eosin_percentile, spacing, is_multiresolution_image));
 		HE_Staining::HE_Classifier he_classifier;
 		HE_Staining::ClassificationResults classification_results(he_classifier.Classify(hsd_image, background_mask, he_masks.first, he_masks.second));
 
@@ -101,19 +94,19 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 				cv::imwrite(m_debug_dir_ + "/debug_data/classification_result/classified" + std::to_string(selected_images_count) + ".tif", classification_results.all_classes * 100);
 			}
 
-			InsertTrainingData_(hsd_image, classification_results, he_masks.first, he_masks.second, sample_information, total_hema_count, total_eosin_count, total_background_count, training_size);
+			InsertTrainingData_(hsd_image, classification_results, he_masks.first, he_masks.second, sample_information, total_hema_count, total_eosin_count, total_background_count, max_training_size);
 			++selected_images_count;
 
-			size_t hema_count_real			= total_hema_count			> training_size * 9 / 20 ? hema_count_real			= training_size * 9 / 20 : total_hema_count;
-			size_t eosin_count_real			= total_eosin_count			> training_size * 9 / 20 ? eosin_count_real			= training_size * 9 / 20 : total_eosin_count;
-			size_t background_count_real	= total_background_count	> training_size * 1 / 10 ? background_count_real	= training_size * 1 / 10 : total_background_count;
+			size_t hema_count_real			= total_hema_count			> max_training_size * 9 / 20 ? hema_count_real			= max_training_size * 9 / 20 : total_hema_count;
+			size_t eosin_count_real			= total_eosin_count			> max_training_size * 9 / 20 ? eosin_count_real			= max_training_size * 9 / 20 : total_eosin_count;
+			size_t background_count_real	= total_background_count	> max_training_size * 1 / 10 ? background_count_real	= max_training_size * 1 / 10 : total_background_count;
 
 			logging_instance->QueueCommandLineLogging(
 				std::to_string(hema_count_real + eosin_count_real + background_count_real) +
-				" training sets are filled, out of " + std::to_string(training_size) + " required.",
+				" training sets are filled, out of " + std::to_string(max_training_size) + " required.",
 				IO::Logging::NORMAL);
 
-			logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(training_size),
+			logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(max_training_size),
 				m_log_file_id_,
 				IO::Logging::NORMAL);
 
@@ -122,19 +115,19 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 				IO::Logging::NORMAL);
 		}
 
-		if (total_hema_count >= training_size * 9 / 20 && total_eosin_count >= training_size * 9 / 20 && total_background_count >= training_size / 10)
+		if (total_hema_count >= max_training_size * 9 / 20 && total_eosin_count >= max_training_size * 9 / 20 && total_background_count >= max_training_size / 10)
 		{
 			break;
 		}
 	}
 
-	if ((total_hema_count < training_size * 9 / 20 || total_eosin_count < training_size * 9 / 20 || total_background_count < training_size / 10))
+	if ((total_hema_count < max_training_size * 9 / 20 || total_eosin_count < max_training_size * 9 / 20 || total_background_count < max_training_size / 10))
 	{
 		size_t non_zero_class_pixels = cv::countNonZero(sample_information.class_data);
 
 		if (non_zero_class_pixels != sample_information.class_data.rows && (selected_images_count > 2 || !min_training_size))
 		{
-			std::string log_text("Could not fill all the " + std::to_string(training_size) + " samples required. Continuing with what is left...");
+			std::string log_text("Could not fill all the " + std::to_string(max_training_size) + " samples required. Continuing with what is left...");
 			logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
 			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
@@ -148,7 +141,7 @@ SampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationHE::Create_HE_Masks_(
 	const HSD::HSD_Model& hsd_image,
 	const cv::Mat& background_mask,
-	const size_t min_training_size,
+	const uint32_t min_training_size,
 	const float hema_percentile,
 	const float eosin_percentile,
 	const std::vector<double>& spacing,
@@ -205,13 +198,13 @@ std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationH
 				mask_acquisition_results.second = eosin_mask_info;
 
 				IO::Logging::LogHandler::GetInstance()->QueueFileLogging(
-					"Passed step 3: Amount of Eos samples " + std::to_string(eosin_mask_info.training_pixels) + ", more than the limit of " + std::to_string(min_training_size / 2),
+					"Passed step 3: Amount of Eosin samples " + std::to_string(eosin_mask_info.training_pixels) + ", more than the limit of " + std::to_string(min_training_size / 2),
 					m_log_file_id_,
 					IO::Logging::NORMAL);
 			}
 			else
 			{
-				failure_log_message = "Skipped step 3: Amount of Eos samples " + std::to_string(eosin_mask_info.training_pixels) + ", less than the limit of " + std::to_string(min_training_size / 2);
+				failure_log_message = "Skipped step 3: Amount of Eosin samples " + std::to_string(eosin_mask_info.training_pixels) + ", less than the limit of " + std::to_string(min_training_size / 2);
 			}
 		}
 		else
@@ -232,16 +225,16 @@ std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationH
 	return mask_acquisition_results;
 }
 
-SampleInformation PixelClassificationHE::InsertTrainingData_(
+TrainingSampleInformation PixelClassificationHE::InsertTrainingData_(
 	const HSD::HSD_Model& hsd_image,
 	const ClassificationResults& classification_results,
 	const HematoxylinMaskInformation& hema_mask_info,
 	const EosinMaskInformation& eosin_mask_info,
-	SampleInformation& sample_information,
+	TrainingSampleInformation& sample_information,
 	size_t& total_hema_count,
 	size_t& total_eosin_count,
 	size_t& total_background_count,
-	const size_t training_size)
+	const uint32_t max_training_size)
 {
 	// Creates a list of random values, ranging from 0 to the amount of class pixels - 1.
 	std::vector<uint32_t> hema_random_numbers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(classification_results.hema_pixels));
@@ -291,7 +284,7 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 		}
 	}
 
-	auto insert_sample_information = [](size_t class_pixel, size_t training_pixel, char class_id, SampleInformation& sample_information, cv::Mat& class_matrix)
+	auto insert_sample_information = [](size_t class_pixel, size_t training_pixel, char class_id, TrainingSampleInformation& sample_information, cv::Mat& class_matrix)
 	{
 		sample_information.training_data_c_x.at<float>(training_pixel, 0)		= class_matrix.at<float>(class_pixel, 0);
 		sample_information.training_data_c_y.at<float>(training_pixel, 0)		= class_matrix.at<float>(class_pixel, 1);
@@ -302,23 +295,23 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 	for (size_t hema_pixel = 0; hema_pixel < classification_results.hema_pixels / 2; ++hema_pixel)
 	{
 		size_t training_pixel = hema_pixel + total_hema_count;
-		if (training_pixel < training_size * 9 / 20)
+		if (training_pixel < max_training_size * 9 / 20)
 		{
 			insert_sample_information(hema_random_numbers[hema_pixel], training_pixel, 1, sample_information, train_data_hema);
 		}
 	}
 	for (size_t eosin_pixel = 0; eosin_pixel < classification_results.eosin_pixels / 2; ++eosin_pixel)
 	{
-		size_t training_pixel = eosin_pixel + total_eosin_count + training_size * 9 / 20;
-		if (training_pixel < training_size * 18 / 20)
+		size_t training_pixel = eosin_pixel + total_eosin_count + max_training_size * 9 / 20;
+		if (training_pixel < max_training_size * 18 / 20)
 		{
 			insert_sample_information(eosin_random_numbers[eosin_pixel], training_pixel, 2, sample_information, train_data_eosin);
 		}
 	}
 	for (size_t background_pixel = 0; background_pixel < classification_results.background_pixels / 2; ++background_pixel)
 	{
-		size_t training_pixel = background_pixel + total_background_count + training_size * 18 / 20;
-		if (training_pixel < training_size)
+		size_t training_pixel = background_pixel + total_background_count + max_training_size * 18 / 20;
+		if (training_pixel < max_training_size)
 		{
 			insert_sample_information(background_random_numbers[background_pixel], training_pixel, 3, sample_information, train_data_background);
 		}
@@ -332,9 +325,9 @@ SampleInformation PixelClassificationHE::InsertTrainingData_(
 	return sample_information;
 }
 
-SampleInformation PixelClassificationHE::PatchTestData_(const size_t non_zero_count, const SampleInformation& current_sample_information)
+TrainingSampleInformation PixelClassificationHE::PatchTestData_(const size_t non_zero_count, const TrainingSampleInformation& current_sample_information)
 {
-	SampleInformation new_sample_information{ cv::Mat::zeros(non_zero_count, 1, CV_32FC1),
+	TrainingSampleInformation new_sample_information{ cv::Mat::zeros(non_zero_count, 1, CV_32FC1),
 												cv::Mat::zeros(non_zero_count, 1, CV_32FC1),
 												cv::Mat::zeros(non_zero_count, 1, CV_32FC1),
 												cv::Mat::zeros(non_zero_count, 1, CV_32FC1) };
