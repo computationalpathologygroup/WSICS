@@ -736,7 +736,7 @@ void Standardization::WriteNormalizedWSI_(const boost::filesystem::path& input_f
 	{
 		if (tile % response_integer == 0)
 		{
-			logging_instance->QueueCommandLineLogging("Completed: " + std::to_string(tile / response_integer) + "%", IO::Logging::NORMAL);
+			logging_instance->QueueCommandLineLogging("Completed: " + std::to_string((tile / response_integer) * 5) + "%", IO::Logging::NORMAL);
 		}
 
 		unsigned char* data( new unsigned char[tile_size * tile_size * 4]);
