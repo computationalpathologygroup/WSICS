@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-i "d:\WSIs\06011-2001A1L2STAMP II .ndpi" -o "d:\WSIs\test_output"</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-i "d:\WSIs\06011-2001A1L2STAMP II.ndpi" -o "d:\WSIs\testfile" --log_level debug</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

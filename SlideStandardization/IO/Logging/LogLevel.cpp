@@ -9,8 +9,8 @@ namespace IO::Logging
 		std::string level_as_string;
 		switch (level)
 		{
-		case	 SILENT:		level_as_string = "silent";	 break;
-		case	 NORMAL:		level_as_string = "normal";	 break;
+		case	 SILENT:	level_as_string = "silent";	 break;
+		case	 NORMAL:	level_as_string = "normal";	 break;
 		case	 DEBUG:		level_as_string = "debug";	 break;
 		}
 		return level_as_string;

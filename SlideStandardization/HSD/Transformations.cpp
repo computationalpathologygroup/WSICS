@@ -42,7 +42,8 @@ namespace HSD
 			}
 		}
 
-		std::vector<cv::Mat> channels{ channel_red, channel_green, channel_blue };
+		//std::vector<cv::Mat> channels{ channel_red, channel_green, channel_blue };
+		std::vector<cv::Mat> channels{ channel_blue, channel_green, channel_red };
 		cv::merge(channels, output_matrix);
 	}
 }

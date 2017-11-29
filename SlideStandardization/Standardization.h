@@ -30,19 +30,20 @@ struct TransformationParameters
 class Standardization
 {
 	public:
-		Standardization(
-			std::string log_directory,
-			const boost::filesystem::path& template_file,
-			const boost::filesystem::path& debug_directory,
-			const uint32_t min_training_size,
-			const uint32_t max_training_size);
+		Standardization(std::string log_directory, const boost::filesystem::path& template_file, const uint32_t min_training_size, const uint32_t max_training_size);
 
-		void Normalize(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const boost::filesystem::path& template_output, const bool is_tiff, const bool consider_ink);
+		void Normalize(
+			const boost::filesystem::path& input_file,
+			const boost::filesystem::path& output_file,
+			const boost::filesystem::path& template_output,
+			const boost::filesystem::path& debug_directory,
+			const bool is_tiff,
+			const bool consider_ink);
 		void SetLogDirectory(std::string& log_directory);
 
 	private:
 		size_t							m_log_file_id_;
-		const boost::filesystem::path&	m_debug_directory_;
+		boost::filesystem::path			m_debug_directory_;
 		const boost::filesystem::path&	m_template_file_;
 
 		uint32_t						m_min_training_size_;

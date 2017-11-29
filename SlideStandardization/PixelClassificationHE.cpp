@@ -63,10 +63,7 @@ TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 
 		if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
 		{
-			boost::filesystem::path debug_directory_path(m_debug_dir_ + "/DebugData/ClassificationResult");
-			boost::filesystem::create_directory(debug_directory_path);
-
-			std::string original_name = debug_directory_path.string() + "/ImageRaw" + std::to_string(selected_images_count) + ".tif";
+			std::string original_name(m_debug_dir_ + "/raw_tiles/image_raw" + std::to_string(current_tile) + ".tif");
 			cv::imwrite(original_name, raw_image);
 		}
 
@@ -91,7 +88,7 @@ TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		{
 			if (logging_instance->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
 			{
-				cv::imwrite(m_debug_dir_ + "/debug_data/classification_result/classified" + std::to_string(selected_images_count) + ".tif", classification_results.all_classes * 100);
+				cv::imwrite(m_debug_dir_ + "/classification_result/classified" + std::to_string(selected_images_count) + ".tif", classification_results.all_classes * 100);
 			}
 
 			InsertTrainingData_(hsd_image, classification_results, he_masks.first, he_masks.second, sample_information, total_hema_count, total_eosin_count, total_background_count, max_training_size);

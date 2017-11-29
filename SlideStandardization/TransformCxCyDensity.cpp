@@ -43,12 +43,12 @@ namespace TransformCxCyDensity
 		for (size_t col = 0; col < cx_cy_params.cols; ++col)
 		{
 			cx_cy_params.at<float>(0, col) = mins[col];
-			cx_cy_params.at<float>(0, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.01, col), col);
-			cx_cy_params.at<float>(0, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.25, col), col);
-			cx_cy_params.at<float>(0, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.50, col), col);
-			cx_cy_params.at<float>(0, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.75, col), col);
-			cx_cy_params.at<float>(0, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.99, col), col);
-			cx_cy_params.at<float>(0, col) = maxs[col];
+			cx_cy_params.at<float>(1, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.01, col), col);
+			cx_cy_params.at<float>(2, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.25, col), col);
+			cx_cy_params.at<float>(3, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.50, col), col);
+			cx_cy_params.at<float>(4, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.75, col), col);
+			cx_cy_params.at<float>(5, col) = cx_cy_values.at<float>(sorted_cx_cy_values.at<int>(sorted_cx_cy_values.rows * 0.99, col), col);
+			cx_cy_params.at<float>(6, col) = maxs[col];
 		}
 
 		return cx_cy_params;

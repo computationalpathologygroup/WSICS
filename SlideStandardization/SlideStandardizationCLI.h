@@ -42,13 +42,21 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 			std::vector<boost::filesystem::path>& files_to_process,
 			uint32_t& max_training_size,
 			uint32_t& min_training_size,
+			std::string& prefix,
+			std::string& postfix,
 			boost::filesystem::path& output_path,
 			boost::filesystem::path& template_input,
 			boost::filesystem::path& template_output,
 			boost::filesystem::path& debug_dir,
-			bool& contains_ink);
+			bool& contains_ink,
+			bool& input_is_directory);
 
-		void CreateDirectories_(const boost::filesystem::path& output_path, const boost::filesystem::path& template_output, const boost::filesystem::path& debug_directory);
+		void CreateDirectories_(
+			const boost::filesystem::path& output_path,
+			const boost::filesystem::path& template_output,
+			const boost::filesystem::path& debug_directory,
+			const std::vector<boost::filesystem::path>& files,
+			const bool input_is_directory);
 
 		/// <summary>
 		/// Checks if the passed input parameter is a file or a directory, it then fills
