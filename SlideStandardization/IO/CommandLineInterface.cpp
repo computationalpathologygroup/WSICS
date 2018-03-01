@@ -31,11 +31,17 @@ namespace IO
 			ListOptions_(options);
 			encountered_error = true;
 		}
-		
-		if (!encountered_error)
+
+		if (!encountered_error && ExecuteStandardFunctionality_(argc, variables_map, options))
 		{
-			ExecuteStandardFunctionality_(argc, variables_map, options);
-			ExecuteModuleFunctionality$(variables_map);
+		//	try
+		//	{
+				ExecuteModuleFunctionality$(variables_map);
+		//	}
+		//	catch (const std::exception& e)
+		//	{
+		//		m_log_handler_.QueueCommandLineLogging(e.what(), IO::Logging::SILENT);
+		//	}
 		}
 	}
 
@@ -60,11 +66,12 @@ namespace IO
 			("log_level,l", boost::program_options::value<std::string>(), std::string("Sets the amount of log output generated. Options are: " + appended_log_levels).c_str());
 	}
 
-	void CommandLineInterface::ExecuteStandardFunctionality_(const int argc, const boost::program_options::variables_map& variables, const boost::program_options::options_description& options)
+	bool CommandLineInterface::ExecuteStandardFunctionality_(const int argc, const boost::program_options::variables_map& variables, const boost::program_options::options_description& options)
 	{
-		if (argc == 2 || variables["help"].as<bool>())
+		if (argc < 2 || variables["help"].as<bool>())
 		{
 			ListOptions_(options);
+			return false;
 		}
 
 		if (!variables["log_level"].empty())
@@ -74,6 +81,8 @@ namespace IO
 
 			SetLogLevel$(IO::Logging::GetLogLevelFromString(log_level));
 		}
+
+		return true;
 	}
 
 	void CommandLineInterface::ListOptions_(const boost::program_options::options_description& options)

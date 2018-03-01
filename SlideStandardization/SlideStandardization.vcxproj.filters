@@ -99,6 +99,9 @@
     <ClCompile Include="SlideStandardizationCLI.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="NormalizedLutCreation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="TransformCxCyDensity.h">
@@ -183,6 +186,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Standardization.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NormalizedLutCreation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

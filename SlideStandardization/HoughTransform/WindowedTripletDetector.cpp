@@ -200,7 +200,7 @@ namespace HoughTransform
 
 	WindowedTripletDetectorParameters WindowedTripletDetector::GetStandardParameters(void)
 	{
-		return { 2.0f, 1.0f, 0.8f, 8.0f, 40.0f, 6.0f, 150, POINT_SELECTION_FULLY_LABELED_DIST_RESTR };
+		return { 2.0f, 1.0f, 0.8f, 7.0f, 40.0f, 6.0f, 150, POINT_SELECTION_FULLY_LABELED_DIST_RESTR };
 	}
 
 	//******************************************************************************

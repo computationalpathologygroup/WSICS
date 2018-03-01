@@ -8,7 +8,7 @@ namespace HSD
 	/// <summary>
 	/// Defines the way a HSD_Model object is initialized. Whether or not to retain the color channel order, or to shift it.
 	/// </summary>
-	enum HSD_Initialization_Type { STANDARD, CHANNEL_SHIFT };
+	enum HSD_Initialization_Type { RGB, BGR };
 
 	/// <summary>
 	/// Represents an image in the HSD model.
@@ -18,7 +18,8 @@ namespace HSD
 		public:
 			cv::Mat red_density, green_density, blue_density;
 			cv::Mat density;
-			cv::Mat c_x, c_y;
+			cv::Mat c_x;
+			cv::Mat c_y;
 
 			/// <summary>
 			/// Initializes the HSD_Model container through the conversion of a RGB image.
@@ -31,12 +32,7 @@ namespace HSD
 			/// Returns the type of initialization used for this object.
 			/// </summary>
 			/// <returns>A HSD_Initialization_Type, which defines the type of initialization used.</returns>
-			HSD_Initialization_Type GetInitializationType(void);
-			/// <summary>
-			/// Converts the HSD information to RGB.
-			/// </summary>
-			/// <returns>A RGB color matrix.</returns>
-			cv::Mat GetRGB(void);
+			HSD_Initialization_Type GetInitializationType(void) const;
 
 		private:
 			HSD_Initialization_Type m_initialization_type_;

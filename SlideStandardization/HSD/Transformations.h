@@ -5,7 +5,7 @@
 
 namespace HSD
 {
-	void CxCyToRGB(cv::Mat& cx_cy_input, cv::Mat& output_matrix);
-	void CxCyToRGB(cv::Mat& cx_cy_input, cv::Mat& output_matrix, cv::Mat& density_scaling);
+	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix);
+	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix, const cv::Mat& density_scaling);
 }
 #endif // __HSD_TRANSFORMATIONS_H__

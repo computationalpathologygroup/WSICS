@@ -69,9 +69,9 @@ namespace CxCyWeights
 		Weights weights { cv::Mat::zeros(c_x.rows, c_x.cols, CV_32FC1), cv::Mat::zeros(c_x.rows, c_x.cols, CV_32FC1), cv::Mat::zeros(c_x.rows, c_x.cols, CV_32FC1) };
 		for (size_t row = 0; row < c_x.rows; ++row)
 		{
-			weights.hema.at<float>(row, 0)			= probability_output.at<float>(row, 0);
-			weights.eosin.at<float>(row, 0)			= probability_output.at<float>(row, 1);
-			weights.background.at<float>(row, 0)	= probability_output.at<float>(row, 2);
+			weights.hema.at<float>(row, 0)			= output.at<float>(row, 0);
+			weights.eosin.at<float>(row, 0)			= output.at<float>(row, 1);
+			weights.background.at<float>(row, 0)	= output.at<float>(row, 2);
 		}
 
 		return weights;

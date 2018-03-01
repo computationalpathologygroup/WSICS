@@ -24,6 +24,7 @@ namespace HSD::BackgroundMask
 		// Creates the background mask object and returns it.
 		cv::Mat background_mask(std::move(blue_density_mask.mul(green_density_mask.mul(red_density_mask.mul(density_mask))) + dark_density_mask));
 		background_mask.convertTo(background_mask, CV_8UC1);
+
 		return background_mask;
 	}
 

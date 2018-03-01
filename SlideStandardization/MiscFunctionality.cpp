@@ -5,10 +5,10 @@
 
 namespace ASAP::MiscFunctionality
 {
-	std::vector<uint32_t> CreateListOfRandomIntegers(size_t size)
+	std::vector<size_t> CreateListOfRandomIntegers(size_t size)
 	{
-		std::vector<uint32_t> random_numbers(size);
-		for (uint32_t element = 0; element < size; ++element)
+		std::vector<size_t> random_numbers(size);
+		for (size_t element = 0; element < size; ++element)
 		{
 			random_numbers[element] = element;
 		}

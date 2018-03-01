@@ -2,7 +2,6 @@
 
 #include <cmath>
 #include <stdexcept>
-#include <opencv2/opencv.hpp>
 
 namespace ASAP::Image_Processing::BLOB_Operations
 {
@@ -153,6 +152,6 @@ namespace ASAP::Image_Processing::BLOB_Operations
 
 	uint32_t BLOB_Window::CalculateWindowStepSize_(const uint32_t window_size)
 	{
-		return window_size * 0.666f;
+		return window_size * 5.0f / 6.0f;
 	}
 }

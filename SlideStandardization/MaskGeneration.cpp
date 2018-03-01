@@ -49,6 +49,7 @@ namespace HE_Staining::MaskGeneration
 
 		ApplyBlur(temporary_matrix, temporary_matrix, blur_sigma);
 		ApplyCannyEdge(temporary_matrix, temporary_matrix, canny_low_threshold, canny_high_threshold);
+
 		return ApplyHoughTransform(temporary_matrix, temporary_matrix, transform_parameters);
 	}
 
@@ -221,7 +222,7 @@ namespace HE_Staining::MaskGeneration
 			double density_mean_threshold	= AcquirePercentile(density_mean, 0.02f);
 
 			contours = FilterContours(contours, density_mean, red_mean, blue_mean, density_mean_threshold, hema_mean_threshold);
-			cv::drawContours(hema_mask_info.training_mask, contours, -1, 0, CV_FILLED, 8);
+			cv::drawContours(hema_mask_info.training_mask, contours, -1, 255, CV_FILLED, 8);
 
 			hema_mask_info.training_mask = hema_mask_info.training_mask - hema_mask_info.training_mask.mul(background_mask);
 			hema_mask_info.training_pixels = 0;

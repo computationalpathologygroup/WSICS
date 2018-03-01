@@ -47,7 +47,8 @@ namespace IO
 			/// <param name="argc">The amount of arguments passed through the command line.</param>
 			/// <param name="variables">The map containing the command line variables.</param>
 			/// <param name="options">The map containing the parameter options.</param>
-			void ExecuteStandardFunctionality_(const int argc, const boost::program_options::variables_map& variables, const boost::program_options::options_description& options);
+			/// <returns>Whether or not the program should continue.</returns>
+			bool ExecuteStandardFunctionality_(const int argc, const boost::program_options::variables_map& variables, const boost::program_options::options_description& options);
 
 			/// <summary>Prints the parameter options to the command line screen.</summary>
 			/// <param name="options">The map containing the parameter options.</param>

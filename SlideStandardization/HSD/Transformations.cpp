@@ -1,16 +1,16 @@
 #include "Transformations.h"
 
-#include <vector>
+#include <opencv2\highgui.hpp>
 
 namespace HSD
 {
-	void CxCyToRGB(cv::Mat& cx_cy_input, cv::Mat& output_matrix)
+	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix)
 	{
 		cv::Mat temporary_matrix;
 		CxCyToRGB(cx_cy_input, output_matrix, temporary_matrix);
 	}
 
-	void CxCyToRGB(cv::Mat& cx_cy_input, cv::Mat& output_matrix, cv::Mat& density_scaling)
+	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix, const cv::Mat& density_scaling)
 	{
 		// Calculates the densities for each channel.
 		cv::Mat channel_red;
@@ -42,8 +42,9 @@ namespace HSD
 			}
 		}
 
-		//std::vector<cv::Mat> channels{ channel_red, channel_green, channel_blue };
 		std::vector<cv::Mat> channels{ channel_blue, channel_green, channel_red };
+		output_matrix.convertTo(output_matrix, CV_32FC3);
 		cv::merge(channels, output_matrix);
+		output_matrix.convertTo(output_matrix, CV_8UC3);
 	}
 }

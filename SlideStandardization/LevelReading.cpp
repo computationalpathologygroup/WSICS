@@ -4,29 +4,18 @@
 
 namespace LevelReading
 {
-	size_t ArrayToMatrix(unsigned char* data, cv::Mat& matrix, bool consider_background, bool is_tiff)
+	size_t ArrayToMatrix(unsigned char* data, cv::Mat& output, const bool consider_background)
 	{
 		size_t background_count = 0;
 		size_t base_index = 0;
-		for (int row = 0; row < matrix.rows; ++row)
+		for (int row = 0; row < output.rows; ++row)
 		{
-			uchar* row_ptr = matrix.ptr(row);
-			for (int col = 0; col < matrix.cols; ++col)
+			uchar* row_ptr = output.ptr(row);
+			for (int col = 0; col < output.cols; ++col)
 			{
-				// Points to each pixel value in turn assuming a CV_8UC1 greyscale image.
-				if (is_tiff)
-				{
-					*row_ptr = data[base_index + 2];
-					*(row_ptr + 1) = data[base_index + 1];
-					*(row_ptr + 2) = data[base_index];
-				}
-				else
-				{
-					*row_ptr = data[base_index];
-					*(row_ptr + 1) = data[base_index + 1];
-					*(row_ptr + 2) = data[base_index + 2];
-				}
-
+				*row_ptr		= data[base_index + 2];
+				*(row_ptr + 1)	= data[base_index + 1];
+				*(row_ptr + 2)	= data[base_index];
 				row_ptr += 3;
 
 				// Threshold was 230 for mrxs files
@@ -35,7 +24,7 @@ namespace LevelReading
 					++background_count;
 				}
 
-				base_index += is_tiff ? 4 : 3;
+				base_index += 3;
 			}
 		}
 
@@ -69,8 +58,7 @@ namespace LevelReading
 		const uint32_t tile_size,
 		const uint32_t level,		
 		const uint32_t skip_factor,
-		const float background_threshold,
-		const bool is_tiff)
+		const float background_threshold)
 	{
 		unsigned char* data(nullptr);
 
@@ -83,7 +71,7 @@ namespace LevelReading
 			{
 				tiled_image.getRawRegion(x  *tiled_image.getLevelDownsample(level), y * tiled_image.getLevelDownsample(level), tile_size, tile_size, level, data);
 
-				size_t background_count = ArrayToMatrix(data, tile_image, true, is_tiff);
+				size_t background_count = ArrayToMatrix(data, tile_image, true);
 				if ((float)background_count / (tile_size * tile_size) < background_threshold)
 				{
 					tile_coordinates.push_back({ x, y });
@@ -103,8 +91,7 @@ namespace LevelReading
 		const uint32_t level,
 		const uint32_t skip_factor,
 		const int32_t scale_diff,
-		const float background_threshold,
-		const bool is_tiff)
+		const float background_threshold)
 	{
 		unsigned char* data(nullptr);
 
@@ -117,7 +104,7 @@ namespace LevelReading
 		{
 			tiled_image.getRawRegion(next_level_tile_coordinates[i].x * tiled_image.getLevelDownsample(level), next_level_tile_coordinates[i].y * tiled_image.getLevelDownsample(level), tile_size, tile_size, level, data);
 
-			size_t background_count = ArrayToMatrix(data, tile_image, true, is_tiff);
+			size_t background_count = ArrayToMatrix(data, tile_image, true);
 			if ((float)background_count / (tile_size * tile_size) < background_threshold)
 			{
 				tile_coordinates.push_back(next_level_tile_coordinates[i]);

@@ -21,6 +21,11 @@ namespace IO::Logging
 		m_in_progress_mutex_.lock();
 		m_in_progress_mutex_.unlock();
 		m_logging_thread_.join();
+
+		for (std::pair<const size_t, std::pair<std::string, std::ofstream>>& open_file : m_open_files_)
+		{
+			open_file.second.second.close();
+		}
 	}
 
 	LogHandler* LogHandler::GetInstance(void)

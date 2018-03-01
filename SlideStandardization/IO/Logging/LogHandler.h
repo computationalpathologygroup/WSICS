@@ -91,8 +91,8 @@ namespace IO::Logging
 		private:
 			static LogHandler*	m_instance_;
 
-			bool					m_end_operations_;
-			LogLevel				m_log_level_;
+			bool				m_end_operations_;
+			LogLevel			m_log_level_;
 
 			std::mutex			m_output_level_access_;
 			std::mutex			m_command_line_access_;

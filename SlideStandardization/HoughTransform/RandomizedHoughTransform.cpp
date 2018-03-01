@@ -47,13 +47,10 @@ namespace HoughTransform
     std::vector<Ellipse> RandomizedHoughTransform::Execute(WindowedTripletDetector& triplet_detector)
     {
         TreeAccumulator combiner(this->parameters.ellipse_radii_threshold*(int)(this->parameters.combine_threshold), this->parameters.ellipse_position_threshold*(int)(this->parameters.combine_threshold), 0);
-		size_t shifts = 0;
-		 ellipses_found = 0;
-		 ellipses_verified = 0;
+
 		bool repeat_epoch = true;
 		while (repeat_epoch || triplet_detector.Next())
 		{
-			++shifts;
 			repeat_epoch = false;
 			Ellipse best_ellipse;
 			size_t	best_ellipse_count = 0;
@@ -62,12 +59,6 @@ namespace HoughTransform
 			for (size_t epoch = 0; epoch < triplet_detector.Size() * this->parameters.epoch_size; ++epoch)
 			{
 				std::pair<bool, Ellipse> ellipse_result(EllipseFromTriplet_(triplet_detector.GetNextTriplet()));
-
-				if (ellipse_result.first)
-				{
-					++ellipses_found;
-				}
-
 				if (ellipse_result.first && ProcessDetectedEllipse_(ellipse_result.second, best_ellipse, best_ellipse_count, repeat_epoch, accumulator, combiner, triplet_detector))
 				{
 					epoch = 0;
@@ -318,7 +309,7 @@ namespace HoughTransform
 			{
 				//triplet_detector.Simplify(ellipse);
 				combiner.AddEllipse(ellipse);
-				++ellipses_verified;
+
 				if (this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_EMPTY_ACCUMULATOR)
 				{
 					reset_epoch = true;

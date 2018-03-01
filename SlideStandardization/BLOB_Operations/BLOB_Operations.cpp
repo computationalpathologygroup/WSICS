@@ -70,8 +70,6 @@ namespace ASAP::Image_Processing::BLOB_Operations
 
 		for (int label = 0; label < stats_array.rows; ++label)
 		{
-			//cv::Point2f top_left(stats_array.at<int>(label, cv::ConnectedComponentsTypes::CC_STAT_LEFT), stats_array.at<int>(label, cv::ConnectedComponentsTypes::CC_STAT_TOP));
-			//cv::Point2f bottom_right(top_left.x + stats_array.at<int>(label, cv::ConnectedComponentsTypes::CC_STAT_WIDTH), top_left.y + stats_array.at<int>(label, cv::ConnectedComponentsTypes::CC_STAT_HEIGHT));
 			labeled_blobs.insert({ label + 1, BLOB() });
 		}
 

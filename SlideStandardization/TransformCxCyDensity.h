@@ -56,7 +56,7 @@ namespace TransformCxCyDensity
 	/// <summary>
 	/// Creates seperate matrices for each class and stores all the classification results in one row (vector).
 	/// </summary>
-	ClassAnnotatedCxCy ClassCxCyGenerator(const cv::Mat& all_tissue_classes, const cv::Mat& c_x_in, const cv::Mat& c_y_in);
+	ClassAnnotatedCxCy ClassCxCyGenerator(const cv::Mat& all_tissue_classes, const cv::Mat& cx_cy_in);
 
 	float CovarianceCalculation(const cv::Mat& samples_matrix);
 
@@ -77,6 +77,7 @@ namespace TransformCxCyDensity
 
 	void ScaleCxCy(const cv::Mat& rotated_input, cv::Mat& scaled_output, const cv::Mat& class_scale_params, const cv::Mat& lut_scale_params);
 	void ScaleCxCyLUT(const cv::Mat& rotated_input, cv::Mat& scaled_output, const cv::Mat& class_scale_params, const cv::Mat& lut_scale_params);
-	void TranslateCxCyBack(const cv::Mat& cx_cy_rotated_back_class, cv::Mat& output_matrix, const std::vector<cv::Point>& indices, const float transform_x_median, const float transform_y_median);
+
+	void TranslateCxCyBack(const cv::Mat& cx_cy, const cv::Mat& cx_cy_lut, cv::Mat& output_matrix, const std::vector<cv::Point>& indices, const float transform_x_median, const float transform_y_median);
 };
 #endif // __TRANSFORM_CX_CY_DENSITY_H__

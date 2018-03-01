@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-i "d:\WSIs\06011-2001A1L2STAMP II.ndpi" -o "d:\WSIs\testfile" --log_level debug</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-i "d:\WSIs\T11-03904_A1.svs" -o "d:\WSIs\testfile" --log_level debug --max_training 1000000 --min_training 10000 --template_output "d:\WSIs\template.csv" </LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

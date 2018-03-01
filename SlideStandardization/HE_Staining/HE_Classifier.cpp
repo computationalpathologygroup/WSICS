@@ -60,9 +60,9 @@ namespace HE_Staining
 		}
 
 		cvflann::Matrix<float> flann_test_data(new float[test_data.rows * test_data.cols], test_data.rows, test_data.cols);
-		for (uint32_t x = 0; x < train_data.rows; ++x)
+		for (uint32_t x = 0; x < test_data.rows; ++x)
 		{
-			for (uint32_t y = 0; y < train_data.cols; ++y)
+			for (uint32_t y = 0; y < test_data.cols; ++y)
 			{
 				flann_test_data[x][y] = test_data.at<float>(x, y);
 			}
@@ -104,11 +104,11 @@ namespace HE_Staining
 		{
 			if (predicted.at<float>(index, 0) == 1)
 			{
-				tissue_classes.at<float>(test_indices[index].y, test_indices[index].x) = 1;
+				tissue_classes.at<float>(test_indices[index]) = 1;
 			}
 			else
 			{
-				tissue_classes.at<float>(test_indices[index].y, test_indices[index].x) = 2;
+				tissue_classes.at<float>(test_indices[index]) = 2;
 			}
 		}
 

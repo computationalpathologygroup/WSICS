@@ -51,13 +51,17 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 	
 	if (succesfully_created_directories && (!output_path.empty() || !template_output.empty()))
 	{
-		Standardization slide_standardizer(output_path.string() + "log.txt", template_input, min_training_size, max_training_size);
+		std::string log_path(output_path.string() + "/log.txt");
+		if (!input_is_directory)
+		{
+			log_path = output_path.parent_path().string() + "/log.txt";
+		}
+
+		Standardization slide_standardizer(log_path, template_input, min_training_size, max_training_size);
 		for (const boost::filesystem::path& filepath : files_to_process)
 		{
 			std::string extension(filepath.extension().string());
 			std::transform(extension.begin(), extension.end(), extension.begin(), ::tolower);
-
-			bool is_tiff = extension == ".tif";
 
 			boost::filesystem::path output_file;
 			boost::filesystem::path template_output_file;
@@ -74,7 +78,7 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 				template_output_file	= template_output.string() + ".csv";
 			}
 
-			slide_standardizer.Normalize(filepath, output_file, template_output_file, file_debug_dir, is_tiff, contains_ink);
+			slide_standardizer.Normalize(filepath, output_file, template_output_file, file_debug_dir, contains_ink);
 		}
 	}
 }
@@ -87,9 +91,9 @@ void SlideStandardizationCLI::AddModuleOptions$(boost::program_options::options_
 		("max_training",	boost::program_options::value<uint32_t>()->default_value(20000000),					"The maximum amount of pixels used for training the classifier.")
 		("min_training",	boost::program_options::value<uint32_t>()->default_value(200000),					"The minimum amount of pixels used for training the classifier.")
 		("prefix",			boost::program_options::value<std::string>()->default_value(""),					"The prefix to use for the output files. Only applied when the input path points towards a directory.")
-		("postfix",		boost::program_options::value<std::string>()->default_value(""),						"The postfix to use for the output files. Only applied when the input path points towards a directory.")
+		("postfix",			boost::program_options::value<std::string>()->default_value(""),					"The postfix to use for the output files. Only applied when the input path points towards a directory.")
 		("template_input",	boost::program_options::value<std::string>()->default_value(""),					"If set, applies an existing template for the normalization.")
-		("template_output", boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template.  Considered as filepath if input points towards a file, otherwise considered as output directory.")
+		("template_output", boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template. Considered as filepath if input points towards a file, otherwise considered as output directory.")
 		("ink,k",			boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Warning: Only use if ink is present on the slide. Reduces the chance of selecting a patch containing ink.");
 }
 
@@ -227,15 +231,6 @@ void SlideStandardizationCLI::CreateDirectories_(
 			std::string debug_base(debug_directory.string() + "/" + filepath.stem().string());
 			boost::filesystem::create_directories(debug_base);
 			logging_instance->QueueCommandLineLogging("Created: " + debug_base, IO::Logging::NORMAL);
-
-			boost::filesystem::create_directory(debug_base + "/classification_result");
-			logging_instance->QueueCommandLineLogging("Created: " + debug_base + "/classification_result", IO::Logging::NORMAL);
-
-			boost::filesystem::create_directory(debug_base + "/normalized_examples");
-			logging_instance->QueueCommandLineLogging("Created: " + debug_base + "/normalized_examples", IO::Logging::NORMAL);
-
-			boost::filesystem::create_directory(debug_base + "/raw_tiles");
-			logging_instance->QueueCommandLineLogging("Created: " + debug_base + "/raw_tiles", IO::Logging::NORMAL);
 		}
 	}
 }

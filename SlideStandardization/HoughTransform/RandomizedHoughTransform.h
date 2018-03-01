@@ -60,8 +60,7 @@ namespace HoughTransform
     {
 		public:
 			RandomizedHoughTransformParameters parameters;
-			size_t ellipses_found;
-			size_t ellipses_verified;
+
 			/// <summary>
 			/// Constructs the RandomizedHoughTransform based with standard parameters.
 			/// </summary>

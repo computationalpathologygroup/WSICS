@@ -4,5 +4,5 @@
 
 namespace ASAP::MiscFunctionality
 {
-	std::vector<uint32_t> CreateListOfRandomIntegers(size_t size);
+	std::vector<size_t> CreateListOfRandomIntegers(size_t size);
 }

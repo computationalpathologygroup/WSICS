@@ -14,8 +14,7 @@ typedef HE_Staining::HematoxylinMaskInformation HematoxylinMaskInformation;
 
 struct TrainingSampleInformation
 {
-	cv::Mat training_data_c_x;
-	cv::Mat training_data_c_y;
+	cv::Mat training_data_cx_cy;
 	cv::Mat training_data_density;
 	cv::Mat class_data;
 };
@@ -36,8 +35,7 @@ class PixelClassificationHE
 			const uint32_t min_level,
 			const float hema_percentile,
 			const float eosin_percentile,
-			const bool is_multiresolution_image,
-			const bool is_tiff);
+			const bool is_multiresolution_image);
 
 	private:
 		bool		m_consider_ink_;
@@ -47,6 +45,7 @@ class PixelClassificationHE
 		std::pair<HematoxylinMaskInformation, EosinMaskInformation> Create_HE_Masks_(
 			const HSD::HSD_Model& hsd_image,
 			const cv::Mat& background_mask,
+			const uint32_t tile_id,
 			const uint32_t max_training_size,
 			const float hema_percentile,
 			const float eosin_percentile,
@@ -60,8 +59,6 @@ class PixelClassificationHE
 		TrainingSampleInformation InsertTrainingData_(
 			const HSD::HSD_Model& hsd_image,
 			const ClassificationResults& classification_results,
-			const HematoxylinMaskInformation& hema_mask_info,
-			const EosinMaskInformation& eosin_mask_info,
 			TrainingSampleInformation& sample_information,
 			size_t& total_hema_count,
 			size_t& total_eosin_count,
