@@ -117,10 +117,11 @@ namespace TransformCxCyDensity
 		eigen_input.at<float>(1, 0) = covariance_matrix.at<float>(1, 0);
 		eigen_input.at<float>(1, 1) = covariance_matrix.at<float>(1, 1);
 
-		cv::PCA pca(eigen_input, cv::Mat(), CV_PCA_DATA_AS_ROW, 0);
-		cv::Mat eigen_vector(-pca.eigenvectors);
+		cv::Mat eigen_values;
+		cv::Mat eigen_vector;
+		cv::eigen(eigen_input, eigen_values, eigen_vector);
 
-		float angle = std::acos(eigen_vector.at<float>(1, 1));
+		float angle = std::acos(-eigen_vector.at<float>(1, 1));
 		if (angle <= M_PI / 2)
 		{
 			angle = M_PI - angle;
@@ -168,7 +169,7 @@ namespace TransformCxCyDensity
 		cv::Mat all_tissue_classes_uchar;
 		all_tissue_classes.convertTo(all_tissue_classes_uchar, CV_8UC1);
 
-		size_t full_size = all_tissue_classes.rows * all_tissue_classes.cols;
+		size_t full_size = all_tissue_classes_uchar.rows * all_tissue_classes_uchar.cols;
 		cv::Mat hema_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
 		cv::Mat eosin_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
 		cv::Mat background_mask = cv::Mat::zeros(full_size, 1, CV_8UC1);
@@ -177,11 +178,11 @@ namespace TransformCxCyDensity
 		size_t eosin_count = 0;
 		size_t background_count = 0;
 
-		for (size_t row = 0; row < all_tissue_classes.rows; ++row)
+		for (size_t row = 0; row < all_tissue_classes_uchar.rows; ++row)
 		{
-			for (size_t col = 0; col < all_tissue_classes.cols; ++col)
+			for (size_t col = 0; col < all_tissue_classes_uchar.cols; ++col)
 			{
-				switch (all_tissue_classes.at<uchar>(row, col))
+				switch (all_tissue_classes_uchar.at<uchar>(row, col))
 				{
 					case 1: hema_mask.at<uchar>(hema_count, 0)				= 1; ++hema_count;			break;
 					case 2: eosin_mask.at<uchar>(eosin_count, 0)			= 1; ++eosin_count;			break;

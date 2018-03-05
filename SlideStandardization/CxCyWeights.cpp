@@ -32,7 +32,7 @@ namespace CxCyWeights
 			{
 				samples.at<float>(current_sample, 0) = c_x.at<float>(row, col);
 				samples.at<float>(current_sample, 1) = c_y.at<float>(row, col);
-				samples.at<float>(current_sample, 2) = density.at<float>(row, col);
+				samples.at<float>(current_sample, 2) = density.at<float>(row, col) / 2;
 
 				switch ((uchar)class_data.at<float>(row, col))
 				{
@@ -59,7 +59,7 @@ namespace CxCyWeights
 		{
 			classifier_input.at<float>(row, 0) = c_x.at<float>(row, 0);
 			classifier_input.at<float>(row, 1) = c_y.at<float>(row, 0);
-			classifier_input.at<float>(row, 2) = density.at<float>(row, 0);
+			classifier_input.at<float>(row, 2) = density.at<float>(row, 0) / 2;
 		}
 
 		cv::Mat output;

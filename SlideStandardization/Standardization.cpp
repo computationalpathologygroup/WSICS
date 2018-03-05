@@ -28,7 +28,23 @@
 #include "NormalizedLutCreation.h"
 
 // TODO: Refactor and restructure into smaller chunks.
+cv::Mat matread(const std::string& filename)
+{
+	std::ifstream fs(filename, std::fstream::binary);
 
+	// Header
+	int rows, cols, type, channels;
+	fs.read((char*)&rows, sizeof(int));         // rows
+	fs.read((char*)&cols, sizeof(int));         // cols
+	fs.read((char*)&type, sizeof(int));         // type
+	fs.read((char*)&channels, sizeof(int));     // channels
+
+												// Data
+	cv::Mat mat(rows, cols, type);
+	fs.read((char*)mat.data, CV_ELEM_SIZE(type) * rows * cols);
+
+	return mat;
+}
 
 Standardization::Standardization(std::string log_directory,	const boost::filesystem::path& template_file, const uint32_t min_training_size, const uint32_t max_training_size)
 	: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(), m_min_training_size_(min_training_size), m_max_training_size_(max_training_size), m_consider_ink_(false), m_is_multiresolution_image_(false)
@@ -109,7 +125,7 @@ void Standardization::Normalize(
 	//	Generating LUT Raw Matrix
 	//===========================================================================
 	logging_instance->QueueFileLogging("Defining LUT\nLUT HSD", m_log_file_id_, IO::Logging::NORMAL);
-	HSD::HSD_Model hsd_lut(CalculateLutRawMat_(), HSD::BGR);
+	HSD::HSD_Model hsd_lut(CalculateLutRawMat_(), HSD::RGB);
 
 	logging_instance->QueueFileLogging("LUT BG calculation", m_log_file_id_, IO::Logging::NORMAL);
 	cv::Mat background_mask(HSD::BackgroundMask::CreateBackgroundMask(hsd_lut, 0.24, 0.22));
@@ -117,10 +133,16 @@ void Standardization::Normalize(
 	//===========================================================================
 	//	Normalizes the LUT.
 	//===========================================================================
-	cv::Mat new_cx(cv::imread("D:/cx.exr", -1));
-	cv::Mat new_cy(cv::imread("D:/cy.exr", -1));
-	cv::Mat new_density(cv::imread("D:/density.exr", -1));
-	cv::Mat new_classes(cv::imread("D:/classes.exr", -1));
+	
+
+	cv::Mat new_cx(matread("D:/cx_new.bin"));
+	cv::Mat new_cy(matread("D:/cy_new.bin"));
+	cv::Mat new_density(matread("D:/density_new.bin"));
+	cv::Mat new_classes(matread("D:/classes_new.bin"));
+
+//	cv::Mat new_cy(cv::imread("D:/cy.exr", -1));
+//	cv::Mat new_density(cv::imread("D:/density.exr", -1));
+//	cv::Mat new_classes(cv::imread("D:/classes.exr", -1));
 
 	new_cx.convertTo(new_cx, CV_32FC1);
 	new_cy.convertTo(new_cy, CV_32FC1);

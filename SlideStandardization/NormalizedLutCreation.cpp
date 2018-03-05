@@ -7,6 +7,26 @@
 #include "HSD/Transformations.h"
 #include "IO/Logging/LogHandler.h"
 
+#include <fstream>
+
+cv::Mat matread2(const std::string& filename)
+{
+	std::ifstream fs(filename, std::fstream::binary);
+
+	// Header
+	int rows, cols, type, channels;
+	fs.read((char*)&rows, sizeof(int));         // rows
+	fs.read((char*)&cols, sizeof(int));         // cols
+	fs.read((char*)&type, sizeof(int));         // type
+	fs.read((char*)&channels, sizeof(int));     // channels
+
+												// Data
+	cv::Mat mat(rows, cols, type);
+	fs.read((char*)mat.data, CV_ELEM_SIZE(type) * rows * cols);
+
+	return mat;
+}
+
 // TODO: Refactor and restructure into smaller chunks.
 
 cv::Mat NormalizedLutCreation::Create(
@@ -117,12 +137,24 @@ cv::Mat NormalizedLutCreation::Create(
 	logging_instance->QueueFileLogging("Density transformation...", log_file_id, IO::Logging::NORMAL);
 	cv::Mat density_scaling(TransformCxCyDensity::DensityNormalizationThreeScales(calculated_transform_parameters.class_density_ranges, lut_transform_parameters.class_density_ranges, lut_hsd.density, weights));
 
+	cv::Mat density_scaling_new(matread2("D:/WSIs/test/T11-03904_A1_DENSITY.bin"));
+	cv::Mat norm_cx_new(matread2("D:/WSIs/test/T11-03904_A1_CX_NORM.bin"));
+	cv::Mat norm_cy_new(matread2("D:/WSIs/test/T11-03904_A1_CY_NORM.bin"));
+	
+	density_scaling_new.convertTo(density_scaling_new, CV_32FC1);
+	norm_cx_new.convertTo(norm_cx_new, CV_32FC1);
+	norm_cy_new.convertTo(norm_cy_new, CV_32FC1);
+
+	cv::Mat norm_cx_cy;
+	cv::hconcat(std::vector<cv::Mat>{norm_cx_new, norm_cy_new }, norm_cx_cy);
+
 	//===========================================================================
 	//	HSD reverse
 	//===========================================================================
 	logging_instance->QueueFileLogging("HSD reverse...", log_file_id, IO::Logging::NORMAL);
 	cv::Mat normalized_image_rgb;
 	HSD::CxCyToRGB(cx_cy_normalized, normalized_image_rgb, density_scaling);
+	//HSD::CxCyToRGB(norm_cx_cy, normalized_image_rgb, density_scaling_new);
 
 	return normalized_image_rgb;
 }
@@ -131,17 +163,17 @@ TrainingSampleInformation NormalizedLutCreation::DownsampleforNbClassifier(const
 {
 	TrainingSampleInformation sample_info_downsampled
 	{
-		cv::Mat::zeros(max_training_size / downsample, 2, CV_32FC1),
+		cv::Mat::zeros(max_training_size / downsample, 2, CV_32FC2),
 		cv::Mat::zeros(max_training_size / downsample, 1, CV_32FC1),
 		cv::Mat::zeros(max_training_size / downsample, 1, CV_32FC1),
 	};
 
-	for (size_t downsampled_pixel = 0; downsampled_pixel < training_samples.class_data.rows / downsample; ++downsampled_pixel)
+	for (size_t pixel = 0; pixel < training_samples.class_data.rows / downsample; ++pixel)
 	{
-		sample_info_downsampled.training_data_cx_cy.at<float>(downsampled_pixel, 0) = training_samples.training_data_cx_cy.at<float>(downsampled_pixel * downsample, 0);
-		sample_info_downsampled.training_data_cx_cy.at<float>(downsampled_pixel, 1) = training_samples.training_data_cx_cy.at<float>(downsampled_pixel * downsample, 1);
-		sample_info_downsampled.training_data_density.at<float>(downsampled_pixel, 0) = training_samples.training_data_density.at<float>(downsampled_pixel * downsample, 0);
-		sample_info_downsampled.class_data.at<float>(downsampled_pixel, 0) = training_samples.class_data.at<float>(downsampled_pixel * downsample, 0);
+		sample_info_downsampled.training_data_cx_cy.at<float>(pixel, 0)		= training_samples.training_data_cx_cy.at<float>(pixel * downsample, 0);
+		sample_info_downsampled.training_data_cx_cy.at<float>(pixel, 1)		= training_samples.training_data_cx_cy.at<float>(pixel * downsample, 1);
+		sample_info_downsampled.training_data_density.at<float>(pixel, 0)	= training_samples.training_data_density.at<float>(pixel * downsample, 0);
+		sample_info_downsampled.class_data.at<float>(pixel, 0)				= training_samples.class_data.at<float>(pixel * downsample, 0);
 	}
 
 	return sample_info_downsampled;
