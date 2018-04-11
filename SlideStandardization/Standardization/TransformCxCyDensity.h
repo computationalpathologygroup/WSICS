@@ -4,7 +4,7 @@
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include "HSD/BackgroundMask.h"
+#include "../HSD/BackgroundMask.h"
 #include "CxCyWeights.h"
 
 struct MedianPercentileValues

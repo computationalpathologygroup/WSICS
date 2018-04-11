@@ -3,8 +3,8 @@
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-#include "HoughTransform/RandomizedHoughTransform.h"
-#include "HSD/HSD_Model.h"
+#include "../HoughTransform/RandomizedHoughTransform.h"
+#include "../HSD/HSD_Model.h"
 
 namespace HE_Staining
 {

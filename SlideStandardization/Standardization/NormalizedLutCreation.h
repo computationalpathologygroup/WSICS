@@ -13,7 +13,7 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 
-#include "HSD/HSD_Model.h"
+#include "../HSD/HSD_Model.h"
 #include "TransformCxCyDensity.h"
 #include "PixelClassificationHE.h"
 
@@ -41,21 +41,7 @@ namespace NormalizedLutCreation
 		const size_t log_file_id);
 
 	TrainingSampleInformation DownsampleforNbClassifier(const TrainingSampleInformation& training_samples, const uint32_t downsample, const uint32_t max_training_size);
-
-	TransformationParameters			HandleParameterization(const TransformationParameters& calc_params, const boost::filesystem::path& template_file, const boost::filesystem::path& template_output, const size_t log_file_id);
-	void									PrintParameters(std::ofstream& output_stream, const TransformationParameters& transform_param, const bool write_csv);
-	TransformationParameters				ReadParameters(std::istream &input);
-
-
-	TrainingSampleInformation CollectTrainingSamples(
-		const boost::filesystem::path& input_file,
-		uint32_t tile_size,
-		MultiResolutionImage& tiled_image,
-		cv::Mat static_image,
-		const std::vector<cv::Point>& tile_coordinates,
-		const std::vector<double>& spacing,
-		const uint32_t min_level);
-
+	TransformationParameters HandleParameterization(const TransformationParameters& calc_params, const boost::filesystem::path& template_file, const boost::filesystem::path& template_output, const size_t log_file_id);
 	std::vector<cv::Mat> InitializeTransformation(
 		const cv::Mat& training_cx_cy,
 		const cv::Mat& lut_cx_cy,
@@ -64,5 +50,9 @@ namespace NormalizedLutCreation
 		const TransformationParameters& params,
 		const TransformationParameters& transform_params,
 		const ClassPixelIndices& class_pixel_indices);
+	void PrintParameters(std::ofstream& output_stream, const TransformationParameters& transform_param, const bool write_csv);
+	TransformationParameters ReadParameters(std::istream &input);
+
+
 };
 #endif // __NORMALIZED_LUT_CREATION_H__

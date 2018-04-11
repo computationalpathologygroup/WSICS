@@ -2,39 +2,38 @@
 
 #include <unordered_set>
 
-#include "Standardization.h"
-
 SlideStandardizationCLI::SlideStandardizationCLI(void)
 {
 }
 
 void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_options::variables_map& variables)
 {
+	
+
+	// Configure the parameters.
+	StandardizationParameters parameters(Standardization::GetStandardParameters());
 	std::vector<boost::filesystem::path> files_to_process;
-	uint32_t max_training_size;
-	uint32_t min_training_size;
 	std::string prefix;
 	std::string postfix;
 	boost::filesystem::path output_path;
 	boost::filesystem::path template_input;
 	boost::filesystem::path template_output;
 	boost::filesystem::path debug_dir;
-	bool contains_ink;
 	bool input_is_directory;
 
 	AcquireAndSanitizeInput_(
 		variables,
+		parameters,
 		files_to_process,
-		max_training_size,
-		min_training_size,
 		prefix,
 		postfix,
 		output_path,
 		template_input,
 		template_output,
 		debug_dir,
-		contains_ink,
 		input_is_directory);
+
+
 
 	bool succesfully_created_directories = true;
 	try
@@ -57,7 +56,7 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 			log_path = output_path.parent_path().string() + "/log.txt";
 		}
 
-		Standardization slide_standardizer(log_path, template_input, min_training_size, max_training_size);
+		Standardization slide_standardizer(log_path, template_input, parameters);
 		for (const boost::filesystem::path& filepath : files_to_process)
 		{
 			std::string extension(filepath.extension().string());
@@ -78,7 +77,7 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 				template_output_file	= template_output.string() + ".csv";
 			}
 
-			slide_standardizer.Normalize(filepath, output_file, template_output_file, file_debug_dir, contains_ink);
+			slide_standardizer.Normalize(filepath, output_file, template_output_file, file_debug_dir);
 		}
 	}
 }
@@ -86,15 +85,18 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 void SlideStandardizationCLI::AddModuleOptions$(boost::program_options::options_description& options)
 {
 	options.add_options()
-		("input,i",			boost::program_options::value<std::string>()->default_value(""),					"Path to an image file or image directory.")
-		("output,o",		boost::program_options::value<std::string>()->default_value(""),					"Path to the output file. If set, outputs the LUT and normalized WSI. Considered as filepath if input points towards a file, otherwise considered as output directory.")
-		("max_training",	boost::program_options::value<uint32_t>()->default_value(20000000),					"The maximum amount of pixels used for training the classifier.")
-		("min_training",	boost::program_options::value<uint32_t>()->default_value(200000),					"The minimum amount of pixels used for training the classifier.")
-		("prefix",			boost::program_options::value<std::string>()->default_value(""),					"The prefix to use for the output files. Only applied when the input path points towards a directory.")
-		("postfix",			boost::program_options::value<std::string>()->default_value(""),					"The postfix to use for the output files. Only applied when the input path points towards a directory.")
-		("template_input",	boost::program_options::value<std::string>()->default_value(""),					"If set, applies an existing template for the normalization.")
-		("template_output", boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template. Considered as filepath if input points towards a file, otherwise considered as output directory.")
-		("ink,k",			boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Warning: Only use if ink is present on the slide. Reduces the chance of selecting a patch containing ink.");
+		("input,i",				boost::program_options::value<std::string>()->default_value(""),					"Path to an image file or image directory.")
+		("output,o",			boost::program_options::value<std::string>()->default_value(""),					"Path to the output file. If set, outputs the LUT and normalized WSI. Considered as filepath if input points towards a file, otherwise considered as output directory.")
+		("max_training",		boost::program_options::value<uint32_t>()->default_value(20000000),					"The maximum amount of pixels used for training the classifier.")
+		("min_training",		boost::program_options::value<uint32_t>()->default_value(200000),					"The minimum amount of pixels used for training the classifier.")
+		("prefix",				boost::program_options::value<std::string>()->default_value(""),					"The prefix to use for the output files. Only applied when the input path points towards a directory.")
+		("postfix",				boost::program_options::value<std::string>()->default_value(""),					"The postfix to use for the output files. Only applied when the input path points towards a directory.")
+		("template_input",		boost::program_options::value<std::string>()->default_value(""),					"If set, applies an existing template for the normalization.")
+		("template_output",		boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template. Considered as filepath if input points towards a file, otherwise considered as output directory.")
+		("ink,k",				boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Warning: Only use if ink is present on the slide. Reduces the chance of selecting a patch containing ink.")
+		("hema_percentile",		boost::program_options::value<float>()->default_value(0.1f),						"Defines how conservative the algorithm is with its blue pixel classification.")
+		("eosin_percentile",	boost::program_options::value<float>()->default_value(0.2f),						"Defines how conservative the algorithm is with its red pixel classification.")
+		("min_ellipses",		boost::program_options::value<int32_t>()->default_value(false),						"Allows for a custom value for the amount of ellipses on a tile.");
 }
 
 void SlideStandardizationCLI::Setup$(void)
@@ -103,20 +105,18 @@ void SlideStandardizationCLI::Setup$(void)
 
 void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 	const boost::program_options::variables_map& variables,
+	StandardizationParameters& parameters,
 	std::vector<boost::filesystem::path>& files_to_process,
-	uint32_t& max_training_size,
-	uint32_t& min_training_size,
 	std::string& prefix,
 	std::string& postfix,
 	boost::filesystem::path& output_path,
 	boost::filesystem::path& template_input,
 	boost::filesystem::path& template_output,
 	boost::filesystem::path& debug_dir,
-	bool& contains_ink,
 	bool& input_is_directory)
 {
-	contains_ink		= variables["ink"].as<bool>();
-	input_is_directory	= boost::filesystem::is_directory(variables["input"].as<std::string>());
+	parameters.consider_ink	= variables["ink"].as<bool>();
+	input_is_directory		= boost::filesystem::is_directory(variables["input"].as<std::string>());
 
 	try
 	{
@@ -132,18 +132,18 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 		throw std::runtime_error("Unable access or acquire any valid files from the input path.");
 	}
 
-	max_training_size = variables["max_training"].as<uint32_t>();
-	min_training_size = variables["min_training"].as<uint32_t>();
+	parameters.max_training_size = variables["max_training"].as<uint32_t>();
+	parameters.min_training_size = variables["min_training"].as<uint32_t>();
 
-	if (max_training_size == 0)
+	if (parameters.max_training_size == 0)
 	{
 		throw std::runtime_error("The max training size requires a value greater than 0.");
 	}
-	else if (min_training_size > max_training_size)
+	else if (parameters.min_training_size > parameters.max_training_size)
 	{
-		uint32_t temp_min = min_training_size;
-		min_training_size = max_training_size;
-		max_training_size = temp_min;
+		uint32_t temp_min				= parameters.min_training_size;
+		parameters.min_training_size	= parameters.max_training_size;
+		parameters.max_training_size	= temp_min;
 	}
 
 	prefix	= variables["prefix"].as<std::string>();
@@ -180,6 +180,19 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 	if (!template_output.empty() && template_output.has_extension())
 	{
 		template_output = template_output.parent_path().append("/" + template_output.stem().string());
+	}
+
+	parameters.hema_percentile	= variables["hema_percentile"].as<float>();
+	parameters.eosin_percentile = variables["eosin_percentile"].as<float>();
+	parameters.minimum_ellipses = variables["min_ellipses"].as<int32_t>();
+
+	if (parameters.hema_percentile > 1.0f)
+	{
+		parameters.hema_percentile = 1.0f;
+	}
+	if (parameters.eosin_percentile > 1.0f)
+	{
+		parameters.eosin_percentile = 1.0f;
 	}
 }
 

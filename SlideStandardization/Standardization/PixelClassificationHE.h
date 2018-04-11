@@ -3,10 +3,11 @@
 
 #include <opencv2/core/core.hpp>
 
-#include "HE_Staining/HE_Classifier.h"
-#include "HSD/HSD_Model.h"
+#include "../HE_Staining/HE_Classifier.h"
+#include "../HSD/HSD_Model.h"
 #include "MaskGeneration.h"
 #include "multiresolutionimageinterface/MultiResolutionImage.h"
+#include "StandardizationParameters.h"
 
 typedef HE_Staining::ClassificationResults ClassificationResults;
 typedef HE_Staining::EosinMaskInformation EosinMaskInformation;
@@ -27,14 +28,11 @@ class PixelClassificationHE
 		TrainingSampleInformation GenerateCxCyDSamples(
 			MultiResolutionImage& tiled_image,
 			const cv::Mat& static_image,
+			const StandardizationParameters& parameters,
 			const std::vector<cv::Point>& tile_coordinates,
 			const std::vector<double>& spacing,
 			const uint32_t tile_size,
-			const uint32_t min_training_size,
-			const uint32_t max_training_size,
 			const uint32_t min_level,
-			const float hema_percentile,
-			const float eosin_percentile,
 			const bool is_multiresolution_image);
 
 	private:
@@ -47,6 +45,7 @@ class PixelClassificationHE
 			const cv::Mat& background_mask,
 			const uint32_t tile_id,
 			const uint32_t max_training_size,
+			const int32_t min_ellipses,
 			const float hema_percentile,
 			const float eosin_percentile,
 			const std::vector<double>& spacing,

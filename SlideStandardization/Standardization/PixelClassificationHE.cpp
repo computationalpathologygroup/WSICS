@@ -1,12 +1,12 @@
 #include "PixelClassificationHE.h"
 
 #include <boost\filesystem.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2\highgui.hpp>
 
-#include "HSD/BackgroundMask.h"
-#include "IO/Logging/LogHandler.h"
-#include "LevelReading.h"
-#include "MiscFunctionality.h"
+#include "../HSD/BackgroundMask.h"
+#include "../IO/Logging/LogHandler.h"
+#include "../Misc/LevelReading.h"
+#include "../Misc/MiscFunctionality.h"
 
 // TODO: Improve structure and refactor InsertTrainingData_
 
@@ -17,31 +17,33 @@ PixelClassificationHE::PixelClassificationHE(const bool consider_ink, const size
 TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 	MultiResolutionImage& tiled_image,
 	const cv::Mat& static_image,
+	const StandardizationParameters& parameters,
 	const std::vector<cv::Point>& tile_coordinates,
 	const std::vector<double>& spacing,
 	const uint32_t tile_size,
-	const uint32_t min_training_size,
-	const uint32_t max_training_size,
 	const uint32_t min_level,
-	const float hema_percentile,
-	const float eosin_percentile,
 	const bool is_multiresolution_image)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
-	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from the WSI: " + std::to_string(max_training_size), IO::Logging::NORMAL);
-	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from each patch: " + std::to_string(min_training_size), IO::Logging::NORMAL);
+	uint32_t min_training_size = 0;
+	if (is_multiresolution_image)
+	{
+		min_training_size = parameters.min_training_size;
+	}
+
+	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from the WSI: " + std::to_string(parameters.max_training_size), IO::Logging::NORMAL);
+	logging_instance->QueueCommandLineLogging("Minimum number of samples to take from each patch: " + std::to_string(parameters.min_training_size), IO::Logging::NORMAL);
 
 	// Tracks the created samples for each class.
 	size_t total_hema_count = 0;
 	size_t total_eosin_count = 0;
 	size_t total_background_count = 0;
 
-	TrainingSampleInformation sample_information{ cv::Mat::zeros(max_training_size, 2, CV_32FC1), cv::Mat::zeros(max_training_size, 1, CV_32FC1), cv::Mat::zeros(max_training_size, 1, CV_32FC1) };
+	TrainingSampleInformation sample_information{ cv::Mat::zeros(parameters.max_training_size, 2, CV_32FC1), cv::Mat::zeros(parameters.max_training_size, 1, CV_32FC1), cv::Mat::zeros(parameters.max_training_size, 1, CV_32FC1) };
 
 	size_t selected_images_count = 0;
 	std::vector<size_t> random_numbers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
-	random_numbers[0] = 59; // TODO: Remove
 	for (size_t current_tile = 0; current_tile < tile_coordinates.size(); ++current_tile)
 	{
 		logging_instance->QueueCommandLineLogging(std::to_string(current_tile + 1) + " images taken as examples!", IO::Logging::NORMAL);
@@ -58,13 +60,11 @@ TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 
 		cv::Mat raw_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
 		LevelReading::ArrayToMatrix(data, raw_image, false);
-
 		if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
 		{
 			std::string original_name(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_raw.tif");
 			cv::imwrite(original_name, raw_image);
 		}
-
 		HSD::HSD_Model hsd_image = is_multiresolution_image ? HSD::HSD_Model(raw_image, HSD::BGR) : HSD::HSD_Model(static_image, HSD::BGR);
 
 		//===========================================================================
@@ -80,8 +80,9 @@ TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 			background_mask,
 			random_numbers[current_tile],
 			min_training_size,
-			hema_percentile,
-			eosin_percentile,
+			parameters.minimum_ellipses,
+			parameters.hema_percentile,
+			parameters.eosin_percentile,
 			spacing,
 			is_multiresolution_image));
 		HE_Staining::HE_Classifier he_classifier;
@@ -110,31 +111,31 @@ TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		//	TrainingSampleInformation& sample_information, const cv::Mat& cx_cy, const cv::Mat& density, const std::vector<cv::Point>& data_pixels, const size_t insertion_start, const size_t pixels_to_insert, const uint8_t class_id
 
 
-			InsertTrainingData_(hsd_image, classification_results, sample_information, total_hema_count, total_eosin_count, total_background_count, max_training_size);
+			InsertTrainingData_(hsd_image, classification_results, sample_information, total_hema_count, total_eosin_count, total_background_count, parameters.max_training_size);
 			++selected_images_count;
 
-			size_t hema_count_real = total_hema_count			> max_training_size * 9 / 20 ? hema_count_real = max_training_size * 9 / 20 : total_hema_count;
-			size_t eosin_count_real = total_eosin_count			> max_training_size * 9 / 20 ? eosin_count_real = max_training_size * 9 / 20 : total_eosin_count;
-			size_t background_count_real = total_background_count	> max_training_size * 1 / 10 ? background_count_real = max_training_size * 1 / 10 : total_background_count;
+			size_t hema_count_real = total_hema_count				> parameters.max_training_size * 9 / 20 ? hema_count_real		= parameters.max_training_size * 9 / 20 : total_hema_count;
+			size_t eosin_count_real = total_eosin_count				> parameters.max_training_size * 9 / 20 ? eosin_count_real		= parameters.max_training_size * 9 / 20 : total_eosin_count;
+			size_t background_count_real = total_background_count	> parameters.max_training_size * 1 / 10 ? background_count_real	= parameters.max_training_size * 1 / 10 : total_background_count;
 
-			logging_instance->QueueCommandLineLogging(std::to_string(hema_count_real + eosin_count_real + background_count_real) + " training sets are filled, out of " + std::to_string(max_training_size) + " required.",	IO::Logging::NORMAL);
-			logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(max_training_size),	m_log_file_id_,	IO::Logging::NORMAL);
+			logging_instance->QueueCommandLineLogging(std::to_string(hema_count_real + eosin_count_real + background_count_real) + " training sets are filled, out of " + std::to_string(parameters.max_training_size) + " required.",	IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(parameters.max_training_size),	m_log_file_id_,	IO::Logging::NORMAL);
 			logging_instance->QueueFileLogging("Hema: " + std::to_string(hema_count_real) + ", Eos: " + std::to_string(eosin_count_real) + ", BG: " + std::to_string(background_count_real), m_log_file_id_, IO::Logging::NORMAL);
 		}
 
-		if (total_hema_count >= max_training_size * 9 / 20 && total_eosin_count >= max_training_size * 9 / 20 && total_background_count >= max_training_size / 10)
+		if (total_hema_count >= parameters.max_training_size * 9 / 20 && total_eosin_count >= parameters.max_training_size * 9 / 20 && total_background_count >= parameters.max_training_size / 10)
 		{
 			break;
 		}
 	}
 
-	if ((total_hema_count < max_training_size * 9 / 20 || total_eosin_count < max_training_size * 9 / 20 || total_background_count < max_training_size / 10))
+	if ((total_hema_count < parameters.max_training_size * 9 / 20 || total_eosin_count < parameters.max_training_size * 9 / 20 || total_background_count < parameters.max_training_size / 10))
 	{
 		size_t non_zero_class_pixels = cv::countNonZero(sample_information.class_data);
 
 		if (non_zero_class_pixels != sample_information.class_data.rows && (selected_images_count > 2 || !min_training_size))
 		{
-			std::string log_text("Could not fill all the " + std::to_string(max_training_size) + " samples required. Continuing with what is left...");
+			std::string log_text("Could not fill all the " + std::to_string(parameters.max_training_size) + " samples required. Continuing with what is left...");
 			logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
 			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
@@ -150,6 +151,7 @@ std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationH
 	const cv::Mat& background_mask,
 	const uint32_t tile_id,
 	const uint32_t min_training_size,
+	const int32_t min_ellipses,
 	const float hema_percentile,
 	const float eosin_percentile,
 	const std::vector<double>& spacing,
@@ -188,7 +190,8 @@ std::pair<HematoxylinMaskInformation, EosinMaskInformation> PixelClassificationH
 
 	std::pair<HE_Staining::HematoxylinMaskInformation, HE_Staining::EosinMaskInformation> mask_acquisition_results;
 
-	double min_detected_ellipses = hsd_image.red_density.rows * hsd_image.red_density.rows * spacing[0] * spacing[0] * (150 / 247700.0);
+	// If the min_ellipses variable has been set as positive, prefer it over a calculation.
+	double min_detected_ellipses = min_ellipses > 0 ? hsd_image.red_density.rows * hsd_image.red_density.rows * spacing[0] * spacing[0] * (150 / 247700.0) : min_ellipses;
 	if (detected_ellipses.size() > min_detected_ellipses || (detected_ellipses.size() > 10 && !is_multiresolution))
 	{
 		logging_instance->QueueFileLogging("Passed step 1: Number of nuclei " + std::to_string(detected_ellipses.size()), m_log_file_id_, IO::Logging::NORMAL);

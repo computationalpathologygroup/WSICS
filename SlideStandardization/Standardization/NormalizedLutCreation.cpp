@@ -3,13 +3,11 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 
-#include "LevelReading.h"
-#include "HSD/Transformations.h"
-#include "IO/Logging/LogHandler.h"
+#include "../Misc/LevelReading.h"
+#include "../HSD/Transformations.h"
+#include "../IO/Logging/LogHandler.h"
 
-#include <fstream>
-
-cv::Mat matread2(const std::string& filename)
+cv::Mat matread(const std::string& filename)
 {
 	std::ifstream fs(filename, std::fstream::binary);
 
@@ -26,8 +24,6 @@ cv::Mat matread2(const std::string& filename)
 
 	return mat;
 }
-
-// TODO: Refactor and restructure into smaller chunks.
 
 cv::Mat NormalizedLutCreation::Create(
 	const bool generate_lut,
@@ -47,7 +43,7 @@ cv::Mat NormalizedLutCreation::Create(
 	logging_instance->QueueFileLogging("Defining variables for transformation...", log_file_id, IO::Logging::NORMAL);
 
 	ClassAnnotatedCxCy train_data(TransformCxCyDensity::ClassCxCyGenerator(training_samples.class_data, training_samples.training_data_cx_cy));
-	
+
 	// Rotates the cx_cy matrice per class and stores the parameters used.
 	cv::Mat cx_cy_hema_rotated;
 	cv::Mat cx_cy_eosin_rotated;
@@ -93,7 +89,9 @@ cv::Mat NormalizedLutCreation::Create(
 	logging_instance->QueueFileLogging("Generating weights with NB classifier", log_file_id, IO::Logging::NORMAL);
 	logging_instance->QueueCommandLineLogging("Generating the weights, Setting dataset of size " + std::to_string(sample_info_downsampled.class_data.rows * sample_info_downsampled.class_data.cols), IO::Logging::NORMAL);
 
-	cv::Ptr<cv::ml::NormalBayesClassifier> classifier(CxCyWeights::CreateNaiveBayesClassifier(sample_info_downsampled.training_data_cx_cy.col(0), sample_info_downsampled.training_data_cx_cy.col(1), sample_info_downsampled.training_data_density, sample_info_downsampled.class_data));
+	ML::NaiveBayesClassifier classifier(CxCyWeights::CreateNaiveBayesClassifier(sample_info_downsampled.training_data_cx_cy.col(0), sample_info_downsampled.training_data_cx_cy.col(1), sample_info_downsampled.training_data_density, sample_info_downsampled.class_data));
+	//auto classifier = CxCyWeights::CreateNaiveBayesClassifier2(sample_info_downsampled.training_data_cx_cy.col(0), sample_info_downsampled.training_data_cx_cy.col(1), sample_info_downsampled.training_data_density, sample_info_downsampled.class_data);
+	
 	logging_instance->QueueCommandLineLogging("Training Naive Bayes Classifier fininshed...", IO::Logging::NORMAL);
 
 	//===========================================================================
@@ -129,6 +127,7 @@ cv::Mat NormalizedLutCreation::Create(
 	//	Generating the weights for each class
 	//===========================================================================
 	logging_instance->QueueFileLogging("Applying weights...", log_file_id, IO::Logging::NORMAL);
+
 	cv::Mat cx_cy_normalized(CxCyWeights::ApplyWeights(lut_transformation_results[0], lut_transformation_results[1], lut_transformation_results[2], weights));
 
 	//===========================================================================
@@ -137,25 +136,12 @@ cv::Mat NormalizedLutCreation::Create(
 	logging_instance->QueueFileLogging("Density transformation...", log_file_id, IO::Logging::NORMAL);
 	cv::Mat density_scaling(TransformCxCyDensity::DensityNormalizationThreeScales(calculated_transform_parameters.class_density_ranges, lut_transform_parameters.class_density_ranges, lut_hsd.density, weights));
 
-	cv::Mat density_scaling_new(matread2("D:/WSIs/test/T11-03904_A1_DENSITY.bin"));
-	cv::Mat norm_cx_new(matread2("D:/WSIs/test/T11-03904_A1_CX_NORM.bin"));
-	cv::Mat norm_cy_new(matread2("D:/WSIs/test/T11-03904_A1_CY_NORM.bin"));
-	
-	density_scaling_new.convertTo(density_scaling_new, CV_32FC1);
-	norm_cx_new.convertTo(norm_cx_new, CV_32FC1);
-	norm_cy_new.convertTo(norm_cy_new, CV_32FC1);
-
-	cv::Mat norm_cx_cy;
-	cv::hconcat(std::vector<cv::Mat>{norm_cx_new, norm_cy_new }, norm_cx_cy);
-
 	//===========================================================================
 	//	HSD reverse
 	//===========================================================================
 	logging_instance->QueueFileLogging("HSD reverse...", log_file_id, IO::Logging::NORMAL);
 	cv::Mat normalized_image_rgb;
 	HSD::CxCyToRGB(cx_cy_normalized, normalized_image_rgb, density_scaling);
-	//HSD::CxCyToRGB(norm_cx_cy, normalized_image_rgb, density_scaling_new);
-
 	return normalized_image_rgb;
 }
 
@@ -163,7 +149,7 @@ TrainingSampleInformation NormalizedLutCreation::DownsampleforNbClassifier(const
 {
 	TrainingSampleInformation sample_info_downsampled
 	{
-		cv::Mat::zeros(max_training_size / downsample, 2, CV_32FC2),
+		cv::Mat::zeros(max_training_size / downsample, 2, CV_32FC1),
 		cv::Mat::zeros(max_training_size / downsample, 1, CV_32FC1),
 		cv::Mat::zeros(max_training_size / downsample, 1, CV_32FC1),
 	};
@@ -236,18 +222,17 @@ std::vector<cv::Mat> NormalizedLutCreation::InitializeTransformation(
 	const ClassPixelIndices& class_pixel_indices)
 {
 	// Rotates the combined matrices for the hema and eosin classes.
-	cv::Mat lut_hema_matrix;
-	cv::Mat lut_eosin_matrix;
+	cv::Mat lut_hema_matrix, lut_eosin_matrix;
 	TransformCxCyDensity::RotateCxCy(lut_cx_cy,
 										lut_hema_matrix,
-										transform_params.hema_rotation_params.x_median,
-										transform_params.hema_rotation_params.y_median,
-										transform_params.hema_rotation_params.angle);
+		params.hema_rotation_params.x_median,
+		params.hema_rotation_params.y_median,
+		params.hema_rotation_params.angle);
 	TransformCxCyDensity::RotateCxCy(lut_cx_cy,
 										lut_eosin_matrix,
-										transform_params.eosin_rotation_params.x_median,
-										transform_params.eosin_rotation_params.y_median,
-										transform_params.eosin_rotation_params.angle);
+		params.eosin_rotation_params.x_median,
+		params.eosin_rotation_params.y_median,
+		params.eosin_rotation_params.angle);
 
 	cv::Mat adjusted_hema_params(TransformCxCyDensity::AdjustParamaterMinMax(lut_hema_matrix, params.hema_scale_params));
 	cv::Mat adjusted_eosin_params(TransformCxCyDensity::AdjustParamaterMinMax(lut_eosin_matrix, params.eosin_scale_params));
@@ -256,8 +241,7 @@ std::vector<cv::Mat> NormalizedLutCreation::InitializeTransformation(
 	TransformCxCyDensity::ScaleCxCyLUT(lut_hema_matrix,	lut_hema_matrix, adjusted_hema_params, transform_params.hema_scale_params);
 	TransformCxCyDensity::ScaleCxCy(lut_eosin_matrix, lut_eosin_matrix,	adjusted_eosin_params, transform_params.eosin_scale_params);
 
-	cv::Mat hema_matrix;
-	cv::Mat eosin_matrix;
+	cv::Mat hema_matrix, eosin_matrix;
 	TransformCxCyDensity::ScaleCxCy(cx_cy_hema_rotated, hema_matrix, adjusted_hema_params, transform_params.hema_scale_params);
 	TransformCxCyDensity::ScaleCxCy(cx_cy_eosin_rotated, eosin_matrix, adjusted_eosin_params, transform_params.eosin_scale_params);
 
@@ -272,10 +256,8 @@ std::vector<cv::Mat> NormalizedLutCreation::InitializeTransformation(
 										transform_params.eosin_scale_params);
 										*/
 	// Reverses the rotation.
-	cv::Mat cx_cy_hema_rotated_back, cx_cy_eosin_rotated_back;
-
-	TransformCxCyDensity::RotateCxCyBack(hema_matrix, hema_matrix, params.hema_rotation_params.angle - M_PI);
-	TransformCxCyDensity::RotateCxCyBack(eosin_matrix, eosin_matrix, params.eosin_rotation_params.angle - M_PI);
+	TransformCxCyDensity::RotateCxCyBack(hema_matrix, hema_matrix, params.hema_rotation_params.angle);
+	TransformCxCyDensity::RotateCxCyBack(eosin_matrix, eosin_matrix, params.eosin_rotation_params.angle);
 
 	TransformCxCyDensity::RotateCxCyBack(lut_hema_matrix, lut_hema_matrix, transform_params.hema_rotation_params.angle - M_PI);
 	TransformCxCyDensity::RotateCxCyBack(lut_eosin_matrix, lut_eosin_matrix, transform_params.eosin_rotation_params.angle - M_PI);
@@ -284,7 +266,7 @@ std::vector<cv::Mat> NormalizedLutCreation::InitializeTransformation(
 	TransformCxCyDensity::TranslateCxCyBack(hema_matrix, lut_hema_matrix, lut_hema_matrix, class_pixel_indices.hema_indices, transform_params.hema_rotation_params.x_median, transform_params.hema_rotation_params.y_median);
 	TransformCxCyDensity::TranslateCxCyBack(eosin_matrix, lut_eosin_matrix, lut_eosin_matrix, class_pixel_indices.eosin_indices, transform_params.eosin_rotation_params.x_median, transform_params.eosin_rotation_params.y_median);
 	TransformCxCyDensity::TranslateCxCyBack(training_cx_cy, lut_cx_cy, lut_background_matrix, class_pixel_indices.background_indices, transform_params.background_rotation_params.x_median, transform_params.background_rotation_params.y_median);
-
+	
 	return { lut_hema_matrix, lut_eosin_matrix, lut_background_matrix };
 }
 
@@ -399,7 +381,6 @@ NormalizedLutCreation::TransformationParameters NormalizedLutCreation::ReadParam
 		parameters.eosin_scale_params.at<float>(i, 1)	= csv_parameters[6][i];
 	}
 
-	// TODO: Find out why pi is getting subtracted from the imported angle.
 	parameters.hema_rotation_params.angle		= csv_parameters[7][0];
 	parameters.eosin_rotation_params.angle		= csv_parameters[8][0];
 	parameters.background_rotation_params.angle = csv_parameters[9][0];

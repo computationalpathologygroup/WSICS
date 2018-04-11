@@ -13,25 +13,22 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Header Files\Classifier">
+      <UniqueIdentifier>{3c78ca04-ca6d-4bc8-8596-507f97964050}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Classifier">
+      <UniqueIdentifier>{d63c40e3-77b9-4d10-b7ec-b13aa2a3f706}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Standardization.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Classifier\Classifier.cpp">
+      <Filter>Source Files\Classifier</Filter>
     </ClCompile>
-    <ClCompile Include="TransformCxCyDensity.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Classifier\NaiveBayesClassifier.cpp">
+      <Filter>Source Files\Classifier</Filter>
     </ClCompile>
-    <ClCompile Include="BLOB_Operations\BLOB.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BLOB_Operations\BLOB_Operations.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="BLOB_Operations\BLOB_Window.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="HE_Staining\HE_Classifier.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="Classifier\NaiveBayesFeatureClassifier.cpp">
+      <Filter>Source Files\Classifier</Filter>
     </ClCompile>
     <ClCompile Include="HoughTransform\AveragedEllipseParameters.cpp">
       <Filter>Source Files</Filter>
@@ -75,49 +72,61 @@
     <ClCompile Include="IO\Logging\LogLevel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CxCyWeights.cpp">
+    <ClCompile Include="Misc\LevelReading.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="LevelReading.cpp">
+    <ClCompile Include="Misc\MiscFunctionality.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MaskGeneration.cpp">
+    <ClCompile Include="Misc\MiscMatrixOperations.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MiscFunctionality.cpp">
+    <ClCompile Include="Standardization\CxCyWeights.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="MiscMatrixOperations.cpp">
+    <ClCompile Include="Standardization\NormalizedLutCreation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PixelClassificationHE.cpp">
+    <ClCompile Include="Standardization\PixelClassificationHE.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Standardization\SlideStandardizationCLI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Standardization\Standardization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Standardization\TransformCxCyDensity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SlideStandardizationCLI.cpp">
+    <ClCompile Include="BLOB_Operations\BLOB.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="NormalizedLutCreation.cpp">
+    <ClCompile Include="BLOB_Operations\BLOB_Operations.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BLOB_Operations\BLOB_Window.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HE_Staining\HE_Classifier.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="HE_Staining\MaskGeneration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="TransformCxCyDensity.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Classifier\Classifier.h">
+      <Filter>Header Files\Classifier</Filter>
     </ClInclude>
-    <ClInclude Include="BLOB_Operations\BLOB.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Classifier\NaiveBayesClassifier.h">
+      <Filter>Header Files\Classifier</Filter>
     </ClInclude>
-    <ClInclude Include="BLOB_Operations\BLOB_Operations.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="BLOB_Operations\BLOB_Window.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="HE_Staining\HE_Classifier.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="Classifier\NaiveBayesFeatureClassifier.h">
+      <Filter>Header Files\Classifier</Filter>
     </ClInclude>
     <ClInclude Include="HoughTransform\AveragedEllipseParameters.h">
       <Filter>Header Files</Filter>
@@ -164,31 +173,49 @@
     <ClInclude Include="IO\Logging\LogLevel.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CxCyWeights.h">
+    <ClInclude Include="Misc\LevelReading.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="LevelReading.h">
+    <ClInclude Include="Misc\MiscFunctionality.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MaskGeneration.h">
+    <ClInclude Include="Misc\MiscMatrixOperations.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MiscFunctionality.h">
+    <ClInclude Include="Standardization\CxCyWeights.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="MiscMatrixOperations.h">
+    <ClInclude Include="Standardization\NormalizedLutCreation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PixelClassificationHE.h">
+    <ClInclude Include="Standardization\PixelClassificationHE.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SlideStandardizationCLI.h">
+    <ClInclude Include="Standardization\SlideStandardizationCLI.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Standardization.h">
+    <ClInclude Include="Standardization\Standardization.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="NormalizedLutCreation.h">
+    <ClInclude Include="Standardization\StandardizationParameters.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Standardization\TransformCxCyDensity.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BLOB_Operations\BLOB.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BLOB_Operations\BLOB_Operations.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BLOB_Operations\BLOB_Window.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HE_Staining\HE_Classifier.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HE_Staining\MaskGeneration.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -14,7 +14,7 @@
 #include <numeric>
 
 #include "../HSD/HSD_Model.h"
-#include "../MaskGeneration.h"
+#include "../HE_Staining/MaskGeneration.h"
 
 namespace HE_Staining
 {

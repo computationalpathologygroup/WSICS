@@ -4,7 +4,9 @@
 #include <math.h>
 #include <opencv2/core/core.hpp>
 
-#include "MiscMatrixOperations.h"
+#include <set>
+
+#include "../Misc/MiscMatrixOperations.h"
 
 namespace TransformCxCyDensity
 {
@@ -57,18 +59,15 @@ namespace TransformCxCyDensity
 
 	ClassAnnotatedCxCy ClassCxCyGenerator(const cv::Mat& all_tissue_classes, const cv::Mat& cx_cy_in)
 	{
-		cv::Mat all_tissue_classes_uchar;
-		all_tissue_classes.convertTo(all_tissue_classes_uchar, CV_8UC1);
-
 		// Points to each pixel value in turn assuming a CV_8UC1 greyscale image 
 		std::vector<size_t> hema_pixels;
 		std::vector<size_t> eosin_pixels;
 		std::vector<size_t> background_pixels;
-		for (size_t row = 0; row < all_tissue_classes_uchar.rows; ++row)
+		for (size_t row = 0; row < all_tissue_classes.rows; ++row)
 		{
-			for (size_t col = 0; col < all_tissue_classes_uchar.cols; ++col)
+			for (size_t col = 0; col < all_tissue_classes.cols; ++col)
 			{
-				switch (all_tissue_classes_uchar.at<uchar>(row, col))
+				switch ((int32_t)all_tissue_classes.at<float>(row, col))
 				{
 					case 1: hema_pixels.push_back(row);			break;
 					case 2: eosin_pixels.push_back(row);		break;
@@ -286,7 +285,7 @@ namespace TransformCxCyDensity
 			cx_cy.copyTo(output_matrix);
 		}
 
-		output_matrix.col(0) -= cy_median;
+		output_matrix.col(0) -= cx_median;
 		output_matrix.col(1) -= cy_median;
 
 		float theta = M_PI - angle;
@@ -364,19 +363,19 @@ namespace TransformCxCyDensity
 
 	void TranslateCxCyBack(const cv::Mat& cx_cy, const cv::Mat& cx_cy_lut, cv::Mat& output_matrix, const std::vector<cv::Point>& indices, const float transform_x_median, const float transform_y_median)
 	{
-		cv::Mat cx_cy_indices(cv::Mat::zeros(indices.size(), 2, CV_32FC1));
+		cv::Mat indice_values(cv::Mat::zeros(indices.size(), 2, CV_32FC1));
 		size_t counter = 0;
 		for (const cv::Point& index : indices)
 		{
-			cx_cy_indices.at<float>(counter, 0) = cx_cy.at<float>(index.y, 0);
-			cx_cy_indices.at<float>(counter, 1) = cx_cy.at<float>(index.y, 1);
+			indice_values.at<float>(counter, 0) = cx_cy.at<float>(index.y, 0);
+			indice_values.at<float>(counter, 1) = cx_cy.at<float>(index.y, 1);
 		}
 
 		cv::Mat sorted_cx_cy_indices;
-		cv::sortIdx(cx_cy_indices, sorted_cx_cy_indices, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
+		cv::sortIdx(indice_values, sorted_cx_cy_indices, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
 
-		float x_median = cx_cy_indices.at<float>(sorted_cx_cy_indices.at<int>(sorted_cx_cy_indices.rows * 0.50, 0), 0);
-		float y_median = cx_cy_indices.at<float>(sorted_cx_cy_indices.at<int>(sorted_cx_cy_indices.rows * 0.50, 1), 1);
+		float x_median = indice_values.at<float>(sorted_cx_cy_indices.at<int>(sorted_cx_cy_indices.rows * 0.50, 0), 0);
+		float y_median = indice_values.at<float>(sorted_cx_cy_indices.at<int>(sorted_cx_cy_indices.rows * 0.50, 1), 1);
 
 		if (cx_cy_lut.data != output_matrix.data)
 		{

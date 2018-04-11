@@ -5,7 +5,7 @@
 #include <math.h>
 #include <random>
 
-#include "MiscMatrixOperations.h"
+#include "../Misc/MiscMatrixOperations.h"
 
 namespace HE_Staining::MaskGeneration
 {

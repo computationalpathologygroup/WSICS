@@ -3,7 +3,8 @@
 
 #include <boost/filesystem.hpp>
 
-#include "IO/CommandLineInterface.h"
+#include "Standardization.h"
+#include "../IO/CommandLineInterface.h"
 
 /// <summary>
 /// Defines the CLI interaction required to use the Slide Standardization libraries.
@@ -39,16 +40,14 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 		/// <param name="variables">The variables gathered from the command line.</param>
 		void AcquireAndSanitizeInput_(
 			const boost::program_options::variables_map& variables,
+			StandardizationParameters& parameters,
 			std::vector<boost::filesystem::path>& files_to_process,
-			uint32_t& max_training_size,
-			uint32_t& min_training_size,
 			std::string& prefix,
 			std::string& postfix,
 			boost::filesystem::path& output_path,
 			boost::filesystem::path& template_input,
 			boost::filesystem::path& template_output,
 			boost::filesystem::path& debug_dir,
-			bool& contains_ink,
 			bool& input_is_directory);
 
 		void CreateDirectories_(

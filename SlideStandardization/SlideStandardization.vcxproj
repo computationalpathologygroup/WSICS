@@ -22,8 +22,11 @@
     <ClCompile Include="BLOB_Operations\BLOB.cpp" />
     <ClCompile Include="BLOB_Operations\BLOB_Operations.cpp" />
     <ClCompile Include="BLOB_Operations\BLOB_Window.cpp" />
-    <ClCompile Include="CxCyWeights.cpp" />
+    <ClCompile Include="Classifier\Classifier.cpp" />
+    <ClCompile Include="Classifier\NaiveBayesClassifier.cpp" />
+    <ClCompile Include="Classifier\NaiveBayesFeatureClassifier.cpp" />
     <ClCompile Include="HE_Staining\HE_Classifier.cpp" />
+    <ClCompile Include="HE_Staining\MaskGeneration.cpp" />
     <ClCompile Include="HoughTransform\AveragedEllipseParameters.cpp" />
     <ClCompile Include="HoughTransform\Ellipse.cpp" />
     <ClCompile Include="HoughTransform\Line.cpp" />
@@ -38,23 +41,26 @@
     <ClCompile Include="IO\CommandLineInterface.cpp" />
     <ClCompile Include="IO\Logging\LogHandler.cpp" />
     <ClCompile Include="IO\Logging\LogLevel.cpp" />
-    <ClCompile Include="LevelReading.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="MaskGeneration.cpp" />
-    <ClCompile Include="MiscFunctionality.cpp" />
-    <ClCompile Include="MiscMatrixOperations.cpp" />
-    <ClCompile Include="NormalizedLutCreation.cpp" />
-    <ClCompile Include="PixelClassificationHE.cpp" />
-    <ClCompile Include="SlideStandardizationCLI.cpp" />
-    <ClCompile Include="Standardization.cpp" />
-    <ClCompile Include="TransformCxCyDensity.cpp" />
+    <ClCompile Include="Misc\LevelReading.cpp" />
+    <ClCompile Include="Misc\MiscFunctionality.cpp" />
+    <ClCompile Include="Misc\MiscMatrixOperations.cpp" />
+    <ClCompile Include="Standardization\CxCyWeights.cpp" />
+    <ClCompile Include="Standardization\NormalizedLutCreation.cpp" />
+    <ClCompile Include="Standardization\PixelClassificationHE.cpp" />
+    <ClCompile Include="Standardization\SlideStandardizationCLI.cpp" />
+    <ClCompile Include="Standardization\Standardization.cpp" />
+    <ClCompile Include="Standardization\TransformCxCyDensity.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BLOB_Operations\BLOB.h" />
     <ClInclude Include="BLOB_Operations\BLOB_Operations.h" />
     <ClInclude Include="BLOB_Operations\BLOB_Window.h" />
-    <ClInclude Include="CxCyWeights.h" />
+    <ClInclude Include="Classifier\Classifier.h" />
+    <ClInclude Include="Classifier\NaiveBayesClassifier.h" />
+    <ClInclude Include="Classifier\NaiveBayesFeatureClassifier.h" />
     <ClInclude Include="HE_Staining\HE_Classifier.h" />
+    <ClInclude Include="HE_Staining\MaskGeneration.h" />
     <ClInclude Include="HoughTransform\AveragedEllipseParameters.h" />
     <ClInclude Include="HoughTransform\Ellipse.h" />
     <ClInclude Include="HoughTransform\IAccumulator.h" />
@@ -70,15 +76,16 @@
     <ClInclude Include="IO\CommandLineInterface.h" />
     <ClInclude Include="IO\Logging\LogHandler.h" />
     <ClInclude Include="IO\Logging\LogLevel.h" />
-    <ClInclude Include="LevelReading.h" />
-    <ClInclude Include="MaskGeneration.h" />
-    <ClInclude Include="MiscFunctionality.h" />
-    <ClInclude Include="MiscMatrixOperations.h" />
-    <ClInclude Include="NormalizedLutCreation.h" />
-    <ClInclude Include="PixelClassificationHE.h" />
-    <ClInclude Include="SlideStandardizationCLI.h" />
-    <ClInclude Include="Standardization.h" />
-    <ClInclude Include="TransformCxCyDensity.h" />
+    <ClInclude Include="Misc\LevelReading.h" />
+    <ClInclude Include="Misc\MiscFunctionality.h" />
+    <ClInclude Include="Misc\MiscMatrixOperations.h" />
+    <ClInclude Include="Standardization\CxCyWeights.h" />
+    <ClInclude Include="Standardization\NormalizedLutCreation.h" />
+    <ClInclude Include="Standardization\PixelClassificationHE.h" />
+    <ClInclude Include="Standardization\SlideStandardizationCLI.h" />
+    <ClInclude Include="Standardization\Standardization.h" />
+    <ClInclude Include="Standardization\StandardizationParameters.h" />
+    <ClInclude Include="Standardization\TransformCxCyDensity.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

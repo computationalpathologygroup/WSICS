@@ -1,74 +1,54 @@
 #include "Standardization.h"
 
 #include <boost/filesystem.hpp>
-
-#define _USE_MATH_DEFINES
-
 #include <stdexcept>
-
 #include <core/filetools.h>
-
-#include "HSD/BackgroundMask.h"
-#include "HSD/Transformations.h"
-
-#include "CxCyWeights.h"
-#include "LevelReading.h"
-#include "IO/Logging/LogHandler.h"
-
 
 #include "multiresolutionimageinterface/MultiResolutionImage.h"
 #include "multiresolutionimageinterface/MultiResolutionImageReader.h"
 #include "multiresolutionimageinterface/MultiResolutionImageWriter.h"
 #include "multiresolutionimageinterface/OpenSlideImageFactory.h"
 
-#include <math.h>
-
-#include "MiscFunctionality.h"
-
+#include "CxCyWeights.h"
 #include "NormalizedLutCreation.h"
+#include "../HSD/BackgroundMask.h"
+#include "../HSD/Transformations.h"
+#include "../IO/Logging/LogHandler.h"
+#include "../Misc/LevelReading.h"
+#include "../Misc/MiscFunctionality.h"
 
 // TODO: Refactor and restructure into smaller chunks.
-cv::Mat matread(const std::string& filename)
-{
-	std::ifstream fs(filename, std::fstream::binary);
 
-	// Header
-	int rows, cols, type, channels;
-	fs.read((char*)&rows, sizeof(int));         // rows
-	fs.read((char*)&cols, sizeof(int));         // cols
-	fs.read((char*)&type, sizeof(int));         // type
-	fs.read((char*)&channels, sizeof(int));     // channels
-
-												// Data
-	cv::Mat mat(rows, cols, type);
-	fs.read((char*)mat.data, CV_ELEM_SIZE(type) * rows * cols);
-
-	return mat;
-}
-
-Standardization::Standardization(std::string log_directory,	const boost::filesystem::path& template_file, const uint32_t min_training_size, const uint32_t max_training_size)
-	: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(), m_min_training_size_(min_training_size), m_max_training_size_(max_training_size), m_consider_ink_(false), m_is_multiresolution_image_(false)
+Standardization::Standardization(std::string log_directory,	const boost::filesystem::path& template_file)
+	: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(), m_parameters_(GetStandardParameters()), m_is_multiresolution_image_(false)
 {
 	this->SetLogDirectory(log_directory);
 }
 
+Standardization::Standardization(std::string log_directory, const boost::filesystem::path& template_file, const StandardizationParameters& parameters)
+	: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(), m_parameters_(parameters), m_is_multiresolution_image_(false)
+{
+	this->SetLogDirectory(log_directory);
+}
+
+StandardizationParameters Standardization::GetStandardParameters(void)
+{
+	return { -1, 200000, 20000000, 0.1f, 0.2f, false };
+}
 
 void Standardization::Normalize(
 	const boost::filesystem::path& input_file,
 	const boost::filesystem::path& output_file,
 	const boost::filesystem::path& template_output,
-	const boost::filesystem::path& debug_directory,
-	const bool consider_ink)
+	const boost::filesystem::path& debug_directory)
 {
 	//===========================================================================
 	//	Sets several execution variables.
 	//===========================================================================
 
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
-
 	m_debug_directory_	= debug_directory;
-	m_consider_ink_		= consider_ink;
-
+	
 	//===========================================================================
 	//	Reading the image:: Identifying the tiles containing tissue using multiple magnifications
 	//===========================================================================
@@ -125,39 +105,16 @@ void Standardization::Normalize(
 	//	Generating LUT Raw Matrix
 	//===========================================================================
 	logging_instance->QueueFileLogging("Defining LUT\nLUT HSD", m_log_file_id_, IO::Logging::NORMAL);
-	HSD::HSD_Model hsd_lut(CalculateLutRawMat_(), HSD::RGB);
+
+	HSD::HSD_Model lut_hsd(CalculateLutRawMat_(), HSD::BGR);
 
 	logging_instance->QueueFileLogging("LUT BG calculation", m_log_file_id_, IO::Logging::NORMAL);
-	cv::Mat background_mask(HSD::BackgroundMask::CreateBackgroundMask(hsd_lut, 0.24, 0.22));
+	cv::Mat background_mask(HSD::BackgroundMask::CreateBackgroundMask(lut_hsd, 0.24, 0.22));
 
 	//===========================================================================
 	//	Normalizes the LUT.
 	//===========================================================================
-	
-
-	cv::Mat new_cx(matread("D:/cx_new.bin"));
-	cv::Mat new_cy(matread("D:/cy_new.bin"));
-	cv::Mat new_density(matread("D:/density_new.bin"));
-	cv::Mat new_classes(matread("D:/classes_new.bin"));
-
-//	cv::Mat new_cy(cv::imread("D:/cy.exr", -1));
-//	cv::Mat new_density(cv::imread("D:/density.exr", -1));
-//	cv::Mat new_classes(cv::imread("D:/classes.exr", -1));
-
-	new_cx.convertTo(new_cx, CV_32FC1);
-	new_cy.convertTo(new_cy, CV_32FC1);
-	new_density.convertTo(new_density, CV_32FC1);
-	new_classes.convertTo(new_classes, CV_32FC1);
-
-	cv::Mat new_cx_cy;
-
-
-
-	cv::hconcat(std::vector<cv::Mat>{ new_cx, new_cy }, new_cx_cy);
-
-	TrainingSampleInformation new_training{ new_cx_cy, new_density, new_classes };
-
-	cv::Mat normalized_lut(NormalizedLutCreation::Create(!output_file.empty(), m_template_file_, template_output, hsd_lut, new_training, m_max_training_size_, m_log_file_id_));
+	cv::Mat normalized_lut(NormalizedLutCreation::Create(!output_file.empty(), m_template_file_, template_output, lut_hsd, training_samples, m_parameters_.max_training_size, m_log_file_id_));
 
 	//===========================================================================
 	//	Writing LUT image to disk
@@ -203,7 +160,6 @@ void Standardization::Normalize(
 	//	Cleans execution variables
 	//===========================================================================
 	m_debug_directory_	= "";
-	m_consider_ink_		= false;
 }
 
 void Standardization::SetLogDirectory(std::string& filepath)
@@ -255,31 +211,18 @@ TrainingSampleInformation Standardization::CollectTrainingSamples_(
 	logging_instance->QueueCommandLineLogging(log_text, IO::Logging::NORMAL);
 	logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
-	PixelClassificationHE pixel_classification_he(m_consider_ink_, m_log_file_id_, m_debug_directory_.string());
-	float hema_percentile = 0.1; // The higher the value, the more conservative the classifier becomes in picking up blue, so standardization will also be pinkish - breast 0.1
-	float eosin_percentile = 0.2;
+	PixelClassificationHE pixel_classification_he(m_parameters_.consider_ink, m_log_file_id_, m_debug_directory_.string());
 	tile_size = 2048;
 
-	uint32_t min_training_size = 0;
-	if (m_is_multiresolution_image_)
-	{
-		min_training_size = m_min_training_size_;
-	}
-
-	TrainingSampleInformation training_samples(pixel_classification_he.GenerateCxCyDSamples(
+	return pixel_classification_he.GenerateCxCyDSamples(
 		tiled_image,
 		static_image,
+		m_parameters_,
 		tile_coordinates,
 		spacing,
 		tile_size,
-		min_training_size,
-		m_max_training_size_,
 		min_level,
-		hema_percentile,
-		eosin_percentile,
-		m_is_multiresolution_image_));
-
-	return training_samples;
+		m_is_multiresolution_image_);
 }
 
 std::pair<bool, std::vector<double>> Standardization::GetResolutionTypeAndSpacing(MultiResolutionImage& tiled_image)
@@ -384,17 +327,16 @@ void Standardization::WriteNormalizedWSI_(const boost::filesystem::path& input_f
 	lut_green.convertTo(lut_green, CV_8UC1);
 	lut_red.convertTo(lut_red, CV_8UC1);
 
+	MultiResolutionImageReader reader;
+	MultiResolutionImage* tiled_image	= reader.open(input_file.string());
+	std::vector<size_t> dimensions		= tiled_image->getLevelDimensions(0);
+
 	MultiResolutionImageWriter image_writer;
 	image_writer.openFile(output_file.string());
 	image_writer.setTileSize(tile_size);
 	image_writer.setCompression(pathology::LZW);
 	image_writer.setDataType(pathology::UChar);
 	image_writer.setColorType(pathology::RGB);
-	image_writer.writeImageInformation(tile_size * 4, tile_size * 4);
-
-	MultiResolutionImageReader reader;
-	MultiResolutionImage* tiled_image	= reader.open(input_file.string());
-	std::vector<size_t> dimensions		= tiled_image->getLevelDimensions(0);
 	image_writer.writeImageInformation(dimensions[0], dimensions[1]);
 
 	uint64_t y_amount_of_tiles = std::ceil((float)dimensions[0] / (float)tile_size);
@@ -510,8 +452,6 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(
 	std::vector<size_t> random_integers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
 
 	size_t num_to_write = 0 > tile_coordinates.size() ? tile_coordinates.size() : 20;
-
-	num_to_write = tile_coordinates.size();
 	cv::Mat tile_image(cv::Mat::zeros(tile_size, tile_size, CV_8UC3));
 	for (size_t tile = 0; tile < num_to_write; ++tile)
 	{
@@ -543,15 +483,8 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(
 
 		cv::Mat slide_lut_image;
 		cv::merge(tiled_bgr, slide_lut_image);
-		
 		std::string filename_lut(output_directory.string() + "/" + "tile_" + std::to_string(random_integers[tile]) + "_normalized.tif");
-
 		logging_instance->QueueCommandLineLogging(filename_lut, IO::Logging::NORMAL);
-
-		cv::imwrite(output_directory.string() + "/" + std::to_string(tile) + "blue.tif", tiled_blue);
-		cv::imwrite(output_directory.string() + "/" + std::to_string(tile) + "green.tif", tiled_green);
-		cv::imwrite(output_directory.string() + "/" + std::to_string(tile) + "red.tif", tiled_red);
-
 		cv::imwrite(filename_lut, slide_lut_image);
 	}
 

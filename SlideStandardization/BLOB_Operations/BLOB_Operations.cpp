@@ -2,7 +2,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "../MiscMatrixOperations.h"
+#include "../Misc/MiscMatrixOperations.h"
 
 namespace ASAP::Image_Processing::BLOB_Operations
 {
