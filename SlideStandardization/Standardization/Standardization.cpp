@@ -33,7 +33,7 @@ Standardization::Standardization(std::string log_directory, const boost::filesys
 
 StandardizationParameters Standardization::GetStandardParameters(void)
 {
-	return { -1, 200000, 20000000, 0.1f, 0.2f, false };
+	return { -1, 200000, 20000000, 0.1f, 0.2f, 0.9f, false };
 }
 
 void Standardization::Normalize(
@@ -94,6 +94,11 @@ void Standardization::Normalize(
 		logging_instance->QueueCommandLineLogging("Deconvolving patch image.", IO::Logging::NORMAL);
 		static_image = cv::imread(input_file.string(), CV_LOAD_IMAGE_COLOR);
 		tile_coordinates.push_back({ 0, 0 });
+	}
+
+	if (tile_coordinates.size() == 0)
+	{
+		throw std::runtime_error("Unable to acquire tiles with tissue. (Try changing the background threshold parameter)");
 	}
 
 	TrainingSampleInformation training_samples(CollectTrainingSamples_(input_file, tile_size, *tiled_image, static_image, tile_coordinates, spacing, min_level));
@@ -271,7 +276,7 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 	// Attempts to acquire the tile coordinates for the lowest level / highest magnification.
 	std::vector<size_t> dimensions		= tiled_image.getLevelDimensions(number_of_levels - 1);
 	uint32_t skip_factor				= 1;
-	float background_tissue_threshold	= 0.9;
+	float background_tissue_threshold	= m_parameters_.background_threshold;
 	uint32_t level_scale_difference		= 1;
 
 	std::vector<cv::Point> tile_coordinates;
@@ -450,8 +455,8 @@ void Standardization::WriteSampleNormalizedImagesForTesting_(
 	lut_blue.convertTo(lut_blue, CV_8UC1);
 
 	std::vector<size_t> random_integers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
-
-	size_t num_to_write = 0 > tile_coordinates.size() ? tile_coordinates.size() : 20;
+	
+	size_t num_to_write = 20 > tile_coordinates.size() ? tile_coordinates.size() : 20;
 	cv::Mat tile_image(cv::Mat::zeros(tile_size, tile_size, CV_8UC3));
 	for (size_t tile = 0; tile < num_to_write; ++tile)
 	{

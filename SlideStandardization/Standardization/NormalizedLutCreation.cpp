@@ -90,8 +90,7 @@ cv::Mat NormalizedLutCreation::Create(
 	logging_instance->QueueCommandLineLogging("Generating the weights, Setting dataset of size " + std::to_string(sample_info_downsampled.class_data.rows * sample_info_downsampled.class_data.cols), IO::Logging::NORMAL);
 
 	ML::NaiveBayesClassifier classifier(CxCyWeights::CreateNaiveBayesClassifier(sample_info_downsampled.training_data_cx_cy.col(0), sample_info_downsampled.training_data_cx_cy.col(1), sample_info_downsampled.training_data_density, sample_info_downsampled.class_data));
-	//auto classifier = CxCyWeights::CreateNaiveBayesClassifier2(sample_info_downsampled.training_data_cx_cy.col(0), sample_info_downsampled.training_data_cx_cy.col(1), sample_info_downsampled.training_data_density, sample_info_downsampled.class_data);
-	
+
 	logging_instance->QueueCommandLineLogging("Training Naive Bayes Classifier fininshed...", IO::Logging::NORMAL);
 
 	//===========================================================================

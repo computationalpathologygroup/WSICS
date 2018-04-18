@@ -85,18 +85,19 @@ void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_o
 void SlideStandardizationCLI::AddModuleOptions$(boost::program_options::options_description& options)
 {
 	options.add_options()
-		("input,i",				boost::program_options::value<std::string>()->default_value(""),					"Path to an image file or image directory.")
-		("output,o",			boost::program_options::value<std::string>()->default_value(""),					"Path to the output file. If set, outputs the LUT and normalized WSI. Considered as filepath if input points towards a file, otherwise considered as output directory.")
-		("max_training",		boost::program_options::value<uint32_t>()->default_value(20000000),					"The maximum amount of pixels used for training the classifier.")
-		("min_training",		boost::program_options::value<uint32_t>()->default_value(200000),					"The minimum amount of pixels used for training the classifier.")
-		("prefix",				boost::program_options::value<std::string>()->default_value(""),					"The prefix to use for the output files. Only applied when the input path points towards a directory.")
-		("postfix",				boost::program_options::value<std::string>()->default_value(""),					"The postfix to use for the output files. Only applied when the input path points towards a directory.")
-		("template_input",		boost::program_options::value<std::string>()->default_value(""),					"If set, applies an existing template for the normalization.")
-		("template_output",		boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template. Considered as filepath if input points towards a file, otherwise considered as output directory.")
-		("ink,k",				boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Warning: Only use if ink is present on the slide. Reduces the chance of selecting a patch containing ink.")
-		("hema_percentile",		boost::program_options::value<float>()->default_value(0.1f),						"Defines how conservative the algorithm is with its blue pixel classification.")
-		("eosin_percentile",	boost::program_options::value<float>()->default_value(0.2f),						"Defines how conservative the algorithm is with its red pixel classification.")
-		("min_ellipses",		boost::program_options::value<int32_t>()->default_value(false),						"Allows for a custom value for the amount of ellipses on a tile.");
+		("input,i",					boost::program_options::value<std::string>()->default_value(""),					"Path to an image file or image directory.")
+		("output,o",				boost::program_options::value<std::string>()->default_value(""),					"Path to the output file. If set, outputs the LUT and normalized WSI. Considered as filepath if input points towards a file, otherwise considered as output directory.")
+		("max_training",			boost::program_options::value<uint32_t>()->default_value(20000000),					"The maximum amount of pixels used for training the classifier.")
+		("min_training",			boost::program_options::value<uint32_t>()->default_value(200000),					"The minimum amount of pixels used for training the classifier.")
+		("prefix",					boost::program_options::value<std::string>()->default_value(""),					"The prefix to use for the output files. Only applied when the input path points towards a directory.")
+		("postfix",					boost::program_options::value<std::string>()->default_value(""),					"The postfix to use for the output files. Only applied when the input path points towards a directory.")
+		("template_input",			boost::program_options::value<std::string>()->default_value(""),					"If set, applies an existing template for the normalization.")
+		("template_output",			boost::program_options::value<std::string>()->default_value(""),					"Path to an template output file. If set, outputs the template. Considered as filepath if input points towards a file, otherwise considered as output directory.")
+		("ink,k",					boost::program_options::value<bool>()->default_value(false)->implicit_value(true),	"Warning: Only use if ink is present on the slide. Reduces the chance of selecting a patch containing ink.")
+		("hema_percentile",			boost::program_options::value<float>()->default_value(0.1f),						"Defines how conservative the algorithm is with its blue pixel classification.")
+		("eosin_percentile",		boost::program_options::value<float>()->default_value(0.2f),						"Defines how conservative the algorithm is with its red pixel classification.")
+		("background_threshold",	boost::program_options::value<float>()->default_value(0.9f),						"Defines the threshold between tissue and background pixels.")
+		("min_ellipses",			boost::program_options::value<int32_t>()->default_value(false),						"Allows for a custom value for the amount of ellipses on a tile.");
 }
 
 void SlideStandardizationCLI::Setup$(void)
@@ -182,9 +183,10 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 		template_output = template_output.parent_path().append("/" + template_output.stem().string());
 	}
 
-	parameters.hema_percentile	= variables["hema_percentile"].as<float>();
-	parameters.eosin_percentile = variables["eosin_percentile"].as<float>();
-	parameters.minimum_ellipses = variables["min_ellipses"].as<int32_t>();
+	parameters.hema_percentile		= variables["hema_percentile"].as<float>();
+	parameters.eosin_percentile		= variables["eosin_percentile"].as<float>();
+	parameters.background_threshold	= variables["background_threshold"].as<float>();
+	parameters.minimum_ellipses		= variables["min_ellipses"].as<int32_t>();
 
 	if (parameters.hema_percentile > 1.0f)
 	{
@@ -193,6 +195,10 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 	if (parameters.eosin_percentile > 1.0f)
 	{
 		parameters.eosin_percentile = 1.0f;
+	}
+	if (parameters.background_threshold > 1.0f)
+	{
+		parameters.background_threshold = 1.0f;
 	}
 }
 

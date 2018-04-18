@@ -34,14 +34,14 @@ namespace IO
 
 		if (!encountered_error && ExecuteStandardFunctionality_(argc, variables_map, options))
 		{
-		//	try
-		//	{
+			try
+			{
 				ExecuteModuleFunctionality$(variables_map);
-		//	}
-		//	catch (const std::exception& e)
-		//	{
-		//		m_log_handler_.QueueCommandLineLogging(e.what(), IO::Logging::SILENT);
-		//	}
+			}
+			catch (const std::exception& e)
+			{
+				m_log_handler_.QueueCommandLineLogging(e.what(), IO::Logging::SILENT);
+			}
 		}
 	}
 
