@@ -4,11 +4,6 @@
 #include <stdexcept>
 #include <core/filetools.h>
 
-#include "multiresolutionimageinterface/MultiResolutionImage.h"
-#include "multiresolutionimageinterface/MultiResolutionImageReader.h"
-#include "multiresolutionimageinterface/MultiResolutionImageWriter.h"
-#include "multiresolutionimageinterface/OpenSlideImageFactory.h"
-
 #include "CxCyWeights.h"
 #include "NormalizedLutCreation.h"
 #include "../HSD/BackgroundMask.h"
@@ -16,6 +11,7 @@
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
 #include "../Misc/MiscFunctionality.h"
+#include "NormalizedOutput.h"
 
 // TODO: Refactor and restructure into smaller chunks.
 
@@ -144,18 +140,26 @@ void Standardization::Normalize(
 
 			if (m_is_multiresolution_image_)
 			{	
-				WriteSampleNormalizedImagesForTesting_(boost::filesystem::path(m_debug_directory_.string()), normalized_lut, *tiled_image, tile_coordinates, tile_size);
+				StainNormalization::WriteSampleNormalizedImagesForTesting_(boost::filesystem::path(m_debug_directory_.string()), normalized_lut, *tiled_image, tile_coordinates, tile_size);
 			}
 			else
 			{
 				boost::filesystem::path output_filepath(m_debug_directory_.string() + "/" + input_file.stem().string() + ".tif");
-				WriteSampleNormalizedImagesForTesting_(output_filepath.string(), normalized_lut, static_image, tile_size);
+				StainNormalization::WriteSampleNormalizedImagesForTesting_(output_filepath.string(), normalized_lut, static_image, tile_size);
 			}
 		}
 
 		logging_instance->QueueFileLogging("Writing the standardized WSI in progress...", m_log_file_id_, IO::Logging::NORMAL);
 		logging_instance->QueueCommandLineLogging("Writing the standardized WSI in progress...", IO::Logging::NORMAL);
-		WriteNormalizedWSI_(input_file, output_file, normalized_lut, tile_size);
+
+		if (m_is_multiresolution_image_)
+		{
+			StainNormalization::WriteNormalizedWSI_(input_file, output_file, normalized_lut, tile_size);
+		}
+		else
+		{
+			StainNormalization::WriteNormalizedWSI_(static_image, output_file, normalized_lut);
+		}
 		logging_instance->QueueFileLogging("Finished writing the image.", m_log_file_id_, IO::Logging::NORMAL);
 		logging_instance->QueueCommandLineLogging("Finished writing the image.", IO::Logging::NORMAL);
 	}
@@ -233,15 +237,14 @@ TrainingSampleInformation Standardization::CollectTrainingSamples_(
 std::pair<bool, std::vector<double>> Standardization::GetResolutionTypeAndSpacing(MultiResolutionImage& tiled_image)
 {
 	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
-	std::pair<bool, std::vector<double>> resolution_and_spacing(true, tiled_image.getSpacing());
+	std::pair<bool, std::vector<double>> resolution_and_spacing((tiled_image.getNumberOfLevels() > 1), tiled_image.getSpacing());
 
 	if (!resolution_and_spacing.second.empty())
 	{
 		if (resolution_and_spacing.second[0] > 1)
 		{
-			resolution_and_spacing.first = false;
 			resolution_and_spacing.second.clear();
-			logging_instance->QueueFileLogging("Image is static!", m_log_file_id_, IO::Logging::NORMAL);
+			logging_instance->QueueFileLogging("Image is static", m_log_file_id_, IO::Logging::NORMAL);
 		}
 		else
 		{
@@ -314,184 +317,4 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 	}
 
 	return tile_coordinates;
-}
-
-
-void Standardization::WriteNormalizedWSI_(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const cv::Mat& normalized_lut, const uint32_t tile_size)
-{
-	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
-
-	std::vector<cv::Mat> lut_bgr(3);
-	cv::split(normalized_lut, lut_bgr);
-
-	cv::Mat lut_blue	= lut_bgr[0];
-	cv::Mat lut_green	= lut_bgr[1];
-	cv::Mat lut_red		= lut_bgr[2];
-
-	lut_blue.convertTo(lut_blue, CV_8UC1);
-	lut_green.convertTo(lut_green, CV_8UC1);
-	lut_red.convertTo(lut_red, CV_8UC1);
-
-	MultiResolutionImageReader reader;
-	MultiResolutionImage* tiled_image	= reader.open(input_file.string());
-	std::vector<size_t> dimensions		= tiled_image->getLevelDimensions(0);
-
-	MultiResolutionImageWriter image_writer;
-	image_writer.openFile(output_file.string());
-	image_writer.setTileSize(tile_size);
-	image_writer.setCompression(pathology::LZW);
-	image_writer.setDataType(pathology::UChar);
-	image_writer.setColorType(pathology::RGB);
-	image_writer.writeImageInformation(dimensions[0], dimensions[1]);
-
-	uint64_t y_amount_of_tiles = std::ceil((float)dimensions[0] / (float)tile_size);
-	uint64_t x_amount_of_tiles = std::ceil((float)dimensions[1] / (float)tile_size);
-	uint64_t total_amount_of_tiles = x_amount_of_tiles * y_amount_of_tiles;
-
-	std::vector<uint64_t> x_values, y_values;
-
-	for (uint64_t x_tile = 0; x_tile < x_amount_of_tiles; ++x_tile)
-	{
-		for (uint64_t y_tile = 0; y_tile < y_amount_of_tiles; ++y_tile)
-		{
-			y_values.push_back(tile_size*y_tile);
-			x_values.push_back(tile_size*x_tile);
-		}
-	}
-
-	size_t response_integer = total_amount_of_tiles / 20;
-	for (uint64_t tile = 0; tile < total_amount_of_tiles; ++tile)
-	{
-		if (tile % response_integer == 0)
-		{
-			logging_instance->QueueCommandLineLogging("Completed: " + std::to_string((tile / response_integer) * 5) + "%", IO::Logging::NORMAL);
-		}
-
-		unsigned char* data = nullptr;
-		tiled_image->getRawRegion(y_values[tile] * tiled_image->getLevelDownsample(0), x_values[tile] * tiled_image->getLevelDownsample(0), tile_size, tile_size, 0, data);
-
-		std::vector<unsigned char> modified_data(tile_size * tile_size * 3);
-		unsigned char* modified_data_ptr(&data[0]);
-
-		size_t data_index = 0;
-		size_t modified_data_index = 0;
-		for (size_t pixel = 0; pixel < tile_size * tile_size; ++pixel)
-		{
-			size_t index = 256 * 256 * data[data_index] + 256 * data[data_index + 1] + data[data_index + 2];
-			modified_data[modified_data_index++] = lut_red.at<unsigned char>(index, 0);
-			modified_data[modified_data_index++] = lut_green.at<unsigned char>(index, 0);
-			modified_data[modified_data_index++] = lut_blue.at<unsigned char>(index, 0);
-			data_index += 3;
-		}
-		image_writer.writeBaseImagePart((void*)modified_data_ptr);
-
-		delete[] data;
-	}
-
-	logging_instance->QueueCommandLineLogging("Finalizing images", IO::Logging::NORMAL);
-	image_writer.finishImage();
-}
-
-void Standardization::WriteSampleNormalizedImagesForTesting_(const std::string output_filepath, const cv::Mat& normalized_lut, const cv::Mat& tile_image, const uint32_t tile_size)
-{
-	std::vector<cv::Mat> bgr_lut;
-	cv::split(normalized_lut, bgr_lut);
-
-	cv::Mat& blue_lut	= bgr_lut[0];
-	cv::Mat& green_lut	= bgr_lut[1];
-	cv::Mat& red_lut	= bgr_lut[2];
-
-	blue_lut.convertTo(blue_lut, CV_8UC1);
-	green_lut.convertTo(green_lut, CV_8UC1);
-	red_lut.convertTo(red_lut, CV_8UC1);
-
-	// get the BGR channels of tile image
-	std::vector<cv::Mat> channels_in_tile(3);
-	cv::split(tile_image, channels_in_tile);
-	cv::Mat blue = channels_in_tile[0];
-	cv::Mat green = channels_in_tile[1];
-	cv::Mat red = channels_in_tile[2];
-
-	for (size_t row = 1; row < tile_image.rows; ++row)
-	{
-		for (size_t col = 1; col < tile_image.cols; ++col)
-		{
-			size_t index = 256 * 256 * red.at<unsigned char>(row, col) + 256 * green.at<unsigned char>(row, col) + blue.at<unsigned char>(row, col);
-			blue.at<unsigned char>(row, col) = blue_lut.at<unsigned char>(index, 0);
-			green.at<unsigned char>(row, col) = green_lut.at<unsigned char>(index, 0);
-			red.at<unsigned char>(row, col) = red_lut.at<unsigned char>(index, 0);
-		}
-	}
-
-	cv::Mat lut_slide_image;
-	cv::merge(channels_in_tile, lut_slide_image);
-
-	cv::imwrite(output_filepath, lut_slide_image);
-
-	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
-	logging_instance->QueueCommandLineLogging("Normalized image is written...", IO::Logging::NORMAL);
-}
-
-void Standardization::WriteSampleNormalizedImagesForTesting_(
-	const boost::filesystem::path& output_directory, 
-	const cv::Mat& lut_image,
-	MultiResolutionImage& tiled_image,
-	const std::vector<cv::Point>& tile_coordinates,
-	const uint32_t tile_size)
-{
-	IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
-
-	logging_instance->QueueCommandLineLogging("Writing sample standardized images in: " + output_directory.string(), IO::Logging::NORMAL);
-
-	std::vector<cv::Mat> lut_bgr(3);
-	cv::split(lut_image, lut_bgr);
-
-	cv::Mat& lut_blue	= lut_bgr[0];
-	cv::Mat& lut_green	= lut_bgr[1];
-	cv::Mat& lut_red	= lut_bgr[2];
-
-	lut_red.convertTo(lut_red, CV_8UC1);
-	lut_green.convertTo(lut_green, CV_8UC1);
-	lut_blue.convertTo(lut_blue, CV_8UC1);
-
-	std::vector<size_t> random_integers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
-	
-	size_t num_to_write = 20 > tile_coordinates.size() ? tile_coordinates.size() : 20;
-	cv::Mat tile_image(cv::Mat::zeros(tile_size, tile_size, CV_8UC3));
-	for (size_t tile = 0; tile < num_to_write; ++tile)
-	{
-		unsigned char* data = nullptr;
-		tiled_image.getRawRegion(tile_coordinates[random_integers[tile]].x * tiled_image.getLevelDownsample(0), tile_coordinates[random_integers[tile]].y * tiled_image.getLevelDownsample(0), tile_size, tile_size, 0, data);
-
-		cv::Mat tile_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
-		LevelReading::ArrayToMatrix(data, tile_image, 0);
-		delete[] data;
-
-		// get the RGB channels of tile image
-		std::vector<cv::Mat> tiled_bgr(3);
-		cv::split(tile_image, tiled_bgr);
-
-		cv::Mat& tiled_blue		= tiled_bgr[0];
-		cv::Mat& tiled_green	= tiled_bgr[1];
-		cv::Mat& tiled_red		= tiled_bgr[2];
-
-		for (size_t row = 0; row < tile_image.rows; ++row)
-		{
-			for (size_t col = 0; col < tile_image.cols; ++col)
-			{
-				size_t index							= 256 * 256 * tiled_red.at<unsigned char>(row, col) + 256 * tiled_green.at<unsigned char>(row, col) + tiled_blue.at<unsigned char>(row, col);
-				tiled_blue.at<unsigned char>(row, col)	= lut_blue.at<unsigned char>(index, 0);
-				tiled_green.at<unsigned char>(row, col) = lut_green.at<unsigned char>(index, 0);
-				tiled_red.at<unsigned char>(row, col)	= lut_red.at<unsigned char>(index, 0);
-			}
-		}
-
-		cv::Mat slide_lut_image;
-		cv::merge(tiled_bgr, slide_lut_image);
-		std::string filename_lut(output_directory.string() + "/" + "tile_" + std::to_string(random_integers[tile]) + "_normalized.tif");
-		logging_instance->QueueCommandLineLogging(filename_lut, IO::Logging::NORMAL);
-		cv::imwrite(filename_lut, slide_lut_image);
-	}
-
-	logging_instance->QueueCommandLineLogging("Sample images are written...", IO::Logging::NORMAL);
 }

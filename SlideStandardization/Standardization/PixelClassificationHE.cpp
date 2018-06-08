@@ -52,20 +52,28 @@ TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		//===========================================================================
 		//	HSD / CxCy Color Model
 		//===========================================================================
-		unsigned char* data(nullptr);
-
-		tiled_image.getRawRegion(tile_coordinates[random_numbers[current_tile]].x * tiled_image.getLevelDownsample(0),
-			tile_coordinates[random_numbers[current_tile]].y * tiled_image.getLevelDownsample(0),
-			tile_size, tile_size, min_level, data);
-
-		cv::Mat raw_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
-		LevelReading::ArrayToMatrix(data, raw_image, false);
-		if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
+		HSD::HSD_Model hsd_image;
+		if (is_multiresolution_image)
 		{
-			std::string original_name(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_raw.tif");
-			cv::imwrite(original_name, raw_image);
+			unsigned char* data(nullptr);
+
+			tiled_image.getRawRegion(tile_coordinates[random_numbers[current_tile]].x * tiled_image.getLevelDownsample(0),
+				tile_coordinates[random_numbers[current_tile]].y * tiled_image.getLevelDownsample(0),
+				tile_size, tile_size, min_level, data);
+
+			cv::Mat raw_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
+			LevelReading::ArrayToMatrix(data, raw_image, false);
+			if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
+			{
+				std::string original_name(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_raw.tif");
+				cv::imwrite(original_name, raw_image);
+			}
+			hsd_image = HSD::HSD_Model(raw_image, HSD::BGR);
 		}
-		HSD::HSD_Model hsd_image = is_multiresolution_image ? HSD::HSD_Model(raw_image, HSD::BGR) : HSD::HSD_Model(static_image, HSD::BGR);
+		else
+		{
+			hsd_image = HSD::HSD_Model(static_image, HSD::BGR);
+		}
 
 		//===========================================================================
 		//	Background Mask

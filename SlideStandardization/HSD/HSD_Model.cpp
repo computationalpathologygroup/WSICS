@@ -4,6 +4,10 @@
 
 namespace HSD
 {
+	HSD_Model::HSD_Model(void)
+	{
+	}
+
 	HSD_Model::HSD_Model(const cv::Mat& rgb_image, const HSD_Initialization_Type initialization_type) : m_initialization_type_(initialization_type)
 	{
 		std::vector<cv::Mat> channels(3);

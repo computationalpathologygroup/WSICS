@@ -117,6 +117,12 @@
     <ClCompile Include="HE_Staining\MaskGeneration.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="C:\Users\Karel Gerbrands\Documents\Worklist_Interface\datatable.cpp">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Standardization\NormalizedOutput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Classifier\Classifier.h">
@@ -216,6 +222,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="HE_Staining\MaskGeneration.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C:\Users\Karel Gerbrands\Documents\Worklist_Interface\datatable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Standardization\NormalizedOutput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

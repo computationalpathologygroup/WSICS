@@ -4,8 +4,8 @@
 #include <opencv2/core/core.hpp>
 
 #include "../HE_Staining/HE_Classifier.h"
+#include "../HE_Staining/MaskGeneration.h"
 #include "../HSD/HSD_Model.h"
-#include "MaskGeneration.h"
 #include "multiresolutionimageinterface/MultiResolutionImage.h"
 #include "StandardizationParameters.h"
 

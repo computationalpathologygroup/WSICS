@@ -22,6 +22,7 @@
     <ClCompile Include="BLOB_Operations\BLOB.cpp" />
     <ClCompile Include="BLOB_Operations\BLOB_Operations.cpp" />
     <ClCompile Include="BLOB_Operations\BLOB_Window.cpp" />
+    <ClCompile Include="C:\Users\Karel Gerbrands\Documents\Worklist_Interface\datatable.cpp" />
     <ClCompile Include="Classifier\Classifier.cpp" />
     <ClCompile Include="Classifier\NaiveBayesClassifier.cpp" />
     <ClCompile Include="Classifier\NaiveBayesFeatureClassifier.cpp" />
@@ -47,6 +48,7 @@
     <ClCompile Include="Misc\MiscMatrixOperations.cpp" />
     <ClCompile Include="Standardization\CxCyWeights.cpp" />
     <ClCompile Include="Standardization\NormalizedLutCreation.cpp" />
+    <ClCompile Include="Standardization\NormalizedOutput.cpp" />
     <ClCompile Include="Standardization\PixelClassificationHE.cpp" />
     <ClCompile Include="Standardization\SlideStandardizationCLI.cpp" />
     <ClCompile Include="Standardization\Standardization.cpp" />
@@ -56,6 +58,7 @@
     <ClInclude Include="BLOB_Operations\BLOB.h" />
     <ClInclude Include="BLOB_Operations\BLOB_Operations.h" />
     <ClInclude Include="BLOB_Operations\BLOB_Window.h" />
+    <ClInclude Include="C:\Users\Karel Gerbrands\Documents\Worklist_Interface\datatable.h" />
     <ClInclude Include="Classifier\Classifier.h" />
     <ClInclude Include="Classifier\NaiveBayesClassifier.h" />
     <ClInclude Include="Classifier\NaiveBayesFeatureClassifier.h" />
@@ -81,6 +84,7 @@
     <ClInclude Include="Misc\MiscMatrixOperations.h" />
     <ClInclude Include="Standardization\CxCyWeights.h" />
     <ClInclude Include="Standardization\NormalizedLutCreation.h" />
+    <ClInclude Include="Standardization\NormalizedOutput.h" />
     <ClInclude Include="Standardization\PixelClassificationHE.h" />
     <ClInclude Include="Standardization\SlideStandardizationCLI.h" />
     <ClInclude Include="Standardization\Standardization.h" />

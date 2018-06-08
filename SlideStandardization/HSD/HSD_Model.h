@@ -22,6 +22,11 @@ namespace HSD
 			cv::Mat c_y;
 
 			/// <summary>
+			/// Default constructor for an empty image.
+			/// </summary>
+			HSD_Model(void);
+
+			/// <summary>
 			/// Initializes the HSD_Model container through the conversion of a RGB image.
 			/// </summary>
 			/// <param name="rgb_image">A matrix containing the RGB representation of an image.</param>
