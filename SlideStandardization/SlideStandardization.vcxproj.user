@@ -5,7 +5,7 @@
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>-i "d:\WSIs\debug\T11-03904_A1\tile_49_raw.tif" -o "d:\WSIs\testfile" --log_level debug --background_threshold 1</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>-i "d:\WSIs\06011-2001A1L2STAMP II.ndpi" --lut_output "D:/WSIs/testfile_lut" --log_level debug --background_threshold 1 --max_training 10000 --min_training 10000</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

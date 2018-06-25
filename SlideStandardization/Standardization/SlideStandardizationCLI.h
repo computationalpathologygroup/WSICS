@@ -44,14 +44,16 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 			std::vector<boost::filesystem::path>& files_to_process,
 			std::string& prefix,
 			std::string& postfix,
-			boost::filesystem::path& output_path,
+			boost::filesystem::path& image_output,
+			boost::filesystem::path& lut_output,
 			boost::filesystem::path& template_input,
 			boost::filesystem::path& template_output,
 			boost::filesystem::path& debug_dir,
 			bool& input_is_directory);
 
 		void CreateDirectories_(
-			const boost::filesystem::path& output_path,
+			const boost::filesystem::path& image_output,
+			const boost::filesystem::path& lut_output,
 			const boost::filesystem::path& template_output,
 			const boost::filesystem::path& debug_directory,
 			const std::vector<boost::filesystem::path>& files,
@@ -64,5 +66,7 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 		/// <param name="input_path">A path pointing either towards an image file, or a directory containing image files.</param>
 		/// <returns>A vector holding all the eligble image files.</returns>
 		std::vector<boost::filesystem::path> GatherImageFilenames_(const boost::filesystem::path input_path);
+
+		boost::filesystem::path SetOutputPath(boost::filesystem::path path, const std::string extension, const std::string filename);
 };
 #endif // __SLIDESTANDARDIZATION_CLI_H__

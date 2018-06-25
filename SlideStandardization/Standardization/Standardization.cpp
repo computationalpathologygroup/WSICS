@@ -34,8 +34,9 @@ StandardizationParameters Standardization::GetStandardParameters(void)
 
 void Standardization::Normalize(
 	const boost::filesystem::path& input_file,
-	const boost::filesystem::path& output_file,
-	const boost::filesystem::path& template_output,
+	const boost::filesystem::path& image_output_file,
+	const boost::filesystem::path& lut_output_file,
+	const boost::filesystem::path& template_output_file,
 	const boost::filesystem::path& debug_directory)
 {
 	//===========================================================================
@@ -115,21 +116,20 @@ void Standardization::Normalize(
 	//===========================================================================
 	//	Normalizes the LUT.
 	//===========================================================================
-	cv::Mat normalized_lut(NormalizedLutCreation::Create(!output_file.empty(), m_template_file_, template_output, lut_hsd, training_samples, m_parameters_.max_training_size, m_log_file_id_));
+	cv::Mat normalized_lut(NormalizedLutCreation::Create(!image_output_file.empty() || !lut_output_file.empty(), m_template_file_, template_output_file, lut_hsd, training_samples, m_parameters_.max_training_size, m_log_file_id_));
+
+	if (!lut_output_file.empty())
+	{
+		logging_instance->QueueFileLogging("Writing LUT to: " + lut_output_file.string() + " (this might take some time).", m_log_file_id_, IO::Logging::NORMAL);
+		logging_instance->QueueCommandLineLogging("Writing LUT to: " + lut_output_file.string() + " (this might take some time).", IO::Logging::NORMAL);
+		cv::imwrite(lut_output_file.string(), normalized_lut);
+	}
 
 	//===========================================================================
 	//	Writing LUT image to disk
 	//===========================================================================
-	if (!output_file.empty())
+	if (!image_output_file.empty())
 	{
-		std::string current_filepath = output_file.parent_path().string() + "/" + input_file.stem().string();
-		std::string lut_output = current_filepath.substr(0, current_filepath.rfind("_normalized")) + "_lut.tif";
-
-		logging_instance->QueueFileLogging("Writing LUT to: " + lut_output + " (this might take some time).", m_log_file_id_, IO::Logging::NORMAL);
-		logging_instance->QueueCommandLineLogging("Writing LUT to: " + lut_output + " (this might take some time).", IO::Logging::NORMAL);
-
-		cv::imwrite(lut_output, normalized_lut);
-
 		//===========================================================================
 		//	Write sample images to Harddisk For testing
 		//===========================================================================
@@ -154,11 +154,11 @@ void Standardization::Normalize(
 
 		if (m_is_multiresolution_image_)
 		{
-			StainNormalization::WriteNormalizedWSI_(input_file, output_file, normalized_lut, tile_size);
+			StainNormalization::WriteNormalizedWSI_(input_file, image_output_file, normalized_lut, tile_size);
 		}
 		else
 		{
-			StainNormalization::WriteNormalizedWSI_(static_image, output_file, normalized_lut);
+			StainNormalization::WriteNormalizedWSI_(static_image, image_output_file, normalized_lut);
 		}
 		logging_instance->QueueFileLogging("Finished writing the image.", m_log_file_id_, IO::Logging::NORMAL);
 		logging_instance->QueueCommandLineLogging("Finished writing the image.", IO::Logging::NORMAL);

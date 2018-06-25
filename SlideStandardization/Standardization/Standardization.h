@@ -15,7 +15,12 @@ class Standardization
 		Standardization(std::string log_directory, const boost::filesystem::path& template_file, const StandardizationParameters& parameters);
 
 		static StandardizationParameters GetStandardParameters(void);
-		void Normalize(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const boost::filesystem::path& template_output, const boost::filesystem::path& debug_directory);
+		void Normalize(
+			const boost::filesystem::path& input_file,
+			const boost::filesystem::path& image_output_file,
+			const boost::filesystem::path& lut_output_file,
+			const boost::filesystem::path& template_output_file,
+			const boost::filesystem::path& debug_directory);
 		void SetLogDirectory(std::string& log_directory);
 
 	private:
