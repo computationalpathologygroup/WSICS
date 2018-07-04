@@ -44,6 +44,6 @@ namespace HSD
 		std::vector<cv::Mat> channels{ channel_blue, channel_green, channel_red };
 		//output_matrix.convertTo(output_matrix, CV_32FC3);
 		cv::merge(channels, output_matrix);
-		//output_matrix.convertTo(output_matrix, CV_8UC3);
+		output_matrix.convertTo(output_matrix, CV_8UC3);
 	}
 }

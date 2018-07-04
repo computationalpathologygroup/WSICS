@@ -186,18 +186,6 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 		{
 			image_output = image_output.parent_path().append("/" + image_output.stem().string());
 		}
-
-		if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG)
-		{
-			if (input_is_directory)
-			{
-				debug_dir = image_output.string() + "/debug";
-			}
-			else
-			{
-				debug_dir = image_output.parent_path().string() + "/debug";
-			}
-		}
 	}
 
 	if (!lut_output.empty() && lut_output.has_extension())
@@ -213,6 +201,28 @@ void SlideStandardizationCLI::AcquireAndSanitizeInput_(
 	if (!template_output.empty() && template_output.has_extension())
 	{
 		template_output = template_output.parent_path().append("/" + template_output.stem().string());
+	}
+
+	if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG)
+	{
+		boost::filesystem::path debug_potential;
+		if (!image_output.empty())
+		{
+			debug_potential = image_output;
+		}
+		else if (!lut_output.empty())
+		{
+			debug_potential = lut_output;
+		}
+
+		if (input_is_directory && !debug_potential.empty())
+		{
+			debug_dir = debug_potential.string() + "/debug";
+		}
+		else
+		{
+			debug_dir = debug_potential.parent_path().string() + "/debug";
+		}
 	}
 
 	parameters.hema_percentile		= variables["hema_percentile"].as<float>();

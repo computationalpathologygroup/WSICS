@@ -371,6 +371,8 @@ NormalizedLutCreation::TransformationParameters NormalizedLutCreation::ReadParam
 	parameters.background_rotation_params.x_median = csv_parameters[2][0];
 	parameters.background_rotation_params.y_median = csv_parameters[2][1];
 
+	parameters.hema_scale_params = cv::Mat(7, 2, CV_32FC1);
+	parameters.eosin_scale_params = cv::Mat(7, 2, CV_32FC1);
 	for (size_t i = 0; i < 7; ++i)
 	{
 		parameters.hema_scale_params.at<float>(i, 0)	= csv_parameters[3][i];

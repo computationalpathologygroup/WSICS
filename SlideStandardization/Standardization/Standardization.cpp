@@ -130,25 +130,6 @@ void Standardization::Normalize(
 	//===========================================================================
 	if (!image_output_file.empty())
 	{
-		//===========================================================================
-		//	Write sample images to Harddisk For testing
-		//===========================================================================
-		// Don't remove! usable for looking at samples of standardization
-		if (!m_debug_directory_.empty() && logging_instance->GetOutputLevel() == IO::Logging::DEBUG)
-		{
-			logging_instance->QueueFileLogging("Writing sample standardized images to: " + m_debug_directory_.string(), m_log_file_id_, IO::Logging::NORMAL);
-
-			if (m_is_multiresolution_image_)
-			{	
-				StainNormalization::WriteSampleNormalizedImagesForTesting_(boost::filesystem::path(m_debug_directory_.string()), normalized_lut, *tiled_image, tile_coordinates, tile_size);
-			}
-			else
-			{
-				boost::filesystem::path output_filepath(m_debug_directory_.string() + "/" + input_file.stem().string() + ".tif");
-				StainNormalization::WriteSampleNormalizedImagesForTesting_(output_filepath.string(), normalized_lut, static_image, tile_size);
-			}
-		}
-
 		logging_instance->QueueFileLogging("Writing the standardized WSI in progress...", m_log_file_id_, IO::Logging::NORMAL);
 		logging_instance->QueueCommandLineLogging("Writing the standardized WSI in progress...", IO::Logging::NORMAL);
 
@@ -164,6 +145,24 @@ void Standardization::Normalize(
 		logging_instance->QueueCommandLineLogging("Finished writing the image.", IO::Logging::NORMAL);
 	}
 
+	//===========================================================================
+	//	Write sample images to Harddisk For testing
+	//===========================================================================
+	// Don't remove! usable for looking at samples of standardization
+	if (!m_debug_directory_.empty() && logging_instance->GetOutputLevel() == IO::Logging::DEBUG)
+	{
+		logging_instance->QueueFileLogging("Writing sample standardized images to: " + m_debug_directory_.string(), m_log_file_id_, IO::Logging::NORMAL);
+
+		if (m_is_multiresolution_image_)
+		{
+			StainNormalization::WriteSampleNormalizedImagesForTesting_(boost::filesystem::path(m_debug_directory_.string()), normalized_lut, *tiled_image, tile_coordinates, tile_size);
+		}
+		else
+		{
+			boost::filesystem::path output_filepath(m_debug_directory_.string() + "/" + input_file.stem().string() + ".tif");
+			StainNormalization::WriteSampleNormalizedImagesForTesting_(output_filepath.string(), normalized_lut, static_image, tile_size);
+		}
+	}
 
 	//===========================================================================
 	//	Cleans execution variables
