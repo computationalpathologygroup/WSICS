@@ -1,12 +1,15 @@
 # Introduction #
+This repository offers an implementation of the WSICS algorithm, as described in "Stain Specific Standardization of Whole-Slide Histopathological Images"
+
 
 # Binaries #
 
 Binaries are available for 64x Windows and Linux, additionally a Docker Container can be build through the Dockerfile within the repository. These are all standalone and don't require any additional work to function.
-* Windows: 
-* Linux: 
+* Windows: link
+* Linux: link
 
 ## Compilation ##
+
 
 # Usage #
 
