@@ -16,7 +16,7 @@ namespace HoughTransform
 	
     size_t TreeAccumulator::AddEllipse(Ellipse& ellipse)
     {
-        if(_isnan(ellipse.theta) || _isnan(ellipse.major_axis) || _isnan(ellipse.minor_axis))
+        if(std::isnan(ellipse.theta) || std::isnan(ellipse.major_axis) || std::isnan(ellipse.minor_axis))
         {
             return 0;
         }

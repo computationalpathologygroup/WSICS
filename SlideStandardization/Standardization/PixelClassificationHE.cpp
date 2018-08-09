@@ -1,7 +1,7 @@
 #include "PixelClassificationHE.h"
 
-#include <boost\filesystem.hpp>
-#include <opencv2\highgui.hpp>
+#include <boost/filesystem.hpp>
+#include <opencv2/highgui.hpp>
 
 #include "../HSD/BackgroundMask.h"
 #include "../IO/Logging/LogHandler.h"

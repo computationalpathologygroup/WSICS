@@ -12,6 +12,7 @@ $Id: Classifier.h,v 1.12 2006/09/01 14:59:32 mirela Exp $
 
 #include <vector>
 
+#include <opencv2/core.hpp>
 #include <opencv2/ml.hpp>
 
 /*! \class Classifier
@@ -79,27 +80,12 @@ namespace ML
 		// Hard classification of the sample s into one of the possible output classes.
 		void Classify(const cv::Mat& input, cv::Mat& output) const;
 
-		//////////////////
-		// Regression of sample s onto one of the outputs.
-		//void Regress(const cv::Mat& input, cv::Mat& output) const;
-
-
-
-
 		/////////////////
 		// Soft classification of the sample s.  Posterior probability for each
 		// possible output class is determined.
 		// Posterior probabilities should add up to one.
 		// N.B. number of outputs equals number of classes.
 		void Posterior(const cv::Mat& input, cv::Mat& output) const;
-
-		//////////////////
-		// Probability density function at this sample. This value is linearly
-		// related to the chance that this sample is drawn from the distribution modeled
-		// by this classifier object.
-		// This function assumes the input samples model a single pdf, so the output
-		// of each sample is not used.
-		//void Pdf(const cv::Mat& input, cv::Mat& output) const;
 
 	protected:
 		bool						m_is_trained$;
@@ -120,12 +106,6 @@ namespace ML
 		/// <param name="output">The output matrix to write the results into.</param>
 		virtual void ClassifySamples$(const cv::Mat& input, cv::Mat& output) const = 0;
 		/// <summary>
-		/// Regresses the samples.
-		/// </summary>
-		/// <param name="input">The input matrix holding the samples to classify.</param>
-		/// <param name="output">The output matrix to write the results into.</param>
-		//virtual void RegressSamples$(const cv::Mat& input, cv::Mat& output) const = 0;
-		/// <summary>
 		/// Performs a soft classification of the samples, providing a posterior probability for each
 		/// possible class output. These are added together and should reach one.
 		/// The number of outputs per sample equal the amount of classes.
@@ -133,12 +113,6 @@ namespace ML
 		/// <param name="input">The input matrix holding the samples to classify.</param>
 		/// <param name="output">The output matrix to write the results into.</param>
 		virtual void PosteriorSamples$(const cv::Mat& input, cv::Mat& output) const = 0;
-		/// <summary>
-		/// Calculates the probability density for the provided samples.
-		/// </summary>
-		/// <param name="input">The input matrix holding the samples to classify.</param>
-		/// <param name="output">The output matrix to write the results into.</param>
-		//virtual void PdfSamples$(const cv::Mat& input, cv::Mat& output) const = 0;
 
 	private:
 		/// <summary>

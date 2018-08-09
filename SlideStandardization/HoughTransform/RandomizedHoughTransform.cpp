@@ -78,45 +78,45 @@ namespace HoughTransform
 	// Private Member Functions
 	//******************************************************************************
 
-	bool RandomizedHoughTransform::ComputeParameters_(PointCollection& triplet, Ellipse& ellipse)
+	bool RandomizedHoughTransform::ComputeParameters_(const PointCollection& input_triplet, Ellipse& output_ellipse) const
 	{
 		double a_data[9];
 		double b_data[] = { 1.0, 1.0, 1.0 };
 
 		for (int i = 0; i < 3; i++)
 		{
-			a_data[i * 3 + 0] = triplet.points[i].first.x  * triplet.points[i].first.x;
-			a_data[i * 3 + 1] = 2 * triplet.points[i].first.x  * triplet.points[i].first.y;
-			a_data[i * 3 + 2] = triplet.points[i].first.y  * triplet.points[i].first.y;
+			a_data[i * 3 + 0] = input_triplet.points[i].first.x  * input_triplet.points[i].first.x;
+			a_data[i * 3 + 1] = 2 * input_triplet.points[i].first.x  * input_triplet.points[i].first.y;
+			a_data[i * 3 + 2] = input_triplet.points[i].first.y  * input_triplet.points[i].first.y;
 		}
 
-		cv::Mat matrixView = cv::Mat::zeros(3, 3, CV_32FC1);
-		cv::Mat vectorView = cv::Mat::zeros(3, 1, CV_32FC1);
-		cv::Mat dst = cv::Mat::zeros(3, 1, CV_32FC1);
+		cv::Mat matrix_view = cv::Mat::zeros(3, 3, CV_32FC1);
 
 		int counter = 0;
-		for (int i = 0; i<3; ++i)
+		for (int row = 0; row < 3; ++row)
 		{
-			for (int j = 0; j<3; ++j)
+			for (int col = 0; col < 3; ++col)
 			{
-				matrixView.at<float>(i, j) = a_data[counter];
+				matrix_view.at<float>(row, col) = a_data[counter];
 				++counter;
 			}
 		}
 
-		vectorView.at<float>(0, 0) = 1; vectorView.at<float>(1, 0) = 1; vectorView.at<float>(2, 0) = 1;
+		cv::Mat vector_view = cv::Mat::zeros(3, 1, CV_32FC1);
+		cv::Mat destination;
+		vector_view += 1;
 
-		cv::solve(matrixView, vectorView, dst, 1);
+		cv::solve(matrix_view, vector_view, destination, 1);
 
-		float a = (ellipse.theta		= dst.at<float>(0, 0));
-		float b = (ellipse.major_axis	= dst.at<float>(1, 0));
-		float c = (ellipse.minor_axis	= dst.at<float>(2, 0));
+		float a = (output_ellipse.theta			= destination.at<float>(0, 0));
+		float b = (output_ellipse.major_axis	= destination.at<float>(1, 0));
+		float c = (output_ellipse.minor_axis	= destination.at<float>(2, 0));
 
 		if (a*c - pow(b, 2) <= 0)
 		{
 			return false;
 		}
-		else if (_isnan(a) || _isnan(b) || _isnan(c))
+		else if (std::isnan(a) || std::isnan(b) || std::isnan(c))
 		{
 			return false;
 		}
@@ -154,7 +154,7 @@ namespace HoughTransform
 		ellipse.minor_axis	= new_minor_axis;
 	}
 
-	cv::Point2f RandomizedHoughTransform::DetermineCenter_(PointCollection& triplet)
+	cv::Point2f RandomizedHoughTransform::DetermineCenter_(const PointCollection& triplet) const
 	{
 		if (triplet.points[0].second.IsParallelWith(triplet.points[1].second))
 		{
@@ -225,10 +225,10 @@ namespace HoughTransform
 		return ellipse.major_axis <= this->parameters.max_ellipse_radius && ellipse.minor_axis >= this->parameters.min_ellipse_radius;
 	}
 
-	bool RandomizedHoughTransform::FitsContours_(PointCollection& triplet, const Ellipse& ellipse) const
+	bool RandomizedHoughTransform::FitsContours_(const PointCollection& triplet, const Ellipse& ellipse) const
 	{
 		char valid = 0;
-		for (std::pair<cv::Point2f, Line>& triplet_pair : triplet.points)
+		for (const std::pair<cv::Point2f, Line>& triplet_pair : triplet.points)
 		{
 			float difference = std::fabs(ellipse.GetTangent(triplet_pair.first) - triplet_pair.second.GetAngle());
 
@@ -246,27 +246,27 @@ namespace HoughTransform
 		return valid >= this->parameters.tangent_verification;
 	}
 
-	std::pair<bool, Ellipse> RandomizedHoughTransform::EllipseFromTriplet_(PointCollection& triplet)
+	std::pair<bool, Ellipse> RandomizedHoughTransform::EllipseFromTriplet_(PointCollection triplet) const
 	{
-		Ellipse ellipse;
+		Ellipse calculated_ellipse;
 		bool valid_ellipse = false;
 
 		if (triplet.points.size() >= 3)
 		{
 			// Compute parameters using the triplet.
-			ellipse = Ellipse(DetermineCenter_(triplet), 0, 0, 0);
-			triplet -= ellipse.center;
+			calculated_ellipse = Ellipse(DetermineCenter_(triplet), 0, 0, 0);
+			triplet -= calculated_ellipse.center;
 
 			// Use the tangents from the image and compare those with the tangents calculated from the parameters.
-			if (ComputeParameters_(triplet, ellipse) && FitsContours_(triplet, ellipse))
+			if (ComputeParameters_(triplet, calculated_ellipse) && FitsContours_(triplet, calculated_ellipse))
 			{
 				// filter the ellipse based on the calculated radius.
-				ConvertParameters_(ellipse);
-				valid_ellipse = HasCorrectRadius_(ellipse);
+				ConvertParameters_(calculated_ellipse);
+				valid_ellipse = HasCorrectRadius_(calculated_ellipse);
 			}
 		}
 
-		return { valid_ellipse, ellipse };
+		return { valid_ellipse, calculated_ellipse };
 	}
 
 	bool RandomizedHoughTransform::ProcessDetectedEllipse_(Ellipse& ellipse,
@@ -307,7 +307,6 @@ namespace HoughTransform
 		{
 			if ((this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_SIMPLE || this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_EMPTY_ACCUMULATOR) && triplet_detector.Verify(ellipse))
 			{
-				//triplet_detector.Simplify(ellipse);
 				combiner.AddEllipse(ellipse);
 
 				if (this->parameters.ellipse_removal_method == ELLIPSE_REMOVAL_EMPTY_ACCUMULATOR)

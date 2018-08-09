@@ -8,7 +8,7 @@ $Id: Classifier.cpp,v 1.11 2006/09/01 14:59:32 mirela Exp $
 //---------------------------------------------------------------------------
 
 #include "Classifier.h"
-#include <exception>
+#include <stdexcept>
 
 namespace ML
 {

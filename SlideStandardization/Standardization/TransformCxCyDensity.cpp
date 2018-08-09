@@ -35,7 +35,7 @@ namespace TransformCxCyDensity
 		}
 
 		cv::Mat sorted_cx_cy_values;
-		cv::sortIdx(cx_cy_values, sorted_cx_cy_values, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
+		cv::sortIdx(cx_cy_values, sorted_cx_cy_values, cv::SORT_EVERY_COLUMN + cv::SORT_ASCENDING);
 
 		std::vector<double> mins(2);
 		std::vector<double> maxs(2);
@@ -106,7 +106,7 @@ namespace TransformCxCyDensity
 	float CovarianceCalculation(const cv::Mat& samples_matrix)
 	{
 		cv::Mat covariance_matrix, mean_matrix;
-		cv::calcCovarMatrix(samples_matrix, covariance_matrix, mean_matrix, CV_COVAR_NORMAL | CV_COVAR_ROWS);
+		cv::calcCovarMatrix(samples_matrix, covariance_matrix, mean_matrix, cv::COVAR_NORMAL | cv::COVAR_ROWS);
 		covariance_matrix /= (samples_matrix.rows - 1);
 		covariance_matrix.convertTo(covariance_matrix, CV_32FC1);
 
@@ -201,7 +201,7 @@ namespace TransformCxCyDensity
 	std::pair<double, double> GetCxCyMedian(const cv::Mat& cx_cy_matrix)
 	{
 		cv::Mat sorted_cx_cy;
-		cv::sortIdx(cx_cy_matrix, sorted_cx_cy, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
+		cv::sortIdx(cx_cy_matrix, sorted_cx_cy, cv::SORT_EVERY_COLUMN + cv::SORT_ASCENDING);
 
 		return
 		{
@@ -248,7 +248,7 @@ namespace TransformCxCyDensity
 	{
 		cv::Mat sorted_cx_cy;
 		cx_cy.copyTo(sorted_cx_cy);
-		cv::sortIdx(sorted_cx_cy, sorted_cx_cy, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
+		cv::sortIdx(sorted_cx_cy, sorted_cx_cy, cv::SORT_EVERY_COLUMN + cv::SORT_ASCENDING);
 
 		return std::pair<float, float>(cx_cy.at<float>(sorted_cx_cy.at<int>(sorted_cx_cy.rows / cx_percentile, 0), 0),
 									   cx_cy.at<float>(sorted_cx_cy.at<int>(sorted_cx_cy.rows / cy_percentile, 1), 1));
@@ -372,7 +372,7 @@ namespace TransformCxCyDensity
 		}
 
 		cv::Mat sorted_cx_cy_indices;
-		cv::sortIdx(indice_values, sorted_cx_cy_indices, CV_SORT_EVERY_COLUMN + CV_SORT_ASCENDING);
+		cv::sortIdx(indice_values, sorted_cx_cy_indices, cv::SORT_EVERY_COLUMN + cv::SORT_ASCENDING);
 
 		float x_median = indice_values.at<float>(sorted_cx_cy_indices.at<int>(sorted_cx_cy_indices.rows * 0.50, 0), 0);
 		float y_median = indice_values.at<float>(sorted_cx_cy_indices.at<int>(sorted_cx_cy_indices.rows * 0.50, 1), 1);

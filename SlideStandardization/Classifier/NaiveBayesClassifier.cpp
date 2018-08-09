@@ -95,7 +95,6 @@ namespace ML
 		{
 			for (size_t sample = 0; sample < input.rows; ++sample)
 			{
-			//	std::cout << "New input " << std::setprecision(40) << input.at<float>(sample, feature) << std::endl;
 				m_feature_classifiers_[feature].Run(input.at<float>(sample, feature), feature_output);
 				if (this->probability_integration_type == ProbabilityIntegration::ADDITION)
 				{
@@ -109,22 +108,10 @@ namespace ML
 		}
 
 		cv::Mat norms;
-		cv::reduce(output, norms, 1, CV_REDUCE_SUM, CV_64F);
+		cv::reduce(output, norms, 1, cv::ReduceTypes::REDUCE_SUM, CV_64F);
 		for (size_t row = 0; row < output.rows; ++row)
 		{
-			std::vector<float> test;
-
-			for (size_t feature = 0; feature < features; ++feature)
-			{
-				//std::cout << "New value " << std::setprecision(40) << output.at<float>(row, feature) << std::endl;
-
-				//test.push_back(output.at<float>(row, feature));
-				//norm += output.at<float>(row, feature);
-			}
-
-			long double norm = std::accumulate(test.begin(), test.end(), (long double)(0));
-			norm = norms.at<long double>(row, 0);
-			//std::cout << "New norm " << std::setprecision(40) << norm << std::endl;
+			long double norm = norms.at<long double>(row, 0);
 
 			if (norm == 0)
 			{

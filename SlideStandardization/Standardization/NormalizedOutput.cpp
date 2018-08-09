@@ -1,6 +1,6 @@
 #include "NormalizedOutput.h"
 
-#include <opencv2\highgui.hpp>
+#include <opencv2/highgui.hpp>
 
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
@@ -57,13 +57,13 @@ namespace StainNormalization
 		}
 	}
 
-	void WriteNormalizedWSI_(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const cv::Mat& normalized_lut, const uint32_t tile_size)
+	void WriteNormalizedWSI(const boost::filesystem::path& input_file, const boost::filesystem::path& output_file, const cv::Mat& normalized_lut, const uint32_t tile_size)
 	{
 		IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
 		MultiResolutionImageReader reader;
 		MultiResolutionImage* tiled_image = reader.open(input_file.string());
-		std::vector<size_t> dimensions = tiled_image->getLevelDimensions(0);
+		const std::vector<unsigned long long> dimensions = tiled_image->getLevelDimensions(0);
 
 		MultiResolutionImageWriter image_writer;
 		image_writer.openFile(output_file.string());
@@ -109,7 +109,7 @@ namespace StainNormalization
 		image_writer.finishImage();
 	}
 
-	void WriteNormalizedWSI_(const cv::Mat& static_image, const boost::filesystem::path& output_file, const cv::Mat& normalized_lut)
+	void WriteNormalizedWSI(const cv::Mat& static_image, const boost::filesystem::path& output_file, const cv::Mat& normalized_lut)
 	{
 		cv::Mat normalized_image;
 		ApplyLUT(static_image, normalized_image, normalized_lut);
@@ -119,7 +119,7 @@ namespace StainNormalization
 		logging_instance->QueueCommandLineLogging("Normalized image written to: " + output_file.string(), IO::Logging::NORMAL);
 	}
 
-	void WriteSampleNormalizedImagesForTesting_(const std::string output_filepath, const cv::Mat& normalized_lut, const cv::Mat& tile_image, const uint32_t tile_size)
+	void WriteNormalizedSample(const std::string output_filepath, const cv::Mat& normalized_lut, const cv::Mat& tile_image, const uint32_t tile_size)
 	{
 		cv::Mat lut_slide_image;
 		ApplyLUT(tile_image, lut_slide_image, normalized_lut);
@@ -129,7 +129,7 @@ namespace StainNormalization
 		logging_instance->QueueCommandLineLogging("Normalized image is written...", IO::Logging::NORMAL);
 	}
 
-	void WriteSampleNormalizedImagesForTesting_(
+	void WriteNormalizedSamples(
 		const boost::filesystem::path& output_directory,
 		const cv::Mat& normalized_lut,
 		MultiResolutionImage& tiled_image,

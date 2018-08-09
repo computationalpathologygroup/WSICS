@@ -113,10 +113,10 @@ namespace HoughTransform
 			/// does this by using a point triplet. Application of linear decomposition then determines the 
 			/// three values that would define an ellipse, with its center located on the origin.
 			/// </summary>
-			/// <param name="triplet">The triplet to use as the basis for the computation.</param>
-			/// <param name="ellipse">The ellipse which already has a location.</param>
+			/// <param name="input_triplet">The triplet to use as the basis for the computation.</param>
+			/// <param name="output_ellipse">The ellipse with recalculated parameters.</param>
 			/// <returns>Whether or not the new ellipse values are valid.</returns>
-			bool ComputeParameters_(PointCollection& triplet, Ellipse& ellipse);
+			bool ComputeParameters_(const PointCollection& input_triplet, Ellipse& output_ellipse) const;
 			/// <summary>
 			/// Converts the ellipses parameters from an a, b, c format to a theta, major axis, minor axis format.
 			/// The reason for doing so is to create a more accumulator friendly range of numbers for each parameter.
@@ -129,14 +129,14 @@ namespace HoughTransform
 			/// </summary>
 			/// <param name="triplet">The triplet from which to determine its center.</param>
 			/// <returns>The center point of the triplet.</returns>
-			cv::Point2f DetermineCenter_(PointCollection& triplet);
+			cv::Point2f DetermineCenter_(const PointCollection& triplet) const;
 			/// <summary>
 			/// Attempts to create a new ellipse through a point triplet. It performs several checks
 			/// in order to report the validity of the created ellipse.
 			/// </summary>
 			/// <param name="triplet">The point triplet to convert into an ellipse.</param>
 			/// <returns>A pair where the first value defines whether or not the Ellipse in the second value is valid.</returns>
-			std::pair<bool, Ellipse> EllipseFromTriplet_(PointCollection& triplet);
+			std::pair<bool, Ellipse> EllipseFromTriplet_(PointCollection triplet) const;
 
 			/// <summary>
 			/// Determines whether an ellipse its size falls into a certain range. To accomplish this, the variables "max_ellipse_radius"
@@ -153,7 +153,7 @@ namespace HoughTransform
 			/// <param name="triplet">The triplet to match to the Ellipses contours.</param>
 			/// <param name="ellipse">The ellipse that defines the contours.</param>
 			/// <returns>Whether or not the ellipse and triplet contorus align within a certain range.</returns>
-			bool FitsContours_(PointCollection& triplet, const Ellipse& ellipse) const;
+			bool FitsContours_(const PointCollection& triplet, const Ellipse& ellipse) const;
 			/// <summary>
 			/// Performs the neccesary operations for the ellipse extraction.
 			/// </summary>

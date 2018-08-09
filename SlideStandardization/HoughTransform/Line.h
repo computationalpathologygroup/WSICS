@@ -1,7 +1,7 @@
 #ifndef __HOUGHTRANSFORM_LINE_H__
 #define __HOUGHTRANSFORM_LINE_H__
 
-#include <opencv2\core\types.hpp>
+#include <opencv2/core/types.hpp>
 
 namespace HoughTransform
 {
@@ -55,19 +55,19 @@ namespace HoughTransform
 		/// Returns the angle of the line in radians.
 		/// </summary>
 		/// <returns>The angle of the line in radians.</returns>
-        float GetAngle(void);
+        float GetAngle(void) const;
 		/// <summary>
 		/// Gets the point of intersection between this and the other line.
 		/// </summary>
 		/// <param name="other">The other line to calculate the intersection with.</param>
 		/// <returns>The point of intersection between the two lines.</returns>
-		cv::Point2f Intersect(const Line& other);
+		cv::Point2f Intersect(const Line& other) const;
 		/// <summary>
 		/// Returns whether or not the two lines run in parallel.
 		/// </summary>
 		/// <param name="other">The other line to compare with.</param>
 		/// <returns>Whether or not the lines run in parallel.</returns>
-        bool IsParallelWith(const Line& other);
+        bool IsParallelWith(const Line& other) const;
 
 		/// <summary>
 		/// Creates a line from a slope and interception value.

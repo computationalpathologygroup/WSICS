@@ -1,9 +1,8 @@
 #include "NaiveBayesFeatureClassifier.h"
 
-#include <exception>
+#include <stdexcept>
 #include <float.h>
 #include <math.h>
-
 
 namespace ML
 {
@@ -29,6 +28,21 @@ namespace ML
 			output += a * m_lut_.row(ibin + 1);
 		}
 	}
+
+	/*void NaiveBayesFeatureClassifier::Process(const cv::Mat& input, cv::Mat output) const
+	{
+		output = cv::Mat::zeros(input.rows, m_lut_.cols, CV_32FC1);
+
+
+		cv::Mat fbin
+		if (input.data != output.data)
+		{
+			input.copyTo(output);
+		}
+		
+		output =
+
+	}*/
 
 	// Computes a (Gaussian-blurred) histogram of p(x|class) for each class, p(x)
 	// (histogram of all classes) and p(class) (the priors). With these quantities

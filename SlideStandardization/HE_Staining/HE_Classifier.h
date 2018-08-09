@@ -93,7 +93,7 @@ namespace HE_Staining
 			/// </summary>
 			/// <param name="matrix">The matrix to perform the operation on.</param>
 			/// <returns>A matrix containing the mean values, subtracted by the standard deviation values.</returns>
-			cv::Mat HE_Classifier::CalculateOneStdDevBelowMean_(cv::Mat& matrix);
+			cv::Mat CalculateOneStdDevBelowMean_(cv::Mat& matrix);
 			/// <summary>
 			/// Creates the training and test data for the K-NN tree.
 			/// </summary>

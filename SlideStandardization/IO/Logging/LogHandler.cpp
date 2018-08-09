@@ -1,5 +1,7 @@
 #include "LogHandler.h"
 
+#include <utility>
+
 namespace IO::Logging
 {
 	// Initialises the static variable.
@@ -22,9 +24,9 @@ namespace IO::Logging
 		m_in_progress_mutex_.unlock();
 		m_logging_thread_.join();
 
-		for (std::pair<const size_t, std::pair<std::string, std::ofstream>>& open_file : m_open_files_)
+		for (std::pair<const size_t, OpenedFile>& open_file : m_open_files_)
 		{
-			open_file.second.second.close();
+			open_file.second.filestream.close();
 		}
 	}
 
@@ -111,11 +113,12 @@ namespace IO::Logging
 			if (!m_open_files_.empty())
 			{
 				auto file_iterator = m_open_files_.end();
-				--file_iterator;
+				file_iterator.operator++();
 				file_index = file_iterator->first + 1;
 			}
 
-			m_open_files_.insert({ file_index, std::pair<std::string, std::ofstream>(filepath, std::ofstream(filepath, flags)) });
+			std::pair<size_t, OpenedFile> insertion_pair = { file_index, OpenedFile{ filepath, std::ofstream(filepath, flags) } };
+			m_open_files_.insert(std::move(insertion_pair));
 
 			m_file_access_.unlock();
 			return file_index;
@@ -142,9 +145,9 @@ namespace IO::Logging
 	std::vector<std::pair<size_t, std::string>> LogHandler::GetOpenFiles(void)
 	{
 		std::vector<std::pair<size_t, std::string>> files;
-		for (const std::pair<const size_t, std::pair<std::string, std::ofstream>>& file : m_open_files_)
+		for (const std::pair<const size_t, OpenedFile>& file : m_open_files_)
 		{
-			files.push_back({ file.first, file.second.first });
+			files.push_back({ file.first, file.second.filepath });
 		}
 		return files;
 	}
@@ -200,7 +203,7 @@ namespace IO::Logging
 
 		if (open_file_iterator != m_open_files_.end())
 		{
-			std::ofstream& stream = open_file_iterator->second.second;
+			std::ofstream& stream = open_file_iterator->second.filestream;
 
 			if (stream.is_open())
 			{

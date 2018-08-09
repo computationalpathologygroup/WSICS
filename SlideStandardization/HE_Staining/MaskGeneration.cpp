@@ -204,7 +204,7 @@ namespace HE_Staining::MaskGeneration
 				}
 
 				cv::Mat all_ellipse_raw(cv::Mat::zeros(hsd_image.red_density.size(), CV_8UC1));
-				cv::drawContours(all_ellipse_raw, coordinates, 0, 255, CV_FILLED, 8);
+				cv::drawContours(all_ellipse_raw, coordinates, 0, 255, cv::FILLED, 8);
 				hema_mask_info.full_mask += all_ellipse_raw;
 
 				contours.push_back(std::move(coordinates[0]));
@@ -222,7 +222,7 @@ namespace HE_Staining::MaskGeneration
 			double density_mean_threshold	= AcquirePercentile(density_mean, 0.02f);
 
 			contours = FilterContours(contours, density_mean, red_mean, blue_mean, density_mean_threshold, hema_mean_threshold);
-			cv::drawContours(hema_mask_info.training_mask, contours, -1, 255, CV_FILLED, 8);
+			cv::drawContours(hema_mask_info.training_mask, contours, -1, 255, cv::FILLED, 8);
 
 			hema_mask_info.training_mask = hema_mask_info.training_mask - hema_mask_info.training_mask.mul(background_mask);
 			hema_mask_info.training_pixels = 0;

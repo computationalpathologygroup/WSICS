@@ -49,7 +49,7 @@ namespace ML
 			NaiveBayesClassifier(const size_t bins = 100, const float blur = 3, const ProbabilityIntegration integration_type = MULTIPLICATION);
 
 			// Copy constructor
-			NaiveBayesClassifier(const NaiveBayesClassifier& nbc);
+			NaiveBayesClassifier(const NaiveBayesClassifier& other);
 
 		protected:
 			void TrainClassifier$(const cv::ml::TrainData& train_data);

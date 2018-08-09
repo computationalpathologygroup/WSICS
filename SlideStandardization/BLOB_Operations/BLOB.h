@@ -2,7 +2,7 @@
 #define __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOB_H
 
 #include <vector>
-#include <opencv2\core\types.hpp>
+#include <opencv2/core/types.hpp>
 
 namespace ASAP::Image_Processing::BLOB_Operations
 {

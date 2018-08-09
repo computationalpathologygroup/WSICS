@@ -37,7 +37,17 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 		/// <summary>
 		/// Takes the commandline input and checks its validity, passing the results into the references.
 		/// </summary>
-		/// <param name="variables">The variables gathered from the command line.</param>
+		/// <param name="variables">The collection of parameters acquired from the CLI.</param>
+		/// <param name="parameters">A struct containing all the exposed parameters.</param>
+		/// <param name="files_to_process">A list of the files that require processing.</param>
+		/// <param name="prefix">The prefix for a file, incase a directory has been offered.</param>
+		/// <param name="postfix">The postfix for a file, incase a directory has been offered.</param>
+		/// <param name="image_output">The file or directory path to where the image output should occur.</param>
+		/// <param name="lut_output">The file or directory path to where the LUT output should occur.</param>
+		/// <param name="template_input">A filepath to the template used for normalising the image.</param>
+		/// <param name="template_output">The file or directory path to where the template output should occur.</param>
+		/// <param name="debug_dir">The directory where debug data should be written to.</param>
+		/// <param name="input_is_directory">Whether or not a file or directory path has been offered.</param>
 		void AcquireAndSanitizeInput_(
 			const boost::program_options::variables_map& variables,
 			StandardizationParameters& parameters,
@@ -51,6 +61,16 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 			boost::filesystem::path& debug_dir,
 			bool& input_is_directory);
 
+
+		/// <summary>
+		/// Creates the directories required for outputting results and debug data.
+		/// </summary>
+		/// <param name="image_output">The directory path to where the image should be written.</param>
+		/// <param name="lut_output">The directory path to where the lut table should be written.</param>
+		/// <param name="template_output">The directory path to where the template should be written.</param>
+		/// <param name="debug_directory">The directory path to where the debug data should be written.</param>
+		/// <param name="files">The list of files that need to be processed.</param>
+		/// <param name="input_is_directory">Whether or not the input parameter contains a directory path.</param>
 		void CreateDirectories_(
 			const boost::filesystem::path& image_output,
 			const boost::filesystem::path& lut_output,
@@ -67,6 +87,14 @@ class SlideStandardizationCLI : public IO::CommandLineInterface
 		/// <returns>A vector holding all the eligble image files.</returns>
 		std::vector<boost::filesystem::path> GatherImageFilenames_(const boost::filesystem::path input_path);
 
+
+		/// <summary>
+		/// Sets the complete output path for whatever filepath is provided.
+		/// </summary>
+		/// <param name="path">The original filepath.</param>
+		/// <param name="extension">What extension the file should have.</param>
+		/// <param name="filename">The filename appended to the path.</param>
+		/// <returns>The definitive output path for a file or directory.</returns>
 		boost::filesystem::path SetOutputPath(boost::filesystem::path path, const std::string extension, const std::string filename);
 };
 #endif // __SLIDESTANDARDIZATION_CLI_H__

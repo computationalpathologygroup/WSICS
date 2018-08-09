@@ -45,7 +45,7 @@ namespace IO::Logging
 			~LogHandler(void);
 
 			LogHandler(const LogHandler&)			= delete;
-			LogHandler(LogHandler&&)					= delete;
+			LogHandler(LogHandler&&)				= delete;
 			LogHandler operator=(const LogHandler&) = delete;
 			LogHandler operator=(LogHandler&&)		= delete;
 
@@ -89,6 +89,12 @@ namespace IO::Logging
 			std::vector<std::pair<size_t, std::string>> GetOpenFiles(void);
 
 		private:
+			struct OpenedFile
+			{
+				std::string		filepath;
+				std::ofstream	filestream;
+			};
+
 			static LogHandler*	m_instance_;
 
 			bool				m_end_operations_;
@@ -101,9 +107,9 @@ namespace IO::Logging
 			std::shared_mutex	m_notification_mutex_;
 			std::thread			m_logging_thread_;
 
-			std::unordered_map<size_t, std::pair<std::string, std::ofstream>>	m_open_files_;
-			std::queue<std::string>												m_command_line_messages_;
-			std::queue<std::pair<size_t, std::string>>							m_file_messages_;
+			std::unordered_map<size_t, OpenedFile>		m_open_files_;
+			std::queue<std::string>						m_command_line_messages_;
+			std::queue<std::pair<size_t, std::string>>	m_file_messages_;
 
 			/// <summary>Starts the thread handling the command line and file writing.</summary>
 			void ProcessLogRequests_(void);

@@ -230,11 +230,11 @@ namespace HoughTransform
 		std::vector<std::pair<size_t, cv::Point2f*>> points_within_range;
 		if (a_from_same_label || b_from_same_label)
 		{
-			label_points_within_range.swap(GetPointsFromRadius_(*labeled_origin.second, labeled_origin.first));
+			label_points_within_range = std::move(GetPointsFromRadius_(*labeled_origin.second, labeled_origin.first));
 		}
 		if (!a_from_same_label || !b_from_same_label)
 		{
-			points_within_range.swap(GetPointsFromRadius_(*labeled_origin.second));
+			points_within_range = std::move(GetPointsFromRadius_(*labeled_origin.second));
 		}
 
 		// Acquires the Alpha and Bravo points randomly.
@@ -257,15 +257,12 @@ namespace HoughTransform
 		std::vector<std::pair<size_t, cv::Point2f*>> points_within_range;
 		if (a_from_same_label || b_from_same_label)
 		{
-			label_points_within_range.swap(GetPointsFromRadius_(*labeled_origin.second, labeled_origin.first));
+			label_points_within_range = std::move(GetPointsFromRadius_(*labeled_origin.second, labeled_origin.first));
 		}
 		if (!a_from_same_label || !b_from_same_label)
 		{
-			points_within_range.swap(GetPointsFromRadius_(*labeled_origin.second));
+			points_within_range = std::move(GetPointsFromRadius_(*labeled_origin.second));
 		}
-
-		std::vector<std::pair<size_t, cv::Point2f*>> label_points_within_range2 = label_points_within_range;
-		std::vector<std::pair<size_t, cv::Point2f*>> points_within_range2 = points_within_range;
 
 		// Leaves the points empty if the corresponding vectors are empty.
 		std::pair<size_t, cv::Point2f*> point_a;

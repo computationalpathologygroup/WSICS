@@ -1,7 +1,7 @@
 #ifndef __HOUGHTRANSFORM_ELLIPSE_H__
 #define __HOUGHTRANSFORM_ELLIPSE_H__
 
-#include <opencv2\core\types.hpp>
+#include <opencv2/core/types.hpp>
 
 namespace HoughTransform
 {

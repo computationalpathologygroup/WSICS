@@ -140,7 +140,7 @@ namespace HoughTransform
     //******************************************************************************
     // Public Member Functions
     //******************************************************************************
-    float Line::GetAngle(void)
+    float Line::GetAngle(void) const
     {
         float theta = this->theta + (0.5 * M_PI);
         if(std::fabs(theta) > 0.5 * M_PI)
@@ -150,7 +150,7 @@ namespace HoughTransform
         return theta;
     }
 
-	cv::Point2f Line::Intersect(const Line& other)
+	cv::Point2f Line::Intersect(const Line& other) const
     {
 		float x;
         float y = (other.rho * std::cos(this->theta) - this->rho * std::cos(other.theta)) / std::sin(other.theta - this->theta);
@@ -167,7 +167,7 @@ namespace HoughTransform
         return cv::Point2f(x,y);
     }
 
-    bool Line::IsParallelWith(const Line& other)
+    bool Line::IsParallelWith(const Line& other) const
     {
 		return this->theta == other.theta;
     }

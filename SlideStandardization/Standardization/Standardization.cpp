@@ -84,12 +84,12 @@ void Standardization::Normalize(
 	std::vector<cv::Point> tile_coordinates;
 	if (m_is_multiresolution_image_)
 	{
-		tile_coordinates.swap(GetTileCoordinates_(*tiled_image, spacing, tile_size, min_level));
+		tile_coordinates = std::move(GetTileCoordinates_(*tiled_image, spacing, tile_size, min_level));
 	}
 	else
 	{
 		logging_instance->QueueCommandLineLogging("Deconvolving patch image.", IO::Logging::NORMAL);
-		static_image = cv::imread(input_file.string(), CV_LOAD_IMAGE_COLOR);
+		static_image = cv::imread(input_file.string(), cv::IMREAD_COLOR);
 		tile_coordinates.push_back({ 0, 0 });
 	}
 
@@ -135,11 +135,11 @@ void Standardization::Normalize(
 
 		if (m_is_multiresolution_image_)
 		{
-			StainNormalization::WriteNormalizedWSI_(input_file, image_output_file, normalized_lut, tile_size);
+			StainNormalization::WriteNormalizedWSI(input_file, image_output_file, normalized_lut, tile_size);
 		}
 		else
 		{
-			StainNormalization::WriteNormalizedWSI_(static_image, image_output_file, normalized_lut);
+			StainNormalization::WriteNormalizedWSI(static_image, image_output_file, normalized_lut);
 		}
 		logging_instance->QueueFileLogging("Finished writing the image.", m_log_file_id_, IO::Logging::NORMAL);
 		logging_instance->QueueCommandLineLogging("Finished writing the image.", IO::Logging::NORMAL);
@@ -155,12 +155,12 @@ void Standardization::Normalize(
 
 		if (m_is_multiresolution_image_)
 		{
-			StainNormalization::WriteSampleNormalizedImagesForTesting_(boost::filesystem::path(m_debug_directory_.string()), normalized_lut, *tiled_image, tile_coordinates, tile_size);
+			StainNormalization::WriteNormalizedSamples(boost::filesystem::path(m_debug_directory_.string()), normalized_lut, *tiled_image, tile_coordinates, tile_size);
 		}
 		else
 		{
 			boost::filesystem::path output_filepath(m_debug_directory_.string() + "/" + input_file.stem().string() + ".tif");
-			StainNormalization::WriteSampleNormalizedImagesForTesting_(output_filepath.string(), normalized_lut, static_image, tile_size);
+			StainNormalization::WriteNormalizedSample(output_filepath.string(), normalized_lut, static_image, tile_size);
 		}
 	}
 
@@ -276,29 +276,29 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 	logging_instance->QueueFileLogging("Detecting tissue", m_log_file_id_, IO::Logging::NORMAL);
 
 	// Attempts to acquire the tile coordinates for the lowest level / highest magnification.
-	std::vector<size_t> dimensions		= tiled_image.getLevelDimensions(number_of_levels - 1);
-	uint32_t skip_factor				= 1;
-	float background_tissue_threshold	= m_parameters_.background_threshold;
-	uint32_t level_scale_difference		= 1;
+	const std::vector<unsigned long long> dimensions	= tiled_image.getLevelDimensions(number_of_levels - 1);
+	uint32_t skip_factor								= 1;
+	float background_tissue_threshold					= m_parameters_.background_threshold;
+	uint32_t level_scale_difference						= 1;
 
 	std::vector<cv::Point> tile_coordinates;
 	if (number_of_levels > 1)
 	{
 		logging_instance->QueueCommandLineLogging("Analyzing level: " + std::to_string(number_of_levels - 1), IO::Logging::NORMAL);
 
-		std::vector<unsigned long long> next_level_dimensions = tiled_image.getLevelDimensions(number_of_levels - 2);
+		const std::vector<unsigned long long> next_level_dimensions = tiled_image.getLevelDimensions(number_of_levels - 2);
 		level_scale_difference = std::pow(std::round(next_level_dimensions[0] / next_level_dimensions[0]), 2);
 
 		// Loops through each level, acquiring coordinates for each and reusing them to calculate the set of coordinates for a higher magnification.
-		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, number_of_levels - 1, skip_factor, background_tissue_threshold));
+		tile_coordinates = std::move(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, number_of_levels - 1, skip_factor, background_tissue_threshold));
 		for (char level_number = number_of_levels - 2; level_number >= 0; --level_number)
 		{
 			if (level_number != 0)
 			{
 				skip_factor = 2;
 
-				std::vector<size_t> dimensions_level_low	= tiled_image.getLevelDimensions(level_number);
-				std::vector<size_t> dimensions_level_high	= tiled_image.getLevelDimensions(level_number - 1);
+				const std::vector<unsigned long long> dimensions_level_low	= tiled_image.getLevelDimensions(level_number);
+				const std::vector<unsigned long long> dimensions_level_high	= tiled_image.getLevelDimensions(level_number - 1);
 				level_scale_difference = std::pow(std::floor(dimensions_level_high[0] / dimensions_level_low[0]), 2);
 			}
 
@@ -307,12 +307,12 @@ std::vector<cv::Point> Standardization::GetTileCoordinates_(MultiResolutionImage
 			logging_instance->QueueFileLogging(log_text, m_log_file_id_, IO::Logging::NORMAL);
 
 			background_tissue_threshold -= 0.1;
-			tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, tile_coordinates, tile_size, level_number, skip_factor, level_scale_difference, background_tissue_threshold));
+			tile_coordinates = std::move(LevelReading::ReadLevelTiles(tiled_image, tile_coordinates, tile_size, level_number, skip_factor, level_scale_difference, background_tissue_threshold));
 		}
 	}
 	else
 	{
-		tile_coordinates.swap(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, number_of_levels - 1, 0.9, skip_factor));
+		tile_coordinates = std::move(LevelReading::ReadLevelTiles(tiled_image, dimensions[0], dimensions[1], tile_size, number_of_levels - 1, 0.9, skip_factor));
 	}
 
 	return tile_coordinates;

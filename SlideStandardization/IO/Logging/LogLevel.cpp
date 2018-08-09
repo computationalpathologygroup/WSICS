@@ -1,6 +1,6 @@
 #include "LogLevel.h"
 
-#include <exception>
+#include <stdexcept>
 
 namespace IO::Logging
 {
@@ -27,7 +27,7 @@ namespace IO::Logging
 			}
 		}
 
-		throw std::exception("Unable to ascertain log level.");
+		throw std::runtime_error("Unable to ascertain log level.");
 	}
 
 	std::vector<std::string> GetLogLevelsAsString(void)
