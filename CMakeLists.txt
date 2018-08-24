@@ -1,6 +1,6 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.9)
 
-PROJECT(stain_normalization)
+PROJECT(wsics)
 
 IF (WIN32)
 	SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS}\ /std:c++latest)
@@ -91,7 +91,7 @@ SET(GROUP_STANDARDIZATION
 	WSICS/Standardization/TransformCxCyDensity.cpp
 )
 
-ADD_EXECUTABLE(stain_normalization
+ADD_EXECUTABLE(wsics
 	WSICS/Main.cpp
 	${GROUP_BLOB_OPERATIONS}
 	${GROUP_CLASSIFIER}
@@ -135,6 +135,6 @@ ELSE()
 ENDIF()
 
 
-TARGET_LINK_LIBRARIES(stain_normalization ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${ASAP_LIBRARIES})
+TARGET_LINK_LIBRARIES(wsics ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${ASAP_LIBRARIES})
 
 install(TARGETS wsics DESTINATION bin)
