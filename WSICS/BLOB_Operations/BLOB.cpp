@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace ASAP::Image_Processing::BLOB_Operations
+namespace WSICS::BLOB_Operations
 {
 	BLOB::BLOB(void)
 	{

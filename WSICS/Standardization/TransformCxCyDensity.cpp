@@ -6,9 +6,9 @@
 
 #include <set>
 
-#include "../Misc/MiscMatrixOperations.h"
+#include "../Misc/MatrixOperations.h"
 
-namespace TransformCxCyDensity
+namespace WSICS::Standardization::TransformCxCyDensity
 {
 	cv::Mat AdjustParamaterMinMax(const cv::Mat& cx_cy, cv::Mat parameters)
 	{
@@ -319,7 +319,7 @@ namespace TransformCxCyDensity
 
 	void ScaleCxCy(const cv::Mat& rotated_input, cv::Mat& scaled_output, const cv::Mat& class_scale_params, const cv::Mat& lut_scale_params)
 	{
-		ASAP::MiscMatrixOperations::PrepareOutputForInput(rotated_input, scaled_output);
+		WSICS::Misc::MatrixOperations::PrepareOutputForInput(rotated_input, scaled_output);
 
 		for (size_t row = 0; row < rotated_input.rows; ++row)
 		{
@@ -343,7 +343,7 @@ namespace TransformCxCyDensity
 
 	void ScaleCxCyLUT(const cv::Mat& rotated_input, cv::Mat& scaled_output, const cv::Mat& class_scale_params, const cv::Mat& lut_scale_params)
 	{
-		ASAP::MiscMatrixOperations::PrepareOutputForInput(rotated_input, scaled_output);
+		WSICS::Misc::MatrixOperations::PrepareOutputForInput(rotated_input, scaled_output);
 
 		for (size_t row = 0; row < rotated_input.rows; ++row)
 		{

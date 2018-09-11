@@ -6,7 +6,7 @@
 
 #include "BLOB_Operations.h"
 
-namespace ASAP::Image_Processing::BLOB_Operations
+namespace WSICS::BLOB_Operations
 {
 	/// <summary>
 	/// Provides windowed / tiled access to the BLOBs of a given matrix.

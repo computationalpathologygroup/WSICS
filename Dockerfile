@@ -42,7 +42,7 @@ RUN wget https://dl.bintray.com/boostorg/release/1.67.0/source/boost_1_67_0.tar.
 	./b2 install && \
 	cd .. && \
 	rm boost_1_67_0 -r
-# --prefix=/usr/local
+
 RUN	wget ftp://dicom.offis.de/pub/dicom/offis/software/dcmtk/dcmtk363/dcmtk-3.6.3.tar.gz && \
 	tar -xzf dcmtk-3.6.3.tar.gz && \
 	rm dcmtk-3.6.3.tar.gz && \

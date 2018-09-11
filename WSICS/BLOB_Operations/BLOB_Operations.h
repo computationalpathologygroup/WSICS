@@ -6,7 +6,7 @@
 
 #include "BLOB.h"
 
-namespace ASAP::Image_Processing::BLOB_Operations
+namespace WSICS::BLOB_Operations
 {
 	enum MaskType { FOUR_CONNECTEDNESS, EIGHT_CONNECTEDNESS };
 

@@ -2,7 +2,7 @@
 
 #include <memory>
 
-namespace LevelReading
+namespace WSICS::Misc::LevelReading
 {
 	size_t ArrayToMatrix(unsigned char* data, cv::Mat& output, const bool consider_background)
 	{

@@ -4,7 +4,7 @@
 #include <vector>
 #include <opencv2/core/types.hpp>
 
-namespace ASAP::Image_Processing::BLOB_Operations
+namespace WSICS::BLOB_Operations
 {
 	/// <summary>
 	///	Represents a BLOB, with several features that aid in image processing.

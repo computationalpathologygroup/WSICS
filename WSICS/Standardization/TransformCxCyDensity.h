@@ -7,48 +7,48 @@
 #include "../HSD/BackgroundMask.h"
 #include "CxCyWeights.h"
 
-struct MedianPercentileValues
+namespace WSICS::Standardization::TransformCxCyDensity
 {
-	double hema_median_cx;
-	double hema_median_cy;
-	double eosin_median_cx;
-	double eosin_median_cy;
-};
+	struct MedianPercentileValues
+	{
+		double hema_median_cx;
+		double hema_median_cy;
+		double eosin_median_cx;
+		double eosin_median_cy;
+	};
 
-struct ClassAnnotatedCxCy
-{
-	cv::Mat cx_cy_merged;
-	cv::Mat hema_cx_cy;
-	cv::Mat eosin_cx_cy;
-	cv::Mat background_cx_cy;
-};
+	struct ClassAnnotatedCxCy
+	{
+		cv::Mat cx_cy_merged;
+		cv::Mat hema_cx_cy;
+		cv::Mat eosin_cx_cy;
+		cv::Mat background_cx_cy;
+	};
 
-struct ClassDensityRanges
-{
-	cv::Scalar hema_density_mean;
-	cv::Scalar hema_density_standard_deviation;
-	cv::Scalar eosin_density_mean;
-	cv::Scalar eosin_density_standard_deviation;
-	cv::Scalar background_density_mean;
-	cv::Scalar background_density_standard_deviation;
-};
+	struct ClassDensityRanges
+	{
+		cv::Scalar hema_density_mean;
+		cv::Scalar hema_density_standard_deviation;
+		cv::Scalar eosin_density_mean;
+		cv::Scalar eosin_density_standard_deviation;
+		cv::Scalar background_density_mean;
+		cv::Scalar background_density_standard_deviation;
+	};
 
-struct ClassPixelIndices
-{
-	std::vector<cv::Point> hema_indices;
-	std::vector<cv::Point> eosin_indices;
-	std::vector<cv::Point> background_indices;
-};
+	struct ClassPixelIndices
+	{
+		std::vector<cv::Point> hema_indices;
+		std::vector<cv::Point> eosin_indices;
+		std::vector<cv::Point> background_indices;
+	};
 
-struct MatrixRotationParameters
-{
-	float	angle;
-	float	x_median;
-	float	y_median;
-};
+	struct MatrixRotationParameters
+	{
+		float	angle;
+		float	x_median;
+		float	y_median;
+	};
 
-namespace TransformCxCyDensity
-{
 	cv::Mat AdjustParamaterMinMax(const cv::Mat& cx_cy, cv::Mat parameters);
 
 	cv::Mat CalculateScaleParameters(const std::vector<cv::Point>& indices, const cv::Mat& cx_cy_rotated_matrix);

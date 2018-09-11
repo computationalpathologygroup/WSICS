@@ -11,7 +11,7 @@
 #include "multiresolutionimageinterface/MultiResolutionImageWriter.h"
 #include "multiresolutionimageinterface/OpenSlideImageFactory.h"
 
-namespace StainNormalization
+namespace WSICS::Standardization
 {
 	/// <summary>
 	/// Splits a BGR matrix and ensures each split matrix has the correct type for the normalization of an image.

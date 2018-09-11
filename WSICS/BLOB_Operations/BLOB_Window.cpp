@@ -3,7 +3,7 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace ASAP::Image_Processing::BLOB_Operations
+namespace WSICS::BLOB_Operations
 {
 	BLOB_Window::BLOB_Window(const uint32_t window_size) :
 		m_window_size_(window_size), m_window_step_size_(CalculateWindowStepSize_(window_size))

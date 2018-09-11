@@ -4,9 +4,10 @@
 
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
-#include "../Misc/MiscFunctionality.h"
+#include "../Misc/Random.h"
+#include "../Misc/MT_Singleton.h"
 
-namespace StainNormalization
+namespace WSICS::Standardization
 {
 	std::vector<cv::Mat> SplitBGR(const cv::Mat& source)
 	{
@@ -140,7 +141,7 @@ namespace StainNormalization
 
 		logging_instance->QueueCommandLineLogging("Writing sample standardized images in: " + output_directory.string(), IO::Logging::NORMAL);
 
-		std::vector<size_t> random_integers(ASAP::MiscFunctionality::CreateListOfRandomIntegers(tile_coordinates.size()));
+		std::vector<size_t> random_integers(Misc::Random::CreateListOfRandomIntegers(tile_coordinates.size(), Misc::MT_Singleton::GetGenerator()));
 
 		size_t num_to_write = 20 > tile_coordinates.size() ? tile_coordinates.size() : 20;
 		cv::Mat tile_image(cv::Mat::zeros(tile_size, tile_size, CV_8UC3));
@@ -149,7 +150,7 @@ namespace StainNormalization
 			unsigned char* data = nullptr;
 			tiled_image.getRawRegion(tile_coordinates[random_integers[tile]].x * tiled_image.getLevelDownsample(0), tile_coordinates[random_integers[tile]].y * tiled_image.getLevelDownsample(0), tile_size, tile_size, 0, data);
 			cv::Mat tile_image = cv::Mat::zeros(tile_size, tile_size, CV_8UC3);
-			LevelReading::ArrayToMatrix(data, tile_image, 0);
+			Misc::LevelReading::ArrayToMatrix(data, tile_image, 0);
 			delete[] data;
 
 			ApplyLUT(tile_image, tile_image, normalized_lut);

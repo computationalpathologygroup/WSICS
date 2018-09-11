@@ -9,7 +9,7 @@
 /// This namespace is for refining the rigid transformation of CxCy values
 /// The weights are applied based on the amount of stain for each pixel
 /// </summary>
-namespace CxCyWeights
+namespace WSICS::Standardization::CxCyWeights
 {
 	struct Weights
 	{

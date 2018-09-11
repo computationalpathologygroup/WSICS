@@ -8,7 +8,7 @@
 /// <summary>
 ///
 /// </summary>
-namespace LevelReading
+namespace WSICS::Misc::LevelReading
 {
 	/// <summary>
 	/// Inserts the data from a vector or array into an OpenCV matrix. Assumes the vector or array are at least compareable to the matrix in terms of size.

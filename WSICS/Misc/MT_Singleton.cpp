@@ -1,5 +1,7 @@
 #include "MT_Singleton.h"
 
+#include <stdexcept>
+
 namespace WSICS::Misc
 {
 	MT_Singleton::MT_Singleton(void) : m_generator_()
@@ -27,12 +29,22 @@ namespace WSICS::Misc
 
 	std::unique_ptr<MT_Singleton> MT_Singleton::Create(void)
 	{
+		if (IsInitialized())
+		{
+			std::runtime_error("An instance of the MT Singleton already exists.");
+		}
+
 		m_instance_ = new MT_Singleton();
 		return std::unique_ptr<MT_Singleton>(m_instance_);
 	}
 
 	std::unique_ptr<MT_Singleton> MT_Singleton::Create(const size_t seed)
 	{
+		if (IsInitialized())
+		{
+			std::runtime_error("An instance of the MT Singleton already exists.");
+		}
+
 		m_instance_ = new MT_Singleton(seed);
 		return std::unique_ptr<MT_Singleton>(m_instance_);
 	}
@@ -44,6 +56,11 @@ namespace WSICS::Misc
 
 	const boost::mt19937_64& MT_Singleton::GetGenerator(void)
 	{
+		if (!IsInitialized())
+		{
+			std::runtime_error("No instance of the MT_Singleton has been initialized.");
+		}
+
 		return m_instance_->m_generator_;
 	}
 }

@@ -1,7 +1,7 @@
 #pragma once
 #include <opencv2/core/core.hpp>
 
-namespace ASAP::MiscMatrixOperations
+namespace WSICS::Misc::MatrixOperations
 {
 	/// <summary>
 	/// Normalizes the Mat to ensure the values range from 0 to 1.

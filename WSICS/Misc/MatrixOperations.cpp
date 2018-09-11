@@ -1,6 +1,6 @@
-#include "MiscMatrixOperations.h"
+#include "MatrixOperations.h"
 
-namespace ASAP::MiscMatrixOperations
+namespace WSICS::Misc::MatrixOperations
 {
 	void NormalizeMat(const cv::Mat& source, cv::Mat& destination)
 	{

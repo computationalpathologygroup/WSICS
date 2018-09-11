@@ -2,9 +2,9 @@
 
 #include <opencv2/opencv.hpp>
 
-#include "../Misc/MiscMatrixOperations.h"
+#include "../Misc/MatrixOperations.h"
 
-namespace ASAP::Image_Processing::BLOB_Operations
+namespace WSICS::BLOB_Operations
 {
 	size_t LabelBLOBs(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const MaskType mask_type)
 	{
@@ -28,7 +28,7 @@ namespace ASAP::Image_Processing::BLOB_Operations
 	size_t LabelBLOBs(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const MaskType mask_type, cv::Mat& stats_array, cv::Mat& centroids_array)
 	{
 		// Ensures the output matrix has the same capacity as the input matrix.
-		ASAP::MiscMatrixOperations::PrepareOutputForInput(binary_matrix, output_matrix);
+		Misc::MatrixOperations::PrepareOutputForInput(binary_matrix, output_matrix);
 
 		// Selects the mask and acquires the BLOBs.
 		unsigned char mask = 4;
