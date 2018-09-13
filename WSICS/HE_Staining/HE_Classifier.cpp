@@ -1,6 +1,6 @@
 #include "HE_Classifier.h"
 
-namespace HE_Staining
+namespace WSICS::HE_Staining
 {
 	HE_Classifier::HE_Classifier(uint32_t max_leaf_size, uint32_t k_value) : max_leaf_size(max_leaf_size), k_value(k_value)
 	{

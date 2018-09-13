@@ -10,7 +10,7 @@ $Id: Classifier.cpp,v 1.11 2006/09/01 14:59:32 mirela Exp $
 #include "Classifier.h"
 #include <stdexcept>
 
-namespace ML
+namespace WSICS::ML
 {
 	Classifier::Classifier(void)
 		: m_is_trained$(false)

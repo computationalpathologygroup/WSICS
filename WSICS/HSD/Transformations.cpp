@@ -1,6 +1,6 @@
 #include "Transformations.h"
 
-namespace HSD
+namespace WSICS::HSD
 {
 	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix)
 	{

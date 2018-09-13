@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	LocationCell::LocationCell(const Ellipse& ellipse) : m_averaged_ellipses_({ AveragedEllipseParameters(ellipse) }), m_best_averaged_ellipse_(m_averaged_ellipses_[0]), m_center_(ellipse.center), m_count_(1)
     {

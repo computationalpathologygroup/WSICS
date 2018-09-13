@@ -29,7 +29,7 @@ Bran van Ginneken, Joes Staal
 DataSet
 */
 
-namespace ML
+namespace WSICS::ML
 {
 	class Classifier
 	{

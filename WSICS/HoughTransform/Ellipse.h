@@ -3,7 +3,7 @@
 
 #include <opencv2/core/types.hpp>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	/// A container class containing the parameters that describe an ellipse.

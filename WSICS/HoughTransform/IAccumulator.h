@@ -5,7 +5,7 @@
 
 #include "Ellipse.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	/// An interface for an accumulator, an implementor should be able to receive ellipses and

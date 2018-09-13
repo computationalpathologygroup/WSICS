@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-namespace IO::Logging
+namespace WSICS::IO::Logging
 {
 	std::string GetLogLevelAsString(LogLevel level)
 	{

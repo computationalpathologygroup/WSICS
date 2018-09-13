@@ -33,7 +33,7 @@ IMPLEMENTED CLASSIFICATIONS
 
 Bram van Ginneken
 */
-namespace ML
+namespace WSICS::ML
 {
 	class NaiveBayesClassifier : public Classifier
 	{

@@ -1,6 +1,6 @@
 #include "BackgroundMask.h"
 
-namespace HSD::BackgroundMask
+namespace WSICS::HSD::BackgroundMask
 {
 	cv::Mat CreateBackgroundMask(const HSD_Model& hsd_image, const float global_threshold, const float channel_threshold)
 	{

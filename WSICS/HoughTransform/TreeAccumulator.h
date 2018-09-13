@@ -4,7 +4,7 @@
 #include "IAccumulator.h"
 #include "LocationCell.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	///	An implementation of the IAccumulator interface using a tree-like structure for performance.

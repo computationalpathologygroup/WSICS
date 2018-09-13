@@ -6,7 +6,7 @@
 #include "../HoughTransform/RandomizedHoughTransform.h"
 #include "../HSD/HSD_Model.h"
 
-namespace HE_Staining
+namespace WSICS::HE_Staining
 {
 	/// <summary>
 	/// Contains a mask for the Eosin pixels, as well as a mask that can be used to train a classifier.

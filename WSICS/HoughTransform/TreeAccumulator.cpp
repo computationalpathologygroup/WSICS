@@ -2,7 +2,7 @@
 
 #include <cmath>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
     TreeAccumulator::TreeAccumulator(const float axis_threshold, const float location_threshold, const size_t count_threshold)
 		: m_axis_threshold_(axis_threshold), m_location_threshold_(location_threshold), m_count_threshold_(count_threshold)

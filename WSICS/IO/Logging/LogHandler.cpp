@@ -2,7 +2,7 @@
 
 #include <utility>
 
-namespace IO::Logging
+namespace WSICS::IO::Logging
 {
 	// Initialises the static variable.
 	LogHandler* LogHandler::m_instance_ = nullptr;

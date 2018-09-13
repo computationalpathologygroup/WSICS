@@ -5,7 +5,7 @@
 #include <math.h>
 #include <set>
 
-namespace ML
+namespace WSICS::ML
 {
 	NaiveBayesClassifier::NaiveBayesClassifier(const size_t bins, const float blur, const ProbabilityIntegration integration_type)
 		: n_bins(bins), blur_sigma(blur), probability_integration_type(integration_type)

@@ -3,7 +3,7 @@
 
 #include <opencv2/core/types.hpp>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	///	An implementation of a line using an internal representation suitable for

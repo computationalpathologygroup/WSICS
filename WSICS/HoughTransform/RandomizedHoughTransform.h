@@ -6,7 +6,7 @@
 
 // TODO: Convert stack of variables into structs that can be passed down to the corresponding objects.
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
     enum EllipseRemoval
     {

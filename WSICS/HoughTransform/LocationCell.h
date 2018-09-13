@@ -6,7 +6,7 @@
 #include "Ellipse.h"
 #include "AveragedEllipseParameters.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	/// A container/node class for the TreeAccumulator class containing an ellipse it's location

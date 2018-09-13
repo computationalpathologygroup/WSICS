@@ -5,13 +5,13 @@
 #include <math.h>
 #include <random>
 
-#include "../Misc/MiscMatrixOperations.h"
+#include "../Misc/MatrixOperations.h"
 
-namespace HE_Staining::MaskGeneration
+namespace WSICS::HE_Staining::MaskGeneration
 {
 	void ApplyBlur(const cv::Mat& input_matrix, cv::Mat& output_matrix, const uint32_t sigma)
 	{
-		ASAP::MiscMatrixOperations::PrepareOutputForInput(input_matrix, output_matrix);
+		WSICS::Misc::MatrixOperations::PrepareOutputForInput(input_matrix, output_matrix);
 
 		cv::blur(output_matrix, output_matrix, cv::Size(sigma, sigma));
 	}
@@ -35,7 +35,7 @@ namespace HE_Staining::MaskGeneration
 	{
 		// Prepares the Hough Transform algorithm and executes it.
 		HoughTransform::RandomizedHoughTransform hough_transform_algorithm(transform_parameters);
-		return hough_transform_algorithm.Execute(binary_matrix, output_matrix, ASAP::Image_Processing::BLOB_Operations::EIGHT_CONNECTEDNESS);
+		return hough_transform_algorithm.Execute(binary_matrix, output_matrix, WSICS::BLOB_Operations::EIGHT_CONNECTEDNESS);
 	}
 
 	std::vector<HoughTransform::Ellipse> DetectEllipses(const cv::Mat& matrix,

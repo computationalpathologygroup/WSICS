@@ -6,7 +6,7 @@
 
 #include "AveragedEllipseParameters.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	AveragedEllipseParameters::AveragedEllipseParameters(const Ellipse& ellipse) : m_count_(1)
     {

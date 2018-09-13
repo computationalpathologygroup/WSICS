@@ -13,7 +13,7 @@
 
 #include "LogLevel.h"
 
-namespace IO::Logging
+namespace WSICS::IO::Logging
 {
 	/// <summary>
 	/// A singleton object that places its own origin on the stack. Can be used to log

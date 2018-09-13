@@ -3,7 +3,7 @@
 
 #include "Line.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	/// A container class containing three points and three tangents running through these points.

@@ -6,7 +6,7 @@
 #include <math.h>
 #include <opencv2/core/core.hpp>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
     //******************************************************************************
     // Constructors / Destructors

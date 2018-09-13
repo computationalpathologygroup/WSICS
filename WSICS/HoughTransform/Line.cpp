@@ -5,7 +5,7 @@
 #include <math.h>
 #include <stdexcept>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
     //******************************************************************************
     // Constructors / Destructors

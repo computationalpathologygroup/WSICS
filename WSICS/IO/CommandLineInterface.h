@@ -8,7 +8,7 @@
 
 #include "Logging/LogHandler.h"
 
-namespace IO
+namespace WSICS::IO
 {
 	/// <summary></summary>
 	class CommandLineInterface

@@ -5,7 +5,7 @@
 #include <cmath>
 #include <math.h> // M_PI
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	Ellipse::Ellipse(void)
 	{

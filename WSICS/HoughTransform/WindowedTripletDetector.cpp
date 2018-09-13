@@ -7,7 +7,7 @@
 #include <math.h> // M_PI
 #include <stdexcept>
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
     //******************************************************************************
     // Constructors / Destructors

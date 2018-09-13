@@ -4,7 +4,7 @@
 #include <float.h>
 #include <math.h>
 
-namespace ML
+namespace WSICS::ML
 {
 	void NaiveBayesFeatureClassifier::Run(const float input, cv::Mat& output) const
 	{

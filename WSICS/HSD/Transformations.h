@@ -3,7 +3,7 @@
 
 #include "opencv2/core.hpp"
 
-namespace HSD
+namespace WSICS::HSD
 {
 	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix);
 	void CxCyToRGB(const cv::Mat& cx_cy_input, cv::Mat& output_matrix, const cv::Mat& density_scaling);

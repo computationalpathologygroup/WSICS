@@ -2,7 +2,7 @@
 
 #include <vector>
 
-namespace HSD
+namespace WSICS::HSD
 {
 	HSD_Model::HSD_Model(void)
 	{

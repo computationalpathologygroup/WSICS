@@ -2,7 +2,7 @@
 
 #include "Logging/LogLevel.h"
 
-namespace IO
+namespace WSICS::IO
 {
 	CommandLineInterface::CommandLineInterface(void) : m_log_handler_(IO::Logging::NORMAL)
 	{

@@ -1,6 +1,6 @@
 #include "PointCollection.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
     //******************************************************************************
     // Public Operators

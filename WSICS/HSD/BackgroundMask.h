@@ -7,7 +7,7 @@
 #include "HSD_Model.h"
 
 /// <summary>Contains functions that can be applied to create or transform background masks.</summary>
-namespace HSD::BackgroundMask
+namespace WSICS::HSD::BackgroundMask
 {
 	/// <summary>Creates a background mask based on several channels and a user defined threshold.</summary>
 	/// <param name="hsd_image">The HSD Model image, from which to create the background mask.</param>

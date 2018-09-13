@@ -2,7 +2,7 @@
 #define __NaiveBayesFeatureClassifier_H__
 #include "Classifier.h"
 
-namespace ML
+namespace WSICS::ML
 {
 	class NaiveBayesFeatureClassifier
 	{

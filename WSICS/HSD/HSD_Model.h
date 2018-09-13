@@ -3,7 +3,7 @@
 
 #include "opencv2/core.hpp"
 
-namespace HSD
+namespace WSICS::HSD
 {
 	/// <summary>
 	/// Defines the way a HSD_Model object is initialized. Whether or not to retain the color channel order, or to shift it.

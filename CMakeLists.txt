@@ -67,11 +67,13 @@ SET(GROUP_IO
 )
 SET(GROUP_MISC 
 	WSICS/Misc/LevelReading.h
-	WSICS/Misc/MiscFunctionality.h
-	WSICS/Misc/MiscMatrixOperations.h
+	WSICS/Misc/Random.h
+	WSICS/Misc/MatrixOperations.h
+	WSICS/Misc/MT_Singleton.h
 	WSICS/Misc/LevelReading.cpp
-	WSICS/Misc/MiscFunctionality.cpp
-	WSICS/Misc/MiscMatrixOperations.cpp
+	WSICS/Misc/Random.cpp
+	WSICS/Misc/MatrixOperations.cpp
+	WSICS/Misc/MT_Singleton.h
 )
 SET(GROUP_STANDARDIZATION
 	WSICS/Standardization/CxCyWeights.h

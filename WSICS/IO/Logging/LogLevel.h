@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-namespace IO::Logging
+namespace WSICS::IO::Logging
 {
 	/// <summary>Represents the different levels of output for the program.</summary>
 	enum LogLevel { SILENT, NORMAL, DEBUG };

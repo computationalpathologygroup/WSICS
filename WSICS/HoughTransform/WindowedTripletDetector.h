@@ -8,7 +8,7 @@
 #include "Ellipse.h"
 #include "PointCollection.h"
 
-namespace HoughTransform
+namespace WSICS::HoughTransform
 {
 	/// <summary>
 	/// Defines the types of point selection for the WindowedTripletDetector.

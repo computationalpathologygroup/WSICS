@@ -16,7 +16,7 @@
 #include "../HSD/HSD_Model.h"
 #include "../HE_Staining/MaskGeneration.h"
 
-namespace HE_Staining
+namespace WSICS::HE_Staining
 {
 	/// <summary>
 	/// 
