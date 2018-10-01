@@ -2,6 +2,8 @@
 
 #include <unordered_set>
 
+#include "../Misc/Mt_Singleton.h"
+
 namespace WSICS::Standardization
 {
 	SlideStandardizationCLI::SlideStandardizationCLI(void)
@@ -10,10 +12,16 @@ namespace WSICS::Standardization
 
 	void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_options::variables_map& variables)
 	{
-
+		for (int i = 0; i < 3; ++i)
+		{
+			std::vector<uint64_t> test(5);
+			auto pointer = WSICS::Misc::MT_Singleton::Create(10);
+			auto gen = Misc::MT_Singleton::GetGenerator();// (test.begin(), test.end());
+			std::cout << std::to_string(gen()) << std::endl;
+		}
 
 		// Configure the parameters.
-		StandardizationParameters parameters(Standardization::GetStandardParameters());
+		StandardizationParameters parameters(StandardizationExecution::GetStandardParameters());
 		std::vector<boost::filesystem::path> files_to_process;
 		std::string prefix;
 		std::string postfix;
