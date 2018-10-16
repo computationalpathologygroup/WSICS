@@ -23,12 +23,12 @@ namespace WSICS::Standardization::NormalizedLutCreation
 {
 	struct TransformationParameters
 	{
-		MatrixRotationParameters	hema_rotation_params;
-		MatrixRotationParameters	eosin_rotation_params;
-		MatrixRotationParameters	background_rotation_params;
-		cv::Mat						hema_scale_params;
-		cv::Mat						eosin_scale_params;
-		ClassDensityRanges			class_density_ranges;
+		TransformCxCyDensity::MatrixRotationParameters	hema_rotation_params;
+		TransformCxCyDensity::MatrixRotationParameters	eosin_rotation_params;
+		TransformCxCyDensity::MatrixRotationParameters	background_rotation_params;
+		cv::Mat											hema_scale_params;
+		cv::Mat											eosin_scale_params;
+		TransformCxCyDensity::ClassDensityRanges		class_density_ranges;
 	};
 
 	cv::Mat	Create(
@@ -49,7 +49,7 @@ namespace WSICS::Standardization::NormalizedLutCreation
 		const cv::Mat& cx_cy_eosin_rotated,
 		const TransformationParameters& params,
 		const TransformationParameters& transform_params,
-		const ClassPixelIndices& class_pixel_indices);
+		const TransformCxCyDensity::ClassPixelIndices& class_pixel_indices);
 	void PrintParameters(std::ofstream& output_stream, const TransformationParameters& transform_param, const bool write_csv);
 	TransformationParameters ReadParameters(std::istream &input);
 

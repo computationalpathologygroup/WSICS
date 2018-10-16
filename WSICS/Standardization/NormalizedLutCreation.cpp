@@ -26,25 +26,25 @@ namespace WSICS::Standardization::NormalizedLutCreation
 		//===========================================================================
 		logging_instance->QueueFileLogging("Defining variables for transformation...", log_file_id, IO::Logging::NORMAL);
 
-		ClassAnnotatedCxCy train_data(TransformCxCyDensity::ClassCxCyGenerator(training_samples.class_data, training_samples.training_data_cx_cy));
+		TransformCxCyDensity::ClassAnnotatedCxCy train_data(TransformCxCyDensity::ClassCxCyGenerator(training_samples.class_data, training_samples.training_data_cx_cy));
 
 		// Rotates the cx_cy matrice per class and stores the parameters used.
 		cv::Mat cx_cy_hema_rotated;
 		cv::Mat cx_cy_eosin_rotated;
 		cv::Mat cx_cy_background_Rotated;
 
-		MatrixRotationParameters hema_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_hema_rotated, train_data.hema_cx_cy));
-		MatrixRotationParameters eosin_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_eosin_rotated, train_data.eosin_cx_cy));
-		MatrixRotationParameters background_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_background_Rotated, train_data.background_cx_cy));
+		TransformCxCyDensity::MatrixRotationParameters hema_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_hema_rotated, train_data.hema_cx_cy));
+		TransformCxCyDensity::MatrixRotationParameters eosin_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_eosin_rotated, train_data.eosin_cx_cy));
+		TransformCxCyDensity::MatrixRotationParameters background_rotation_info(TransformCxCyDensity::RotateCxCy(train_data.cx_cy_merged, cx_cy_background_Rotated, train_data.background_cx_cy));
 
-		ClassPixelIndices class_pixel_indices(TransformCxCyDensity::GetClassIndices(training_samples.class_data));
+		TransformCxCyDensity::ClassPixelIndices class_pixel_indices(TransformCxCyDensity::GetClassIndices(training_samples.class_data));
 
 		// Calculates the scale parameters per class.
 		cv::Mat hema_scale_parameters(TransformCxCyDensity::CalculateScaleParameters(class_pixel_indices.hema_indices, cx_cy_hema_rotated));
 		cv::Mat eosin_scale_parameters(TransformCxCyDensity::CalculateScaleParameters(class_pixel_indices.eosin_indices, cx_cy_eosin_rotated));
 		cv::Mat background_scale_parameters(TransformCxCyDensity::CalculateScaleParameters(class_pixel_indices.background_indices, cx_cy_background_Rotated));
 
-		ClassDensityRanges class_density_ranges(TransformCxCyDensity::GetDensityRanges(training_samples.class_data, training_samples.training_data_density, class_pixel_indices));
+		TransformCxCyDensity::ClassDensityRanges class_density_ranges(TransformCxCyDensity::GetDensityRanges(training_samples.class_data, training_samples.training_data_density, class_pixel_indices));
 
 		logging_instance->QueueFileLogging("Finished computing tranformation parameters for the current image", log_file_id, IO::Logging::NORMAL);
 
@@ -202,7 +202,7 @@ namespace WSICS::Standardization::NormalizedLutCreation
 		const cv::Mat& cx_cy_eosin_rotated,
 		const TransformationParameters& params,
 		const TransformationParameters& transform_params,
-		const ClassPixelIndices& class_pixel_indices)
+		const TransformCxCyDensity::ClassPixelIndices& class_pixel_indices)
 	{
 		// Rotates the combined matrices for the hema and eosin classes.
 		cv::Mat lut_hema_matrix, lut_eosin_matrix;
