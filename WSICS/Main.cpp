@@ -2,7 +2,7 @@
 
 int main( int argc, char * argv[])
 {
-	SlideStandardizationCLI cli;
+	WSICS::Standardization::SlideStandardizationCLI cli;
 	cli.Execute(argc, argv);
 	return 0;
 }

@@ -62,7 +62,7 @@ namespace WSICS::HoughTransform
 			/// <param name="binary_matrix">The binary matrix to transform.</param>
 			/// <param name="output_matrix">The matrix to write the results towards.</param>
 			/// <param name="mask_type">The type of mask used to detect the BLOBs.</param>
-			void Initialize(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type);
+			void Initialize(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const WSICS::BLOB_Operations::MaskType mask_type);
 			/// <summary>
 			/// Initializes the detector for processing by recovering the labeled blobs from the matrix.
 			/// </summary>
@@ -136,13 +136,13 @@ namespace WSICS::HoughTransform
 			inline std::pair<size_t, cv::Point2f*> GetRandomLabeledPoint$(const size_t label);
 
 		private:
-			std::unordered_map<size_t, ASAP::Image_Processing::BLOB_Operations::BLOB*>	m_labeled_blobs_;
-			std::unordered_set<cv::Point2f*>											m_deleted_points_;
-			std::unordered_map<size_t, std::vector<cv::Point2f*>>						m_labeled_points_;
-			std::vector<size_t>															m_current_labels_;
+			std::unordered_map<size_t, WSICS::BLOB_Operations::BLOB*>	m_labeled_blobs_;
+			std::unordered_set<cv::Point2f*>							m_deleted_points_;
+			std::unordered_map<size_t, std::vector<cv::Point2f*>>		m_labeled_points_;
+			std::vector<size_t>											m_current_labels_;
 
-			ASAP::Image_Processing::BLOB_Operations::BLOB_Window						m_blob_window_;
-			size_t																		m_total_window_points_;
+			WSICS::BLOB_Operations::BLOB_Window							m_blob_window_;
+			size_t														m_total_window_points_;
 
 			/// <summary>
 			/// Acquires a triplet fully randomly.

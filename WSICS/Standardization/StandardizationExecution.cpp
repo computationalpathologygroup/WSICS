@@ -1,4 +1,4 @@
-#include "Standardization.h"
+#include "StandardizationExecution.h"
 
 #include <boost/filesystem.hpp>
 #include <stdexcept>
@@ -170,6 +170,7 @@ namespace WSICS::Standardization
 		//	Cleans execution variables
 		//===========================================================================
 		m_debug_directory_ = "";
+		delete tiled_image;
 	}
 
 	void StandardizationExecution::SetLogDirectory(std::string& filepath)

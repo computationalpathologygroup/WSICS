@@ -30,7 +30,7 @@ namespace WSICS::HoughTransform
     // Public Member Functions
     //******************************************************************************
 
-	std::vector<Ellipse> RandomizedHoughTransform::Execute(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type)
+	std::vector<Ellipse> RandomizedHoughTransform::Execute(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const WSICS::BLOB_Operations::MaskType mask_type)
 	{
 		WindowedTripletDetector triplet_detector(m_triplet_detector_parameters_);
 		triplet_detector.Initialize(binary_matrix, output_matrix, mask_type);

@@ -84,7 +84,7 @@ namespace WSICS::HoughTransform
 			/// <param name="output_matrix">The matrix that will hold the BLOB labeling results.</param>
 			/// <param name="mask_type">The type of mask to use for the BLOB searching.</param>
 			/// <returns>The detected ellipses.<returns>
-			std::vector<Ellipse> Execute(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type);
+			std::vector<Ellipse> Execute(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const WSICS::BLOB_Operations::MaskType mask_type);
 			/// <summary>
 			/// Performs ellipse detection on a labeled BLOBs matrix.
 			/// </summary>

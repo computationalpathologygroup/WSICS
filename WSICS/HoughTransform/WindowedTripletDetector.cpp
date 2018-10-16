@@ -25,15 +25,15 @@ namespace WSICS::HoughTransform
     // Public Member Functions
     //******************************************************************************
 
-	void WindowedTripletDetector::Initialize(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const ASAP::Image_Processing::BLOB_Operations::MaskType mask_type)
+	void WindowedTripletDetector::Initialize(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const WSICS::BLOB_Operations::MaskType mask_type)
     {
-		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), binary_matrix, output_matrix, mask_type);
+		m_blob_window_ = WSICS::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), binary_matrix, output_matrix, mask_type);
 		UpdateWindowInformation_();
     }
 
 	void WindowedTripletDetector::Initialize(const cv::Mat& labeled_blob_matrix, const cv::Mat& stats_array)
 	{
-		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), labeled_blob_matrix, stats_array);
+		m_blob_window_ = WSICS::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize(), labeled_blob_matrix, stats_array);
 		UpdateWindowInformation_();
 	}
 
@@ -69,7 +69,7 @@ namespace WSICS::HoughTransform
 		m_deleted_points_.clear();
 		m_labeled_points_.clear();
 		m_current_labels_.clear();
-		m_blob_window_ = ASAP::Image_Processing::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize());
+		m_blob_window_ = WSICS::BLOB_Operations::BLOB_Window(m_blob_window_.GetWindowSize());
 	}
 
 	bool WindowedTripletDetector::Next(void)
@@ -418,7 +418,7 @@ namespace WSICS::HoughTransform
 		// Initializes the list of labels, which is used by the randomize function to select a random point.
 		m_labeled_points_.reserve(m_labeled_blobs_.size());
 		m_current_labels_.reserve(m_labeled_blobs_.size());
-		for (std::pair<const size_t, ASAP::Image_Processing::BLOB_Operations::BLOB*>& labeled_blob : m_labeled_blobs_)
+		for (std::pair<const size_t, WSICS::BLOB_Operations::BLOB*>& labeled_blob : m_labeled_blobs_)
 		{
 			m_labeled_points_.insert({ labeled_blob.first, std::vector<cv::Point2f*>() });
 			m_current_labels_.push_back(labeled_blob.first);

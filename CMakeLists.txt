@@ -81,7 +81,7 @@ SET(GROUP_STANDARDIZATION
 	WSICS/Standardization/NormalizedOutput.h
 	WSICS/Standardization/PixelClassificationHE.h
 	WSICS/Standardization/SlideStandardizationCLI.h
-	WSICS/Standardization/Standardization.h
+	WSICS/Standardization/StandardizationExecution.h
 	WSICS/Standardization/StandardizationParameters.h
 	WSICS/Standardization/TransformCxCyDensity.h
 	WSICS/Standardization/CxCyWeights.cpp
@@ -89,7 +89,7 @@ SET(GROUP_STANDARDIZATION
 	WSICS/Standardization/NormalizedOutput.cpp
 	WSICS/Standardization/PixelClassificationHE.cpp
 	WSICS/Standardization/SlideStandardizationCLI.cpp
-	WSICS/Standardization/Standardization.cpp
+	WSICS/Standardization/StandardizationExecution.cpp
 	WSICS/Standardization/TransformCxCyDensity.cpp
 )
 
