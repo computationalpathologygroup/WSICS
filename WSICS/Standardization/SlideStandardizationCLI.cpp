@@ -2,7 +2,8 @@
 
 #include <unordered_set>
 
-#include "../Misc/Mt_Singleton.h"
+#include "../Misc/Mt_Singleton.hpp"
+#include "../Misc/Random.h"
 
 namespace WSICS::Standardization
 {
@@ -12,14 +13,6 @@ namespace WSICS::Standardization
 
 	void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_options::variables_map& variables)
 	{
-		for (int i = 0; i < 3; ++i)
-		{
-			std::vector<uint64_t> test(5);
-			auto pointer = WSICS::Misc::MT_Singleton::Create(10);
-			auto gen = Misc::MT_Singleton::GetGenerator();// (test.begin(), test.end());
-			std::cout << std::to_string(gen()) << std::endl;
-		}
-
 		// Configure the parameters.
 		StandardizationParameters parameters(StandardizationExecution::GetStandardParameters());
 		std::vector<boost::filesystem::path> files_to_process;
@@ -131,7 +124,8 @@ namespace WSICS::Standardization
 			("hema_percentile", boost::program_options::value<float>()->default_value(0.1f), "Defines how conservative the algorithm is with its blue pixel classification.")
 			("eosin_percentile", boost::program_options::value<float>()->default_value(0.2f), "Defines how conservative the algorithm is with its red pixel classification.")
 			("background_threshold", boost::program_options::value<float>()->default_value(0.9f), "Defines the threshold between tissue and background pixels.")
-			("min_ellipses", boost::program_options::value<int32_t>()->default_value(false), "Allows for a custom value for the amount of ellipses on a tile.");
+			("min_ellipses", boost::program_options::value<int32_t>()->default_value(false), "Allows for a custom value for the amount of ellipses on a tile.")
+			("seed,s", boost::program_options::value<size_t>()->default_value(1000), "Defines the seed used for random processing.");
 	}
 
 	void SlideStandardizationCLI::Setup$(void)

@@ -10,6 +10,8 @@ namespace WSICS::IO
 
 	void CommandLineInterface::Execute(int argc, char * argv[])
 	{
+		Setup$();
+
 		// Registers and starts the log handlers prcoessing.
 		IO::Logging::LogHandler::Register(&m_log_handler_);
 		IO::Logging::LogHandler::GetInstance()->Initialize();

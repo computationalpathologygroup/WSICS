@@ -35,7 +35,7 @@ namespace WSICS::Misc
 				instance.m_generator_ = generator;
 			}
 
-			static const boost::mt19937_64& GetGenerator()
+			static boost::mt19937_64& GetGenerator()
 			{
 				MT_Singleton& instance(GetInstance());
 				return instance.m_generator_;

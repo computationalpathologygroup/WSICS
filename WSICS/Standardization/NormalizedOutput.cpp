@@ -5,7 +5,7 @@
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
 #include "../Misc/Random.h"
-#include "../Misc/MT_Singleton.h"
+#include "../Misc/MT_Singleton.hpp"
 
 namespace WSICS::Standardization
 {

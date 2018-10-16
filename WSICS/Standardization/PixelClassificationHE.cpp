@@ -7,7 +7,7 @@
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
 #include "../Misc/Random.h"
-#include "../Misc/MT_Singleton.h"
+#include "../Misc/MT_Singleton.hpp"
 
 // TODO: Improve structure and refactor InsertTrainingData_
 
