@@ -58,7 +58,14 @@ namespace WSICS::Standardization
 
 		if (!tiled_image)
 		{
-			throw std::invalid_argument("Unable to open file: " + input_file.string());
+			std::set<std::string> extensions(MultiResolutionImageFactory::getAllSupportedExtensions());
+			std::string not_supported = "\n";
+			if (extensions.find(input_file.extension().string().substr(1)) == extensions.end())
+			{
+				not_supported += input_file.extension().string().substr(1) + " files aren't supported by this binary";
+			}
+
+			throw std::invalid_argument("Unable to open file: " + input_file.string() + not_supported);
 		}
 
 		// Acquires the type of image, the spacing and the minimum level to select tiles from.
