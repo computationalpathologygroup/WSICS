@@ -23,7 +23,7 @@ namespace WSICS::Misc
 				return instance;
 			}
 
-			static void SetSeed(const size_t seed)
+			static void SetSeed(const uint64_t seed)
 			{
 				MT_Singleton& instance(GetInstance());
 				instance.m_generator_ = boost::mt19937_64(seed);

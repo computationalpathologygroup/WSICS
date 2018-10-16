@@ -97,7 +97,25 @@ namespace WSICS::Standardization
 				spacing,
 				is_multiresolution_image));
 			HE_Staining::HE_Classifier he_classifier;
-			HE_Staining::ClassificationResults classification_results(he_classifier.Classify(hsd_image, background_mask, he_masks.first, he_masks.second));
+
+			if (he_masks.first.full_mask.size() == cv::Size(0, 0))
+			{
+				throw std::runtime_error("Unable to create Hematoxylin mask");
+			}
+			else if (he_masks.second.full_mask.size() == cv::Size(0, 0))
+			{
+				throw std::runtime_error("Unable to create Eosin mask");
+			}
+	
+			HE_Staining::ClassificationResults classification_results;
+			try
+			{
+				classification_results = he_classifier.Classify(hsd_image, background_mask, he_masks.first, he_masks.second);
+			}
+			catch (const std::exception& e)
+			{
+				throw std::runtime_error("Unable to classify HE stained tissue.");
+			}
 
 			// Wanna keep?
 			// Randomly pick samples and Fill in Cx-Cy-D major sample vectors	
@@ -225,7 +243,7 @@ namespace WSICS::Standardization
 					m_log_file_id_,
 					IO::Logging::NORMAL);
 
-				HE_Staining::EosinMaskInformation eosin_mask_info(HE_Staining::MaskGeneration::GenerateEosinMasks(hsd_image, background_mask, hema_mask_info, 0.85));
+				HE_Staining::EosinMaskInformation eosin_mask_info(HE_Staining::MaskGeneration::GenerateEosinMasks(hsd_image, background_mask, hema_mask_info, eosin_percentile));
 				if (eosin_mask_info.training_pixels > min_training_size / 2)
 				{
 					mask_acquisition_results.second = eosin_mask_info;

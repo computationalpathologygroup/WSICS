@@ -3,7 +3,6 @@
 #include <unordered_set>
 
 #include "../Misc/Mt_Singleton.hpp"
-#include "../Misc/Random.h"
 
 namespace WSICS::Standardization
 {
@@ -51,6 +50,8 @@ namespace WSICS::Standardization
 			logging_instance->QueueCommandLineLogging("Unable to create directories, ending execution.", IO::Logging::SILENT);
 		}
 
+		// Sets the seed for deterministic processing.
+		Misc::MT_Singleton::SetSeed(parameters.seed);
 
 		// Attempts to utilize one of the output paths as path for the log file.
 		boost::filesystem::path log_path;
@@ -125,7 +126,7 @@ namespace WSICS::Standardization
 			("eosin_percentile", boost::program_options::value<float>()->default_value(0.2f), "Defines how conservative the algorithm is with its red pixel classification.")
 			("background_threshold", boost::program_options::value<float>()->default_value(0.9f), "Defines the threshold between tissue and background pixels.")
 			("min_ellipses", boost::program_options::value<int32_t>()->default_value(false), "Allows for a custom value for the amount of ellipses on a tile.")
-			("seed,s", boost::program_options::value<size_t>()->default_value(1000), "Defines the seed used for random processing.");
+			("seed,s", boost::program_options::value<uint64_t>()->default_value(1000), "Defines the seed used for random processing.");
 	}
 
 	void SlideStandardizationCLI::Setup$(void)
@@ -175,6 +176,8 @@ namespace WSICS::Standardization
 			parameters.min_training_size = parameters.max_training_size;
 			parameters.max_training_size = temp_min;
 		}
+
+		parameters.seed = variables["seed"].as<uint64_t>();
 
 		prefix = variables["prefix"].as<std::string>();
 		postfix = variables["postfix"].as<std::string>();
@@ -246,6 +249,8 @@ namespace WSICS::Standardization
 		{
 			parameters.background_threshold = 1.0f;
 		}
+
+
 	}
 
 	void SlideStandardizationCLI::CreateDirectories_(
