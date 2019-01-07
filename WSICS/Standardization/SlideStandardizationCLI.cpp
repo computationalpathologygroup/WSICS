@@ -232,10 +232,10 @@ namespace WSICS::Standardization
 			}
 		}
 
-		parameters.hema_percentile = variables["hema_percentile"].as<float>();
-		parameters.eosin_percentile = variables["eosin_percentile"].as<float>();
+		parameters.hema_percentile		= variables["hema_percentile"].as<float>();
+		parameters.eosin_percentile		= variables["eosin_percentile"].as<float>();
 		parameters.background_threshold = variables["background_threshold"].as<float>();
-		parameters.minimum_ellipses = variables["min_ellipses"].as<int32_t>();
+		parameters.minimum_ellipses		= variables["min_ellipses"].as<uint32_t>();
 
 		if (parameters.hema_percentile > 1.0f)
 		{
@@ -245,15 +245,10 @@ namespace WSICS::Standardization
 		{
 			parameters.eosin_percentile = 1.0f;
 		}
-		if (parameters.background_threshold > 1.0f)
-		{
-			parameters.background_threshold = 1.0f;
-		}
-
-
 	}
 
-	void SlideStandardizationCLI::CreateDirectories_(
+	void SlideStandardizationCLI::CreateDirectories_
+	(
 		const boost::filesystem::path& image_output,
 		const boost::filesystem::path& lut_output,
 		const boost::filesystem::path& template_output,

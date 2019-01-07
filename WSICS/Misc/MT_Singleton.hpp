@@ -16,7 +16,6 @@ namespace WSICS::Misc
 			void operator=(const MT_Singleton& other)	= delete;
 			void operator=(MT_Singleton&& other)		= delete;
 
-			
 			static MT_Singleton& GetInstance(void)
 			{
 				static MT_Singleton instance;
