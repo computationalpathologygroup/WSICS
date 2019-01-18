@@ -1,22 +1,22 @@
-#ifndef __STANDARDIZATION_H__
-#define __STANDARDIZATION_H__
+#ifndef __WSICS_NORMALIZATION_WSICSALGORITHM__
+#define __WSICS_NORMALIZATION_WSICSALGORITHM__
 
 #include <opencv2/core/core.hpp>
 #include <boost/filesystem.hpp>
 
 #include "PixelClassificationHE.h"
-#include "StandardizationParameters.h"
+#include "WSICS_Parameters.h"
 #include "TransformCxCyDensity.h"
 
-namespace WSICS::Standardization
+namespace WSICS::Normalization
 {
-	class StandardizationExecution
+	class WSICS_Algorithm
 	{
 		public:
-			StandardizationExecution(std::string log_directory, const boost::filesystem::path& template_file);
-			StandardizationExecution(std::string log_directory, const boost::filesystem::path& template_file, const StandardizationParameters& parameters);
+			WSICS_Algorithm(std::string log_directory, const boost::filesystem::path& template_file);
+			WSICS_Algorithm(std::string log_directory, const boost::filesystem::path& template_file, const WSICS_Parameters& parameters);
 
-			static StandardizationParameters GetStandardParameters(void);
+			static WSICS_Parameters GetStandardParameters(void);
 			void Normalize(
 				const boost::filesystem::path& input_file,
 				const boost::filesystem::path& image_output_file,
@@ -30,7 +30,7 @@ namespace WSICS::Standardization
 			boost::filesystem::path			m_debug_directory_;
 			const boost::filesystem::path&	m_template_file_;
 
-			StandardizationParameters		m_parameters_;
+			WSICS_Parameters				m_parameters_;
 			bool							m_is_multiresolution_image_;
 
 			cv::Mat									CalculateLutRawMat_(void);
@@ -47,4 +47,4 @@ namespace WSICS::Standardization
 				const uint32_t min_level);
 	};
 }
-#endif // __STANDARDIZATION_H__
+#endif // __WSICS_NORMALIZATION_WSICSALGORITHM__

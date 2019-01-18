@@ -1,6 +1,6 @@
 #include "CxCyWeights.h"
 
-namespace WSICS::Standardization::CxCyWeights
+namespace WSICS::Normalization::CxCyWeights
 {
 	cv::Mat ApplyWeights(const cv::Mat& c_xy_hema, const cv::Mat& c_xy_eosin, const cv::Mat& c_xy_background, const Weights& weights)
 	{

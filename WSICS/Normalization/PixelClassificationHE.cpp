@@ -11,7 +11,7 @@
 
 // TODO: Improve structure and refactor InsertTrainingData_
 
-namespace WSICS::Standardization
+namespace WSICS::Normalization
 {
 	PixelClassificationHE::PixelClassificationHE(const bool consider_ink, const size_t log_file_id, const std::string debug_dir) : m_consider_ink_(consider_ink), m_log_file_id_(log_file_id), m_debug_dir_(debug_dir)
 	{

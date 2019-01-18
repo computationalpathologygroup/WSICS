@@ -8,7 +8,7 @@
 
 #include "../Misc/MatrixOperations.h"
 
-namespace WSICS::Standardization::TransformCxCyDensity
+namespace WSICS::Normalization::TransformCxCyDensity
 {
 	cv::Mat AdjustParamaterMinMax(const cv::Mat& cx_cy, cv::Mat parameters)
 	{

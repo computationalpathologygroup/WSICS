@@ -7,7 +7,7 @@
 #include "../Misc/Random.h"
 #include "../Misc/MT_Singleton.hpp"
 
-namespace WSICS::Standardization
+namespace WSICS::Normalization
 {
 	std::vector<cv::Mat> SplitBGR(const cv::Mat& source)
 	{

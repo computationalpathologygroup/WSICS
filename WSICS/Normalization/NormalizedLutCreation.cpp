@@ -7,7 +7,7 @@
 #include "../HSD/Transformations.h"
 #include "../IO/Logging/LogHandler.h"
 
-namespace WSICS::Standardization::NormalizedLutCreation
+namespace WSICS::Normalization::NormalizedLutCreation
 {
 	cv::Mat Create(
 		const bool generate_lut,

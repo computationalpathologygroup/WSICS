@@ -1,23 +1,23 @@
-#ifndef __SLIDESTANDARDIZATION_CLI_H__
-#define __SLIDESTANDARDIZATION_CLI_H__
+#ifndef __WSICS_STANDARDIZATION_CLI_H__
+#define __WSICS_STANDARDIZATION_CLI_H__
 
 #include <boost/filesystem.hpp>
 
-#include "StandardizationExecution.h"
+#include "WSICS_Algorithm.h"
 #include "../IO/CommandLineInterface.h"
 
-namespace WSICS::Standardization
+namespace WSICS::Normalization
 {
 	/// <summary>
 	/// Defines the CLI interaction required to use the Slide Standardization libraries.
 	/// </summary>
-	class SlideStandardizationCLI : public IO::CommandLineInterface
+	class CLI : public IO::CommandLineInterface
 	{
 		public:
 			/// <summary>
 			/// Default constructor.
 			/// </summary>
-			SlideStandardizationCLI(void);
+			CLI(void);
 
 		protected:
 			/// <summary>
@@ -52,7 +52,7 @@ namespace WSICS::Standardization
 			/// <param name="input_is_directory">Whether or not a file or directory path has been offered.</param>
 			void AcquireAndSanitizeInput_(
 				const boost::program_options::variables_map& variables,
-				StandardizationParameters& parameters,
+				WSICS_Parameters& parameters,
 				std::vector<boost::filesystem::path>& files_to_process,
 				std::string& prefix,
 				std::string& postfix,
@@ -100,4 +100,4 @@ namespace WSICS::Standardization
 			boost::filesystem::path SetOutputPath(boost::filesystem::path path, const std::string extension, const std::string filename);
 	};
 }
-#endif // __SLIDESTANDARDIZATION_CLI_H__
+#endif // __WSICS_STANDARDIZATION_CLI_H__

@@ -1,15 +1,16 @@
 #ifndef __PixelClassificationHE_H__
 #define __PixelClassificationHE_H__
 
+#include <multiresolutionimageinterface/MultiResolutionImage.h>
 #include <opencv2/core/core.hpp>
 
 #include "../HE_Staining/HE_Classifier.h"
 #include "../HE_Staining/MaskGeneration.h"
 #include "../HSD/HSD_Model.h"
-#include "multiresolutionimageinterface/MultiResolutionImage.h"
-#include "StandardizationParameters.h"
 
-namespace WSICS::Standardization
+#include "WSICS_Parameters.h"
+
+namespace WSICS::Normalization
 {
 	typedef HE_Staining::ClassificationResults ClassificationResults;
 	typedef HE_Staining::EosinMaskInformation EosinMaskInformation;
@@ -30,7 +31,7 @@ namespace WSICS::Standardization
 			TrainingSampleInformation GenerateCxCyDSamples(
 				MultiResolutionImage& tiled_image,
 				const cv::Mat& static_image,
-				const StandardizationParameters& parameters,
+				const WSICS_Parameters& parameters,
 				const std::vector<cv::Point>& tile_coordinates,
 				const std::vector<double>& spacing,
 				const uint32_t tile_size,

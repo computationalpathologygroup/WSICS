@@ -1,19 +1,18 @@
-#include "SlideStandardizationCLI.h"
+#include "CLI.h"
 
 #include <unordered_set>
-
 #include "../Misc/Mt_Singleton.hpp"
 
-namespace WSICS::Standardization
+namespace WSICS::Normalization
 {
-	SlideStandardizationCLI::SlideStandardizationCLI(void)
+	CLI::CLI(void)
 	{
 	}
 
-	void SlideStandardizationCLI::ExecuteModuleFunctionality$(const boost::program_options::variables_map& variables)
+	void CLI::ExecuteModuleFunctionality$(const boost::program_options::variables_map& variables)
 	{
 		// Configure the parameters.
-		StandardizationParameters parameters(StandardizationExecution::GetStandardParameters());
+		Execution_Parameters parameters(WSICS_Execution::GetStandardParameters());
 		std::vector<boost::filesystem::path> files_to_process;
 		std::string prefix;
 		std::string postfix;
@@ -80,7 +79,7 @@ namespace WSICS::Standardization
 				log_path = log_path.parent_path().string() + "/log.txt";
 			}
 
-			StandardizationExecution slide_standardizer(log_file, template_input, parameters);
+			WSICS_Execution slide_standardizer(log_file, template_input, parameters);
 			for (const boost::filesystem::path& filepath : files_to_process)
 			{
 				std::string extension(filepath.extension().string());
@@ -109,7 +108,7 @@ namespace WSICS::Standardization
 		}
 	}
 
-	void SlideStandardizationCLI::AddModuleOptions$(boost::program_options::options_description& options)
+	void CLI::AddModuleOptions$(boost::program_options::options_description& options)
 	{
 		options.add_options()
 			("input,i", boost::program_options::value<std::string>()->default_value(""), "Path to an image file or image directory.")
@@ -129,13 +128,13 @@ namespace WSICS::Standardization
 			("seed,s", boost::program_options::value<uint64_t>()->default_value(1000), "Defines the seed used for random processing.");
 	}
 
-	void SlideStandardizationCLI::Setup$(void)
+	void CLI::Setup$(void)
 	{
 	}
 
-	void SlideStandardizationCLI::AcquireAndSanitizeInput_(
+	void CLI::AcquireAndSanitizeInput_(
 		const boost::program_options::variables_map& variables,
-		StandardizationParameters& parameters,
+		Execution_Parameters& parameters,
 		std::vector<boost::filesystem::path>& files_to_process,
 		std::string& prefix,
 		std::string& postfix,
@@ -247,7 +246,7 @@ namespace WSICS::Standardization
 		}
 	}
 
-	void SlideStandardizationCLI::CreateDirectories_
+	void CLI::CreateDirectories_
 	(
 		const boost::filesystem::path& image_output,
 		const boost::filesystem::path& lut_output,
@@ -301,7 +300,7 @@ namespace WSICS::Standardization
 		}
 	}
 
-	std::vector<boost::filesystem::path> SlideStandardizationCLI::GatherImageFilenames_(const boost::filesystem::path input_path)
+	std::vector<boost::filesystem::path> CLI::GatherImageFilenames_(const boost::filesystem::path input_path)
 	{
 		// TODO: These should be pulled from the image loading DLL/SO.
 		std::unordered_set<std::string> filetypes_to_accept;
@@ -340,7 +339,7 @@ namespace WSICS::Standardization
 		return files;
 	}
 
-	boost::filesystem::path SlideStandardizationCLI::SetOutputPath(boost::filesystem::path path, const std::string extension, const std::string filename)
+	boost::filesystem::path CLI::SetOutputPath(boost::filesystem::path path, const std::string extension, const std::string filename)
 	{
 		if (!path.empty())
 		{

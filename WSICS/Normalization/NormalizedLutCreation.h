@@ -19,7 +19,7 @@
 
 // TODO: Refactor into smaller, more well defined segments.
 
-namespace WSICS::Standardization::NormalizedLutCreation
+namespace WSICS::Normalization::NormalizedLutCreation
 {
 	struct TransformationParameters
 	{

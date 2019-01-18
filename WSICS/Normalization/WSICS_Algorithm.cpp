@@ -1,4 +1,4 @@
-#include "StandardizationExecution.h"
+#include "WSICS_Algorithm.h"
 
 #include <boost/filesystem.hpp>
 #include <stdexcept>
@@ -6,35 +6,36 @@
 
 #include "CxCyWeights.h"
 #include "NormalizedLutCreation.h"
+#include "NormalizedOutput.h"
 #include "../HSD/BackgroundMask.h"
 #include "../HSD/Transformations.h"
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
 #include "../Misc/Random.h"
-#include "NormalizedOutput.h"
+
 
 // TODO: Refactor and restructure into smaller chunks.
 
-namespace WSICS::Standardization
+namespace WSICS::Normalization
 {
-	StandardizationExecution::StandardizationExecution(std::string log_directory, const boost::filesystem::path& template_file)
+	WSICS_Algorithm::WSICS_Algorithm(std::string log_directory, const boost::filesystem::path& template_file)
 		: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(), m_parameters_(GetStandardParameters()), m_is_multiresolution_image_(false)
 	{
 		this->SetLogDirectory(log_directory);
 	}
 
-	StandardizationExecution::StandardizationExecution(std::string log_directory, const boost::filesystem::path& template_file, const StandardizationParameters& parameters)
+	WSICS_Algorithm::WSICS_Algorithm(std::string log_directory, const boost::filesystem::path& template_file, const WSICS_Parameters& parameters)
 		: m_log_file_id_(0), m_template_file_(template_file), m_debug_directory_(), m_parameters_(parameters), m_is_multiresolution_image_(false)
 	{
 		this->SetLogDirectory(log_directory);
 	}
 
-	StandardizationParameters StandardizationExecution::GetStandardParameters(void)
+	WSICS_Parameters WSICS_Algorithm::GetStandardParameters(void)
 	{
-		return { -1, 200000, 20000000, 0.1f, 0.2f, 0.9f, false };
+		return { -1, 200000, 20000000, 2000, 0.1f, 0.2f, 0.9f, false };
 	}
 
-	void StandardizationExecution::Normalize(
+	void WSICS_Algorithm::Normalize(
 		const boost::filesystem::path& input_file,
 		const boost::filesystem::path& image_output_file,
 		const boost::filesystem::path& lut_output_file,
@@ -180,7 +181,7 @@ namespace WSICS::Standardization
 		delete tiled_image;
 	}
 
-	void StandardizationExecution::SetLogDirectory(std::string& filepath)
+	void WSICS_Algorithm::SetLogDirectory(std::string& filepath)
 	{
 		IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 
@@ -193,7 +194,7 @@ namespace WSICS::Standardization
 		m_log_file_id_ = logging_instance->OpenFile(filepath, false);
 	}
 
-	cv::Mat StandardizationExecution::CalculateLutRawMat_(void)
+	cv::Mat WSICS_Algorithm::CalculateLutRawMat_(void)
 	{
 		cv::Mat raw_lut(cv::Mat::zeros(256 * 256 * 256, 1, CV_8UC3));//16387064
 		int counterTest = 0;
@@ -211,7 +212,7 @@ namespace WSICS::Standardization
 		return raw_lut;
 	}
 
-	TrainingSampleInformation StandardizationExecution::CollectTrainingSamples_(
+	TrainingSampleInformation WSICS_Algorithm::CollectTrainingSamples_(
 		const boost::filesystem::path& input_file,
 		uint32_t tile_size,
 		MultiResolutionImage& tiled_image,
@@ -243,7 +244,7 @@ namespace WSICS::Standardization
 			m_is_multiresolution_image_);
 	}
 
-	std::pair<bool, std::vector<double>> StandardizationExecution::GetResolutionTypeAndSpacing(MultiResolutionImage& tiled_image)
+	std::pair<bool, std::vector<double>> WSICS_Algorithm::GetResolutionTypeAndSpacing(MultiResolutionImage& tiled_image)
 	{
 		IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 		std::pair<bool, std::vector<double>> resolution_and_spacing((tiled_image.getNumberOfLevels() > 1), tiled_image.getSpacing());
@@ -271,7 +272,7 @@ namespace WSICS::Standardization
 		return resolution_and_spacing;
 	}
 
-	std::vector<cv::Point> StandardizationExecution::GetTileCoordinates_(MultiResolutionImage& tiled_image, const std::vector<double>& spacing, const uint32_t tile_size, const uint32_t min_level)
+	std::vector<cv::Point> WSICS_Algorithm::GetTileCoordinates_(MultiResolutionImage& tiled_image, const std::vector<double>& spacing, const uint32_t tile_size, const uint32_t min_level)
 	{
 		IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
 

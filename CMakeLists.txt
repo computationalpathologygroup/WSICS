@@ -69,30 +69,29 @@ SET(GROUP_IO
 )
 SET(GROUP_MISC 
 	WSICS/Misc/LevelReading.h
-	WSICS/Misc/MT_Singleton.h
+	WSICS/Misc/MT_Singleton.hpp
 	WSICS/Misc/Random.h
 	WSICS/Misc/MatrixOperations.h
 	WSICS/Misc/LevelReading.cpp
-	WSICS/Misc/MT_Singleton.cpp
 	WSICS/Misc/Random.cpp
 	WSICS/Misc/MatrixOperations.cpp
 )
-SET(GROUP_STANDARDIZATION
-	WSICS/Standardization/CxCyWeights.h
-	WSICS/Standardization/NormalizedLutCreation.h
-	WSICS/Standardization/NormalizedOutput.h
-	WSICS/Standardization/PixelClassificationHE.h
-	WSICS/Standardization/SlideStandardizationCLI.h
-	WSICS/Standardization/StandardizationExecution.h
-	WSICS/Standardization/StandardizationParameters.h
-	WSICS/Standardization/TransformCxCyDensity.h
-	WSICS/Standardization/CxCyWeights.cpp
-	WSICS/Standardization/NormalizedLutCreation.cpp
-	WSICS/Standardization/NormalizedOutput.cpp
-	WSICS/Standardization/PixelClassificationHE.cpp
-	WSICS/Standardization/SlideStandardizationCLI.cpp
-	WSICS/Standardization/StandardizationExecution.cpp
-	WSICS/Standardization/TransformCxCyDensity.cpp
+SET(GROUP_NORMALIZATION
+	WSICS/Normalization/CxCyWeights.h
+	WSICS/Normalization/NormalizedLutCreation.h
+	WSICS/Normalization/NormalizedOutput.h
+	WSICS/Normalization/PixelClassificationHE.h
+	WSICS/Normalization/CLI.h
+	WSICS/Normalization/WSICS_Algorithm.h
+	WSICS/Normalization/WSICS_Parameters.h
+	WSICS/Normalization/TransformCxCyDensity.h
+	WSICS/Normalization/CxCyWeights.cpp
+	WSICS/Normalization/NormalizedLutCreation.cpp
+	WSICS/Normalization/NormalizedOutput.cpp
+	WSICS/Normalization/PixelClassificationHE.cpp
+	WSICS/Normalization/CLI.cpp
+	WSICS/Normalization/WSICS_Algorithm.cpp
+	WSICS/Normalization/TransformCxCyDensity.cpp
 )
 
 ADD_EXECUTABLE(wsics
@@ -104,17 +103,17 @@ ADD_EXECUTABLE(wsics
 	${GROUP_HSD}
 	${GROUP_IO}
 	${GROUP_MISC}
-	${GROUP_STANDARDIZATION}
+	${GROUP_NORMALIZATION}
 )
 
 SOURCE_GROUP("BLOB_Operations"	FILES ${GROUP_BLOB_OPERATIONS})
-SOURCE_GROUP("Classifier"		FILES ${GROUP_CLASSIFIER})
-SOURCE_GROUP("HE_Staining"		FILES ${GROUP_HE_STAINING})
+SOURCE_GROUP("Classifier"	FILES ${GROUP_CLASSIFIER})
+SOURCE_GROUP("HE_Staining"	FILES ${GROUP_HE_STAINING})
 SOURCE_GROUP("HoughTransform"	FILES ${GROUP_HOUGH_TRANSFORM})
-SOURCE_GROUP("HSD"				FILES ${GROUP_HSD})
-SOURCE_GROUP("IO"				FILES ${GROUP_IO})
-SOURCE_GROUP("Misc"				FILES ${GROUP_MISC})
-SOURCE_GROUP("Standardization"	FILES ${GROUP_STANDARDIZATION})
+SOURCE_GROUP("HSD" 		FILES ${GROUP_HSD})
+SOURCE_GROUP("IO"		FILES ${GROUP_IO})
+SOURCE_GROUP("Misc"		FILES ${GROUP_MISC})
+SOURCE_GROUP("Normalization"	FILES ${GROUP_NORMALIZATION})
 
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem program_options system)
 IF(Boost_FOUND)

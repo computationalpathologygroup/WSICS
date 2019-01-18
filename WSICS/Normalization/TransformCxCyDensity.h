@@ -7,7 +7,7 @@
 #include "../HSD/BackgroundMask.h"
 #include "CxCyWeights.h"
 
-namespace WSICS::Standardization::TransformCxCyDensity
+namespace WSICS::Normalization::TransformCxCyDensity
 {
 	struct MedianPercentileValues
 	{
