@@ -1,5 +1,7 @@
 #include "NaiveBayesClassifier.h"
 
+#include <opencv2/ml.hpp>
+
 #include <numeric>
 #include <float.h>
 #include <math.h>
@@ -7,14 +9,14 @@
 
 namespace WSICS::ML
 {
-	NaiveBayesClassifier::NaiveBayesClassifier(const size_t bins, const float blur, const ProbabilityIntegration integration_type)
+	NaiveBayesClassifier::NaiveBayesClassifier(const uint64_t bins, const float blur, const ProbabilityIntegration integration_type)
 		: n_bins(bins), blur_sigma(blur), probability_integration_type(integration_type), m_is_trained_(false)
 	{
 	}
 
 	NaiveBayesClassifier::NaiveBayesClassifier(const NaiveBayesClassifier& other)
-		: Classifier(other), n_bins(other.n_bins), blur_sigma(other.blur_sigma), probability_integration_type(other.probability_integration_type),
-		m_is_trained_(other.m_is_trained_), m_classes_(other.m_classes_), m_trained_feature_names_(other.m_trained_feature_names_), m_weights_(other.m_weights_)
+		: n_bins(other.n_bins), blur_sigma(other.blur_sigma), probability_integration_type(other.probability_integration_type),	m_is_trained_(other.m_is_trained_),
+		m_classes_(other.m_classes_), m_trained_feature_names_(other.m_trained_feature_names_), m_weights_(other.m_weights_)
 	{
 	}
 
@@ -40,6 +42,24 @@ namespace WSICS::ML
 	bool NaiveBayesClassifier::IsTrained(void) const
 	{
 		return m_is_trained_;
+	}
+
+	void NaiveBayesClassifier::Classify(const cv::Mat& input, cv::Mat& output) const
+	{
+		// Ensures this function isn't called on an untrained classifier.
+		CheckIfTrained_();
+
+		// Search for the maximum output and set the class label accordingly.
+		cv::Mat posterior_output;
+		Posterior(input, posterior_output);
+
+		output = cv::Mat::zeros(input.rows, 1, CV_8UC1);
+		for (size_t row = 0; row < posterior_output.rows; ++row)
+		{
+			double min, max;
+			cv::minMaxLoc(output.row(row), &min, &max);
+			output.at<uchar>(row, 0) = m_classes_[static_cast<uchar>(max)];
+		}
 	}
 
 	void NaiveBayesClassifier::Posterior(const cv::Mat& input, cv::Mat& output) const
@@ -123,24 +143,6 @@ namespace WSICS::ML
 		}
 
 		TrainClassifier_(train_data);
-	}
-
-	void NaiveBayesClassifier::Classify(const cv::Mat& input, cv::Mat& output) const
-	{
-		// Ensures this function isn't called on an untrained classifier.
-		CheckIfTrained_();
-		
-		// Search for the maximum output and set the class label accordingly.
-		cv::Mat posterior_output;
-		PosteriorSamples$(input, posterior_output);
-
-		output = cv::Mat::zeros(input.rows, 1, CV_8UC1);
-		for (size_t row = 0; row < posterior_output.rows; ++row)
-		{
-			double min, max;
-			cv::minMaxLoc(output.row(row), &min, &max);
-			output.at<uchar>(row, 0) = m_classes_[static_cast<uchar>(max)];
-		}
 	}
 
 	void NaiveBayesClassifier::CheckIfTrained_(void) const

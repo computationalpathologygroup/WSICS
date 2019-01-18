@@ -1,6 +1,9 @@
-#ifndef __NaiveBayesFeatureClassifier_H__
-#define __NaiveBayesFeatureClassifier_H__
-#include "Classifier.h"
+#ifndef __WSICS_CLASSIFICATION__NAIVEBAYESFEATURECLASSIFIER__
+#define __WSICS_CLASSIFICATION__NAIVEBAYESFEATURECLASSIFIER__
+
+#include <opencv2/core.hpp>
+#include <vector>
+
 
 namespace WSICS::ML
 {
@@ -17,4 +20,4 @@ namespace WSICS::ML
 			size_t		m_n_bins_;
 	};
 }
-#endif // __NaiveBayesFeatureClassifier_H__
+#endif // __WSICS_CLASSIFICATION__NAIVEBAYESFEATURECLASSIFIER__

@@ -3,13 +3,11 @@
 
 #include <cstdint>
 
-#include "Classifier.h"
 #include "NaiveBayesFeatureClassifier.h"
-
 
 namespace WSICS::ML
 {
-	class NaiveBayesClassifier : public Classifier
+	class NaiveBayesClassifier
 	{
 		public:
 			enum ProbabilityIntegration { ADDITION, MULTIPLICATION };
