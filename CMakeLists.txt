@@ -18,14 +18,6 @@ SET(GROUP_BLOB_OPERATIONS
 	WSICS/BLOB_Operations/BLOB_Operations.cpp
 	WSICS/BLOB_Operations/BLOB_Window.cpp
 )
-SET(GROUP_CLASSIFIER
-	WSICS/Classifier/Classifier.h
-	WSICS/Classifier/NaiveBayesClassifier.h
-	WSICS/Classifier/NaiveBayesFeatureClassifier.h
-	WSICS/Classifier/Classifier.cpp
-	WSICS/Classifier/NaiveBayesClassifier.cpp
-	WSICS/Classifier/NaiveBayesFeatureClassifier.cpp
-)
 SET(GROUP_HE_STAINING
 	WSICS/HE_Staining/HE_Classifier.h
 	WSICS/HE_Staining/MaskGeneration.h
@@ -76,6 +68,12 @@ SET(GROUP_MISC
 	WSICS/Misc/Random.cpp
 	WSICS/Misc/MatrixOperations.cpp
 )
+SET(GROUP_ML
+	WSICS/ML/NaiveBayesClassifier.h
+	WSICS/ML/NaiveBayesFeatureClassifier.h
+	WSICS/ML/NaiveBayesClassifier.cpp
+	WSICS/ML/NaiveBayesFeatureClassifier.cpp
+)
 SET(GROUP_NORMALIZATION
 	WSICS/Normalization/CxCyWeights.h
 	WSICS/Normalization/NormalizedLutCreation.h
@@ -97,22 +95,22 @@ SET(GROUP_NORMALIZATION
 ADD_EXECUTABLE(wsics
 	WSICS/Main.cpp
 	${GROUP_BLOB_OPERATIONS}
-	${GROUP_CLASSIFIER}
 	${GROUP_HE_STAINING}
 	${GROUP_HOUGH_TRANSFORM}
 	${GROUP_HSD}
 	${GROUP_IO}
 	${GROUP_MISC}
+	${GROUP_ML}
 	${GROUP_NORMALIZATION}
 )
 
 SOURCE_GROUP("BLOB_Operations"	FILES ${GROUP_BLOB_OPERATIONS})
-SOURCE_GROUP("Classifier"	FILES ${GROUP_CLASSIFIER})
-SOURCE_GROUP("HE_Staining"	FILES ${GROUP_HE_STAINING})
+SOURCE_GROUP("HE_Staining"		FILES ${GROUP_HE_STAINING})
 SOURCE_GROUP("HoughTransform"	FILES ${GROUP_HOUGH_TRANSFORM})
-SOURCE_GROUP("HSD" 		FILES ${GROUP_HSD})
-SOURCE_GROUP("IO"		FILES ${GROUP_IO})
-SOURCE_GROUP("Misc"		FILES ${GROUP_MISC})
+SOURCE_GROUP("HSD" 				FILES ${GROUP_HSD})
+SOURCE_GROUP("IO"				FILES ${GROUP_IO})
+SOURCE_GROUP("Misc"				FILES ${GROUP_MISC})
+SOURCE_GROUP("ML"		FILES ${GROUP_ML})
 SOURCE_GROUP("Normalization"	FILES ${GROUP_NORMALIZATION})
 
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem program_options system)

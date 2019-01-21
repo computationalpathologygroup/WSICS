@@ -1,9 +1,9 @@
-#ifndef __CXYWEIGHTS_H__
-#define __CXYWEIGHTS_H__
+#ifndef __WSICS_NORMALIZATION_CXYWEIGHTS__
+#define __WSICS_NORMALIZATION_CXYWEIGHTS__
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/ml/ml.hpp>
-#include "../Classifier/NaiveBayesClassifier.h"
+#include "../ML/NaiveBayesClassifier.h"
 
 /// <Summary>
 /// This namespace is for refining the rigid transformation of CxCy values
@@ -25,16 +25,5 @@ namespace WSICS::Normalization::CxCyWeights
 	/// Creates and trains a NaiveBayesClassifier.
 	/// </summary>
 	ML::NaiveBayesClassifier CreateNaiveBayesClassifier(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Mat& all_tissue_classes);
-
-	// Generates weights for the case that test data of Cx,Cy,D are different from training data
-	// This is in particular used for the case of generating waits for Look up table values
-	Weights GenerateWeights(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const ML::NaiveBayesClassifier& classifier);
-
-
-	cv::Ptr<cv::ml::NormalBayesClassifier> CreateNaiveBayesClassifier2(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Mat& all_tissue_classes);
-
-	// Generates weights for the case that test data of Cx,Cy,D are different from training data
-	// This is in particular used for the case of generating waits for Look up table values
-	Weights GenerateWeights2(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Ptr<cv::ml::NormalBayesClassifier>& classifier);
 };
-#endif // __CXYWEIGHTS_H__
+#endif // __WSICS_NORMALIZATION_CXYWEIGHTS__

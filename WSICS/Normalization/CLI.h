@@ -1,5 +1,5 @@
-#ifndef __WSICS_STANDARDIZATION_CLI_H__
-#define __WSICS_STANDARDIZATION_CLI_H__
+#ifndef __WSICS_STANDARDIZATION_CLI__
+#define __WSICS_STANDARDIZATION_CLI__
 
 #include <boost/filesystem.hpp>
 
@@ -100,4 +100,4 @@ namespace WSICS::Normalization
 			boost::filesystem::path SetOutputPath(boost::filesystem::path path, const std::string extension, const std::string filename);
 	};
 }
-#endif // __WSICS_STANDARDIZATION_CLI_H__
+#endif // __WSICS_STANDARDIZATION_CLI__

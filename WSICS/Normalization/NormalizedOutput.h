@@ -1,5 +1,5 @@
-#ifndef __NORMALIZEDOUTPUT_H__
-#define __NORMALIZEDOUTPUT_H__
+#ifndef __WSICS_NORMALIZATION_NORMALIZEDOUTPUT__
+#define __WSICS_NORMALIZATION_NORMALIZEDOUTPUT__
 
 #include <vector>
 
@@ -69,4 +69,4 @@ namespace WSICS::Normalization
 	/// <param name="tile_size">The size of each tile.</param>
 	void WriteNormalizedSamples(const boost::filesystem::path& output_directory, const cv::Mat& lut_image, MultiResolutionImage& tiled_image, const std::vector<cv::Point>& tile_coordinates, const uint32_t tile_size);
 };
-#endif // __NORMALIZEDOUTPUT_H__
+#endif // __WSICS_NORMALIZATION_NORMALIZEDOUTPUT__

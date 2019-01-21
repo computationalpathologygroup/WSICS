@@ -1,5 +1,5 @@
-#ifndef __TRANSFORM_CX_CY_DENSITY_H__
-#define __TRANSFORM_CX_CY_DENSITY_H__
+#ifndef __WSICS_NORMALIZATION_TRANSFORMCXCYDENSITY__
+#define __WSICS_NORMALIZATION_TRANSFORMCXCYDENSITY__
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -80,4 +80,4 @@ namespace WSICS::Normalization::TransformCxCyDensity
 
 	void TranslateCxCyBack(const cv::Mat& cx_cy, const cv::Mat& cx_cy_lut, cv::Mat& output_matrix, const std::vector<cv::Point>& indices, const float transform_x_median, const float transform_y_median);
 };
-#endif // __TRANSFORM_CX_CY_DENSITY_H__
+#endif // __WSICS_NORMALIZATION_TRANSFORMCXCYDENSITY__

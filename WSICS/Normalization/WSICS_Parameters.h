@@ -1,5 +1,5 @@
-#ifndef __WSICS_NORMALIZATION_PARAMETERS__
-#define __WSICS_NORMALIZATION_PARAMETERS__
+#ifndef __WSICS_NORMALIZATION_WSICSPARAMETERS__
+#define __WSICS_NORMALIZATION_WSICSPARAMETERS__
 
 #include <cstdint>
 
@@ -20,4 +20,4 @@ namespace WSICS::Normalization
 		bool		consider_ink;
 	};
 }
-#endif // __WSICS_NORMALIZATION_PARAMETERS__
+#endif // __WSICS_NORMALIZATION_WSICSPARAMETERS__

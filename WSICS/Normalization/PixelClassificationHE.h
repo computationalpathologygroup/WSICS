@@ -1,5 +1,5 @@
-#ifndef __PixelClassificationHE_H__
-#define __PixelClassificationHE_H__
+#ifndef __WSICS_NORMALIZATION_PIXELCLASSIFICATIONHE__
+#define __WSICS_NORMALIZATION_PIXELCLASSIFICATIONHE__
 
 #include <multiresolutionimageinterface/MultiResolutionImage.h>
 #include <opencv2/core/core.hpp>
@@ -70,4 +70,4 @@ namespace WSICS::Normalization
 			TrainingSampleInformation PatchTestData_(const size_t non_zero_count, const TrainingSampleInformation& current_sample_information);
 	};
 }
-#endif // __PixelClassificationHE_H__
+#endif // __WSICS_NORMALIZATION_PIXELCLASSIFICATIONHE__
