@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_PARAMETERCELL_H__
-#define __HOUGHTRANSFORM_PARAMETERCELL_H__
+#ifndef __WSICS_HOUGHTRANSFORM_PARAMETERCELL__
+#define __WSICS_HOUGHTRANSFORM_PARAMETERCELL__
 
 #include "Ellipse.h"
 
@@ -49,4 +49,4 @@ namespace WSICS::HoughTransform
 		AveragedEllipseInformation	m_averaged_information_;
     };
 }
-#endif // __HOUGHTRANSFORM_PARAMETERCELL_H__
+#endif // __WSICS_HOUGHTRANSFORM_PARAMETERCELL__

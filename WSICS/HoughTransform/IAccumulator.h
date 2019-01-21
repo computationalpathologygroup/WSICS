@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_IACCUMULATOR_H__
-#define __HOUGHTRANSFORM_IACCUMULATOR_H__
+#ifndef __WSICS_HOUGHTRANSFORM_IACCUMULATOR__
+#define __WSICS_HOUGHTRANSFORM_IACCUMULATOR__
 
 #include <vector>
 
@@ -29,7 +29,7 @@ namespace WSICS::HoughTransform
 			/// <summary>
 			/// Clears the accumulator.
 			/// </summary>
-			virtual void Clear(void)							= 0;
+			virtual void Clear(void)						= 0;
 			/// <summary>
 			/// Accumulates all the ellipses in the accumulator that occur more than a certain threshold.
 			/// </summary>
@@ -37,4 +37,4 @@ namespace WSICS::HoughTransform
 			virtual std::vector<Ellipse> Accumulate(void)	= 0;
     };
 }
-#endif // __HOUGHTRANSFORM_IACCUMULATOR_H__
+#endif // __WSICS_HOUGHTRANSFORM_IACCUMULATOR__

@@ -1,5 +1,5 @@
-#ifndef __HSD_HSD_Model_H__
-#define __HSD_HSD_Model_H__
+#ifndef __WSICS_HSD_HSD_Model__
+#define __WSICS_HSD_HSD_Model__
 
 #include "opencv2/core.hpp"
 
@@ -49,4 +49,4 @@ namespace WSICS::HSD
 			void AdjustChannelMatrix_(cv::Mat& matrix);
 	};
 }
-#endif // __HSD_HSD_Model_H__
+#endif // __WSICS_HSD_HSD_Model__

@@ -1,5 +1,5 @@
-#ifndef __IO_LOG_LEVEL_H__
-#define __IO_LOG_LEVEL_H__
+#ifndef __WSICS_IO_LOG_LEVEL__
+#define __WSICS_IO_LOG_LEVEL__
 
 #include <string>
 #include <vector>
@@ -21,4 +21,4 @@ namespace WSICS::IO::Logging
 	/// <returns>The complete list of converted enumerables.</returns>
 	std::vector<std::string> GetLogLevelsAsString(void);
 }
-#endif // __IO_LOG_LEVEL_H__
+#endif // __WSICS_IO_LOG_LEVEL__

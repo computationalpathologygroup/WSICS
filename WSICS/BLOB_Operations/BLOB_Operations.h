@@ -1,5 +1,5 @@
-#ifndef __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_H
-#define __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_H
+#ifndef __WSICS_BLOBOPERATIONS__
+#define __WSICS_BLOBOPERATIONS__
 #include <unordered_map>
 
 #include <opencv2/core/core.hpp>
@@ -51,4 +51,4 @@ namespace WSICS::BLOB_Operations
 	/// <returns>An unordered map containing all the labeled BLOBs.</returns>
 	std::unordered_map<size_t, BLOB> LabelAndGroup(const cv::Mat& binary_matrix, cv::Mat& output_matrix, const MaskType mask_type);
 };
-#endif // __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_H
+#endif // __WSICS_BLOBOPERATIONS__

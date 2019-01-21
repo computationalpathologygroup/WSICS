@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_POINTTRIPLET_H__
-#define __HOUGHTRANSFORM_POINTTRIPLET_H__
+#ifndef __WSICS_HOUGHTRANSFORM_POINTTRIPLET__
+#define __WSICS_HOUGHTRANSFORM_POINTTRIPLET__
 
 #include "Line.h"
 
@@ -24,4 +24,4 @@ namespace WSICS::HoughTransform
 		void operator+=(const cv::Point2f& addition_point);
     };
 }
-#endif // __HOUGHTRANSFORM_POINTTRIPLET_H__
+#endif // __WSICS_HOUGHTRANSFORM_POINTTRIPLET__

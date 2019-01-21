@@ -1,7 +1,5 @@
-#ifndef __IO_COMMANDLINE_INTERFACE_H__
-#define __IO_COMMANDLINE_INTERFACE_H__
-
-//#include <boost/filesystem.hpp>
+#ifndef __WSICS_IO_COMMANDLINE_INTERFACE__
+#define __WSICS_IO_COMMANDLINE_INTERFACE__
 
 #include <boost/program_options.hpp>
 #include <string>
@@ -55,4 +53,4 @@ namespace WSICS::IO
 			void ListOptions_(const boost::program_options::options_description& options);
 	};
 }
-#endif // __IO_COMMANDLINE_INTERFACE_H__
+#endif // __WSICS_IO_COMMANDLINE_INTERFACE__

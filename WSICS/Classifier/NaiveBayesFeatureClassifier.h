@@ -4,7 +4,6 @@
 #include <opencv2/core.hpp>
 #include <vector>
 
-
 namespace WSICS::ML
 {
 	class NaiveBayesFeatureClassifier

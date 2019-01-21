@@ -1,5 +1,5 @@
-#ifndef __HSD_BackgroundMask_H__
-#define __HSD_BackgroundMask_H__
+#ifndef __WSICS_HSD_BACKGROUNDMASK__
+#define __WSICS_HSD_BACKGROUNDMASK__
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -24,4 +24,4 @@ namespace WSICS::HSD::BackgroundMask
 	/// <returns>The amount of non-background pixels.</returns>
 	size_t CountNonBackGroundPixels(cv::Mat& background_mask);
 }
-#endif // __HSD_BackgroundMask_H__
+#endif // __WSICS_HSD_BACKGROUNDMASK__

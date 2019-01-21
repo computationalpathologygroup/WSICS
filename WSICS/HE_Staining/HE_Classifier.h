@@ -4,8 +4,8 @@
 // percentile thresholding.
 //===========================================================================
 
-#ifndef __ClassifyHE_H
-#define __ClassifyHE_H
+#ifndef __WSICS_HESTAINING_HECLASSIFIER__
+#define __WSICS_HESTAINING_HECLASSIFIER__
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/flann/flann.hpp>
@@ -105,4 +105,4 @@ namespace WSICS::HE_Staining
 			TrainAndClassData CreateTrainAndClassData_(HSD::HSD_Model& hsd_image, cv::Mat& background_mask, HematoxylinMaskInformation& hema_mask_info, EosinMaskInformation& eosin_mask_info);
 	};
 }
-#endif
+#endif // __WSICS_HE_STAINING_HECLASSIFIER__

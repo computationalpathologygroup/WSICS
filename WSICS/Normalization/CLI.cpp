@@ -12,7 +12,7 @@ namespace WSICS::Normalization
 	void CLI::ExecuteModuleFunctionality$(const boost::program_options::variables_map& variables)
 	{
 		// Configure the parameters.
-		Execution_Parameters parameters(WSICS_Execution::GetStandardParameters());
+		WSICS_Parameters parameters(WSICS_Algorithm::GetStandardParameters());
 		std::vector<boost::filesystem::path> files_to_process;
 		std::string prefix;
 		std::string postfix;
@@ -79,7 +79,7 @@ namespace WSICS::Normalization
 				log_path = log_path.parent_path().string() + "/log.txt";
 			}
 
-			WSICS_Execution slide_standardizer(log_file, template_input, parameters);
+			WSICS_Algorithm wsics(log_file, template_input, parameters);
 			for (const boost::filesystem::path& filepath : files_to_process)
 			{
 				std::string extension(filepath.extension().string());
@@ -103,7 +103,7 @@ namespace WSICS::Normalization
 					template_output_file = SetOutputPath(template_output, "csv", "");
 				}
 
-				slide_standardizer.Normalize(filepath, image_output_file, lut_output_file, template_output_file, file_debug_dir);
+				wsics.Normalize(filepath, image_output_file, lut_output_file, template_output_file, file_debug_dir);
 			}
 		}
 	}
@@ -134,7 +134,7 @@ namespace WSICS::Normalization
 
 	void CLI::AcquireAndSanitizeInput_(
 		const boost::program_options::variables_map& variables,
-		Execution_Parameters& parameters,
+		WSICS_Parameters& parameters,
 		std::vector<boost::filesystem::path>& files_to_process,
 		std::string& prefix,
 		std::string& postfix,

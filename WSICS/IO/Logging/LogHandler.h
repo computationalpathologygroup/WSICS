@@ -1,5 +1,5 @@
-#ifndef __IO_LOG_HANDLER_H__
-#define __IO_LOG_HANDLER_H__
+#ifndef __WSICS_IO_LOG_HANDLER__
+#define __WSICS_IO_LOG_HANDLER__
 
 #include <fstream>
 #include <iostream>
@@ -119,4 +119,4 @@ namespace WSICS::IO::Logging
 			void WriteMessageToFile_(const size_t file_id, const std::string& message);
     };
 }
-#endif
+#endif // __WSICS_IO_LOG_HANDLER__

@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_RANDOMIZEDHOUGHTRANSFORM_H__
-#define __HOUGHTRANSFORM_RANDOMIZEDHOUGHTRANSFORM_H__
+#ifndef __WSICS_HOUGHTRANSFORM_RANDOMIZEDHOUGHTRANSFORM__
+#define __WSICS_HOUGHTRANSFORM_RANDOMIZEDHOUGHTRANSFORM__
 
 #include "TreeAccumulator.h"
 #include "WindowedTripletDetector.h"
@@ -173,4 +173,4 @@ namespace WSICS::HoughTransform
 				WindowedTripletDetector& triplet_detector);
     };
 }
-#endif
+#endif // __WSICS_HOUGHTRANSFORM_RANDOMIZEDHOUGHTRANSFORM__

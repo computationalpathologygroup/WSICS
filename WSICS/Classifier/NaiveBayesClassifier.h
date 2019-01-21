@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+#include <opencv2/ml.hpp>
+
 #include "NaiveBayesFeatureClassifier.h"
 
 namespace WSICS::ML

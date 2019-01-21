@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_LINE_H__
-#define __HOUGHTRANSFORM_LINE_H__
+#ifndef __WSICS_HOUGHTRANSFORM_LINE__
+#define __WSICS_HOUGHTRANSFORM_LINE__
 
 #include <opencv2/core/types.hpp>
 
@@ -78,4 +78,4 @@ namespace WSICS::HoughTransform
         static Line CreateFromSlopeIntercept(const float slope, const float intercept);
     };
 }
-#endif // __HOUGHTRANSFORM_LINE_H__
+#endif // __WSICS_HOUGHTRANSFORM_LINE__

@@ -1,5 +1,5 @@
-#ifndef __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOBWINDOW_H
-#define __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOBWINDOW_H
+#ifndef __WSICS_BLOBOPERATIONS_BLOBWINDOW__
+#define __WSICS_BLOBOPERATIONS_BLOBWINDOW__
 
 #include <unordered_map>
 #include <opencv2/core.hpp>
@@ -102,4 +102,4 @@ namespace WSICS::BLOB_Operations
 			uint32_t CalculateWindowStepSize_(const uint32_t window_size);
 	};
 };
-#endif // __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOBWINDOW_H
+#endif // __WSICS_BLOBOPERATIONS_BLOBWINDOW__

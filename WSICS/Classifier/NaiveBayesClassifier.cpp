@@ -1,7 +1,5 @@
 #include "NaiveBayesClassifier.h"
 
-#include <opencv2/ml.hpp>
-
 #include <numeric>
 #include <float.h>
 #include <math.h>

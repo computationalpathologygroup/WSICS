@@ -1,3 +1,6 @@
+#ifndef __WSICS_MISC_MTSINGLETON__
+#define __WSICS_MISC_MTSINGLETON__
+
 #include <memory>
 
 #include <boost/random/mersenne_twister.hpp>
@@ -48,3 +51,4 @@ namespace WSICS::Misc
 			boost::mt19937_64 m_generator_;
 	};
 }
+#endif // __WSICS_MISC_MTSINGLETON__

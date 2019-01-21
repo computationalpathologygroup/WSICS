@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_TREEACCUMULATOR_H__
-#define __HOUGHTRANSFORM_TREEACCUMULATOR_H__
+#ifndef __WSICS_HOUGHTRANSFORM_TREEACCUMULATOR__
+#define __WSICS_HOUGHTRANSFORM_TREEACCUMULATOR__
 
 #include "IAccumulator.h"
 #include "LocationCell.h"
@@ -43,4 +43,4 @@ namespace WSICS::HoughTransform
 			std::vector<LocationCell>	m_averaged_centers_;
     };
 }
-#endif // __HOUGHTRANSFORM_TREEACCUMULATOR_H__
+#endif // __WSICS_HOUGHTRANSFORM_TREEACCUMULATOR__

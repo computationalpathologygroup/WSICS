@@ -1,5 +1,5 @@
-#ifndef __HE_STAIN_MASK_GENERATION_H__
-#define __HE_STAIN_MASK_GENERATION_H__
+#ifndef __WSICS_HESTAINING_MASKGENERATION__
+#define __WSICS_HESTAINING_MASKGENERATION__
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -148,4 +148,4 @@ namespace WSICS::HE_Staining
 		std::vector<double> LinearSpace(const double start_point, const double end_point, const uint16_t interval);
 	}
 };
-#endif // __HE_STAIN_MASK_GENERATION_H__
+#endif // __WSICS_HESTAINING_MASKGENERATION__

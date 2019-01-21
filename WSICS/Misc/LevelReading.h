@@ -1,5 +1,5 @@
-#ifndef __LevelReading_H__
-#define __LevelReading_H__
+#ifndef __WSICS_MISC_LEVELREADING__
+#define __WSICS_MISC_LEVELREADING__
 
 #include <opencv2/core/core.hpp>
 
@@ -65,4 +65,4 @@ namespace WSICS::Misc::LevelReading
 		const uint32_t skip_factor,
 		const float background_threshold);
 };
-#endif //__LevelReading_H__
+#endif //__WSICS_MISC_LEVELREADING__

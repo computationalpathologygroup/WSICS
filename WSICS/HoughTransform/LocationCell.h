@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_LOCATIONCELL_H__
-#define __HOUGHTRANSFORM_LOCATIONCELL_H__
+#ifndef __WSICS_HOUGHTRANSFORM_LOCATIONCELL__
+#define __WSICS_HOUGHTRANSFORM_LOCATIONCELL__
 
 #include <vector>
 
@@ -57,4 +57,4 @@ namespace WSICS::HoughTransform
 			size_t									m_count_;
     };
 }
-#endif // __HOUGHTRANSFORM_LOCATIONCELL_H__
+#endif // __WSICS_HOUGHTRANSFORM_LOCATIONCELL__

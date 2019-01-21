@@ -1,5 +1,5 @@
-#ifndef __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOB_H
-#define __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOB_H
+#ifndef __WSICS_BLOBOPERATIONS_BLOB__
+#define __WSICS_BLOBOPERATIONS_BLOB__
 
 #include <vector>
 #include <opencv2/core/types.hpp>
@@ -122,4 +122,4 @@ namespace WSICS::BLOB_Operations
 			std::vector<cv::Point2f>	m_points_;
     };
 }
-#endif // __ASAP_IMAGEPROCESSING_BLOBOPERATIONS_BLOB_H
+#endif // __WSICS_BLOBOPERATIONS_BLOB__

@@ -192,7 +192,7 @@ namespace WSICS::HoughTransform
         return angle;
     }
 
-	bool Ellipse::SquareContains_(cv::Point2f& a, cv::Point2f& b, cv::Point2f& point) const
+	bool Ellipse::SquareContains_(const cv::Point2f& a, const cv::Point2f& b, const cv::Point2f& point) const
 	{
 		return point.x >= a.x && point.x <= b.x && point.y >= a.y && point.y <= b.y;
 	}

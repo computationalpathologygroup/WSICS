@@ -1,4 +1,6 @@
-#pragma once
+#ifndef __WSICS_MISC_MATRIXOPERATIONS__
+#define __WSICS_MISC_MATRIXOPERATIONS__
+
 #include <opencv2/core/core.hpp>
 
 namespace WSICS::Misc::MatrixOperations
@@ -19,4 +21,6 @@ namespace WSICS::Misc::MatrixOperations
 	/// <param name="source">The input matrix to acquire the parameters from.</param>
 	/// <param name="destination">The output matrix to prepare.</param>
 	void PrepareOutputForInput(const cv::Mat& source, cv::Mat& destination);
-}
+} 
+
+#endif // __WSICS_MISC_MATRIXOPERATIONS__

@@ -1,5 +1,5 @@
-#ifndef __HOUGHTRANSFORM_ELLIPSE_H__
-#define __HOUGHTRANSFORM_ELLIPSE_H__
+#ifndef __WSICS_HOUGHTRANSFORM_ELLIPSE__
+#define __WSICS_HOUGHTRANSFORM_ELLIPSE__
 
 #include <opencv2/core/types.hpp>
 
@@ -81,7 +81,7 @@ namespace WSICS::HoughTransform
 			/// <param name="b">Bottom right corner.</param>
 			/// <param name="point">The point to compare to the rectangle.</param>
 			/// <returns>Whether or not the point is placed within the rectangle.</returns>
-			inline bool SquareContains_(cv::Point2f& a, cv::Point2f& b, cv::Point2f& point) const;
+			inline bool SquareContains_(const cv::Point2f& a, const cv::Point2f& b, const cv::Point2f& point) const;
     };
 }
-#endif // __HOUGHTRANSFORM_ELLIPSE_H__
+#endif // __WSICS_HOUGHTRANSFORM_ELLIPSE__

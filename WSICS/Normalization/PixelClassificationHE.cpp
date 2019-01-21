@@ -20,7 +20,7 @@ namespace WSICS::Normalization
 	TrainingSampleInformation PixelClassificationHE::GenerateCxCyDSamples(
 		MultiResolutionImage& tiled_image,
 		const cv::Mat& static_image,
-		const StandardizationParameters& parameters,
+		const WSICS_Parameters& parameters,
 		const std::vector<cv::Point>& tile_coordinates,
 		const std::vector<double>& spacing,
 		const uint32_t tile_size,
@@ -276,19 +276,6 @@ namespace WSICS::Normalization
 
 		return mask_acquisition_results;
 	}
-	/*
-	void PixelClassificationHE::InsertTrainingData_(TrainingSampleInformation& sample_information, const cv::Mat& cx_cy, const cv::Mat& density, const std::vector<cv::Point>& data_pixels, const size_t insertion_start, const size_t pixels_to_insert, const uint8_t class_id)
-	{
-	std::vector<size_t> random_pixels(ASAP::MiscFunctionality::CreateListOfRandomIntegers(data_pixels.size()));
-	for (size_t pixel = 0; pixel < pixels_to_insert; ++pixel)
-	{
-	sample_information.training_data_cx_cy.at<float>(insertion_start + pixel, 0)	= cx_cy.at<float>(data_pixels[random_pixels[pixel]].y, 0);
-	sample_information.training_data_cx_cy.at<float>(insertion_start + pixel, 1)	= cx_cy.at<float>(data_pixels[random_pixels[pixel]].y, 1);
-	sample_information.training_data_density.at<float>(insertion_start + pixel, 0)	= density.at<float>((data_pixels[random_pixels[pixel]]));
-	sample_information.class_data.at<float>(insertion_start + pixel, 0)				= class_id;
-
-	}
-	}*/
 
 	TrainingSampleInformation PixelClassificationHE::InsertTrainingData_(
 		const HSD::HSD_Model& hsd_image,
