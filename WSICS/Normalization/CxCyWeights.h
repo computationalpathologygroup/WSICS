@@ -25,5 +25,9 @@ namespace WSICS::Normalization::CxCyWeights
 	/// Creates and trains a NaiveBayesClassifier.
 	/// </summary>
 	ML::NaiveBayesClassifier CreateNaiveBayesClassifier(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const cv::Mat& all_tissue_classes);
+
+	// Generates weights for the case that test data of Cx,Cy,D are different from training data
+	// This is in particular used for the case of generating waits for Look up table values
+	Weights GenerateWeights(const cv::Mat& c_x, const cv::Mat& c_y, const cv::Mat& density, const ML::NaiveBayesClassifier& classifier);
 };
 #endif // __WSICS_NORMALIZATION_CXYWEIGHTS__
