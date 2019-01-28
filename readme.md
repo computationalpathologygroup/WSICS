@@ -4,12 +4,19 @@ This repository offers an implementation of the WSICS algorithm, as described in
 
 # Binaries #
 
-Binaries are available for 64x Windows and Linux, additionally a Docker Container can be build through the Dockerfile within the repository. These are all standalone and don't require any additional work to function.
+A precompiled binary is available for 64x Windows. Additionally a Docker Container can be build through the Dockerfile within the repository. These are both standalone, and don't require any additional work to function.
 * Windows: link
-* Linux: link
+
 
 ## Compilation ##
+This project aims to provide source code that is compatible with both Windows and Linux. However, Linux systems may vary in terms of available packages, which is why we don't officially support or provide binaries for any specific distribution.
 
+In order to compile the WSICS binary, the following prerequisites must be met:
+* [ASAP](https://github.com/computationalpathologygroup/ASAP)
+* [BOOST](https://www.boost.org/)
+* [OpenCV](https://www.opencv.org/)
+
+Due to the utilization of the [ASAP](https://github.com/computationalpathologygroup/ASAP) image reading capabilities, all of its dependenceis are required as well.
 
 # Usage #
 
@@ -52,6 +59,11 @@ If one or multiple whole-slide images contain ink or other heavily represented a
 -k, --ink
 ```
 
+Several steps of the normalization process are based on randomized processes. In order to still offer a deterministic execution, the BOOST Mersenne Twister implementation has been utilized as the random generator. Its seed can be set through the **seed** variable.
+```
+-s, --seed [unsigned integer]
+```
+
 ## Training ##
 
 The creation of the Look Up Table utilizes a Naïve Bayes classifier to determine the probabilities of a pixel belonging to a certain class. In order to train this classifier, pixels corresponding to the background, Eosine and Hematoxyline colored tissue is selected and added to a training set. The **max_training** and **min_training** parameters define the total size of the training set created and the minimum amount of selected pixels required to continue an execution.
@@ -64,7 +76,7 @@ The creation of the Look Up Table utilizes a Naïve Bayes classifier to determin
 The training pixels are selected from tiles that contain little to no background, this is done by calculating the amount of pixels that are near white or black. If this is higher than the percentage indicated by the **background_threshold** parameter, then the tile isn’t utilized for the selection of training pixels.
 
 ```
---background_threshold [float value between 0 and 1]
+--background_threshold [positive float]
 ```
 
 The selection of Hematoxylin colored pixels is done by detecting ellipses within the tissue and then calculating the mean red density value of the HSD color space. The **hema_percentile** parameter then defines which ellipse mean is selected to serve as threshold for the selection of Hematoxylin pixels.
