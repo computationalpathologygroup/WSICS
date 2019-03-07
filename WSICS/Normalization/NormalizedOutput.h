@@ -9,7 +9,6 @@
 #include "multiresolutionimageinterface/MultiResolutionImage.h"
 #include "multiresolutionimageinterface/MultiResolutionImageReader.h"
 #include "multiresolutionimageinterface/MultiResolutionImageWriter.h"
-#include "multiresolutionimageinterface/OpenSlideImageFactory.h"
 
 namespace WSICS::Normalization
 {

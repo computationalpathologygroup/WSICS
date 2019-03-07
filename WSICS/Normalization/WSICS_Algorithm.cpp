@@ -1,5 +1,7 @@
 #include "WSICS_Algorithm.h"
 
+#include <multiresolutionimageinterface/MultiResolutionImageReader.h>
+#include <multiresolutionimageinterface/MultiResolutionImageFactory.h>
 #include <boost/filesystem.hpp>
 #include <stdexcept>
 #include <core/filetools.h>
@@ -12,7 +14,6 @@
 #include "../IO/Logging/LogHandler.h"
 #include "../Misc/LevelReading.h"
 #include "../Misc/Random.h"
-
 
 // TODO: Refactor and restructure into smaller chunks.
 

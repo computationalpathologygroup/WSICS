@@ -1,5 +1,7 @@
 #include "NormalizedOutput.h"
 
+#include <multiresolutionimageinterface/MultiResolutionImageReader.h>
+#include <multiresolutionimageinterface/MultiResolutionImageWriter.h>
 #include <opencv2/highgui.hpp>
 
 #include "../IO/Logging/LogHandler.h"

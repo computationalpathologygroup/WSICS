@@ -1,7 +1,7 @@
 #include "CLI.h"
 
 #include <unordered_set>
-#include "../Misc/Mt_Singleton.hpp"
+#include "../Misc/MT_Singleton.hpp"
 
 namespace WSICS::Normalization
 {
