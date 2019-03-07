@@ -1,11 +1,12 @@
 # Introduction #
-This repository offers an implementation of the WSICS algorithm, as described in "Stain Specific Standardization of Whole-Slide Histopathological Images"
+This repository offers an implementation of the WSICS algorithm, as described in "Stain Specific Standardization of Whole-Slide Histopathological Images"(10.1109/TMI.2015.2476509). WSICS can create templates from H&E stained images and use these to normalize other H&E stained images accordingly.
 
 
 # Binaries #
 
 A precompiled binary is available for 64x Windows. Additionally a Docker Container can be build through the Dockerfile within the repository. These are both standalone, and don't require any additional work to function.
 * Windows: link
+* Docker: 
 
 
 ## Compilation ##
@@ -16,13 +17,20 @@ In order to compile the WSICS binary, the following prerequisites must be met:
 * [BOOST](https://www.boost.org/)
 * [OpenCV](https://www.opencv.org/)
 
-Due to the utilization of the [ASAP](https://github.com/computationalpathologygroup/ASAP) image reading capabilities, all of its dependenceis are required as well.
+Due to the utilization of the [ASAP](https://github.com/computationalpathologygroup/ASAP) image reading capabilities, all of its dependencies are required as well.
 
 # Usage #
 
 WSICS can be called through a CLI and accepts whole slide images in a tiled image format, or as a flat patch. The image reading is provided by the [ASAP project](https://github.com/computationalpathologygroup/ASAP), and thus provides any format that it does as well. WSICS attempts to locate tiles or static images that don't just contain background, if no tiles or static images are discovered that can be utilized for processing, adjusting the "--background_threshold" parameter can make this process less or more strict.
 
 The normalization process requires that a template image is converted to a CSV file with relevant paramaters. Using another WSI directly isn't supported yet. Please see the "--output_template" parameter for the creation of a template file.
+
+## Docker ##
+
+The containerized version of WSICS relies on volumes to access the required files and images. WSICS statically utilizes the /mount/ folder as its mount location.
+```
+docker run -v [host_directory:/mount/] [WSICS parameters]
+```
 
 ## Input and Output ##
 
