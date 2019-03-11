@@ -96,66 +96,59 @@ namespace WSICS::Normalization
 				parameters.eosin_percentile,
 				spacing,
 				is_multiresolution_image));
-			HE_Staining::HE_Classifier he_classifier;
 
-			if (he_masks.first.full_mask.size() == cv::Size(0, 0))
+			if (he_masks.first.full_mask.size() != cv::Size(0, 0) &&
+				he_masks.second.full_mask.size() != cv::Size(0, 0))
 			{
-				throw std::runtime_error("Unable to create Hematoxylin mask");
-			}
-			else if (he_masks.second.full_mask.size() == cv::Size(0, 0))
-			{
-				throw std::runtime_error("Unable to create Eosin mask");
-			}
-	
-			HE_Staining::ClassificationResults classification_results;
-			try
-			{
-				classification_results = he_classifier.Classify(hsd_image, background_mask, he_masks.first, he_masks.second);
-			}
-			catch (const std::exception& e)
-			{
-				throw std::runtime_error("Unable to classify HE stained tissue.");
-			}
-
-			// Wanna keep?
-			// Randomly pick samples and Fill in Cx-Cy-D major sample vectors	
-			if (classification_results.train_and_class_data.train_data.rows >= min_training_size)
-			{
-				if (logging_instance->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
+				HE_Staining::HE_Classifier he_classifier;
+				HE_Staining::ClassificationResults classification_results;
+				try
 				{
-					cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_classified.tif", classification_results.all_classes * 100);
-
-					std::vector<cv::Mat> channels;
-					channels.push_back(he_masks.second.full_mask);
-					channels.push_back(background_mask);
-					channels.push_back(he_masks.first.full_mask);
-
-					cv::Mat classes;
-					cv::merge(channels, classes);
-					classes.convertTo(classes, CV_8UC1);
-					cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_classes.tif", classes * 100);
+					classification_results = he_classifier.Classify(hsd_image, background_mask, he_masks.first, he_masks.second);
+				}
+				catch (const std::exception& e)
+				{
+					throw std::runtime_error("Unable to classify HE stained tissue.");
 				}
 
+				// Wanna keep?
+				// Randomly pick samples and Fill in Cx-Cy-D major sample vectors	
+				if (classification_results.train_and_class_data.train_data.rows >= min_training_size)
+				{
+					if (logging_instance->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_dir_.empty())
+					{
+						cv::Mat classifications_scaled(classification_results.all_classes * 100);
+						cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_classified.tif", classifications_scaled);
 
-				//	TrainingSampleInformation& sample_information, const cv::Mat& cx_cy, const cv::Mat& density, const std::vector<cv::Point>& data_pixels, const size_t insertion_start, const size_t pixels_to_insert, const uint8_t class_id
+						std::vector<cv::Mat> channels;
+						channels.push_back(he_masks.second.full_mask);
+						channels.push_back(background_mask);
+						channels.push_back(he_masks.first.full_mask);
 
+						cv::Mat classes;
+						cv::merge(channels, classes);
+						classes.convertTo(classes, CV_8UC1);
+						classes *= 100;
+						cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(random_numbers[current_tile]) + "_classes.tif", classes);
+					}
 
-				InsertTrainingData_(hsd_image, classification_results, sample_information, total_hema_count, total_eosin_count, total_background_count, parameters.max_training_size);
-				++selected_images_count;
+					InsertTrainingData_(hsd_image, classification_results, sample_information, total_hema_count, total_eosin_count, total_background_count, parameters.max_training_size);
+					++selected_images_count;
 
-				size_t hema_count_real = total_hema_count				> parameters.max_training_size * 9 / 20 ? hema_count_real = parameters.max_training_size * 9 / 20 : total_hema_count;
-				size_t eosin_count_real = total_eosin_count				> parameters.max_training_size * 9 / 20 ? eosin_count_real = parameters.max_training_size * 9 / 20 : total_eosin_count;
-				size_t background_count_real = total_background_count	> parameters.max_training_size * 1 / 10 ? background_count_real = parameters.max_training_size * 1 / 10 : total_background_count;
+					size_t hema_count_real = total_hema_count				> parameters.max_training_size * 9 / 20 ? hema_count_real = parameters.max_training_size * 9 / 20 : total_hema_count;
+					size_t eosin_count_real = total_eosin_count				> parameters.max_training_size * 9 / 20 ? eosin_count_real = parameters.max_training_size * 9 / 20 : total_eosin_count;
+					size_t background_count_real = total_background_count	> parameters.max_training_size * 1 / 10 ? background_count_real = parameters.max_training_size * 1 / 10 : total_background_count;
 
-				logging_instance->QueueCommandLineLogging(std::to_string(hema_count_real + eosin_count_real + background_count_real) + " training sets are filled, out of " + std::to_string(parameters.max_training_size) + " required.", IO::Logging::NORMAL);
-				logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(parameters.max_training_size), m_log_file_id_, IO::Logging::NORMAL);
-				logging_instance->QueueFileLogging("Hema: " + std::to_string(hema_count_real) + ", Eos: " + std::to_string(eosin_count_real) + ", BG: " + std::to_string(background_count_real), m_log_file_id_, IO::Logging::NORMAL);
-			}
+					logging_instance->QueueCommandLineLogging(std::to_string(hema_count_real + eosin_count_real + background_count_real) + " training samples are filled, out of " + std::to_string(parameters.max_training_size) + " required.", IO::Logging::NORMAL);
+					logging_instance->QueueFileLogging("Filled: " + std::to_string(hema_count_real + eosin_count_real + background_count_real) + " / " + std::to_string(parameters.max_training_size), m_log_file_id_, IO::Logging::NORMAL);
+					logging_instance->QueueFileLogging("Hema: " + std::to_string(hema_count_real) + ", Eos: " + std::to_string(eosin_count_real) + ", BG: " + std::to_string(background_count_real), m_log_file_id_, IO::Logging::NORMAL);
+				}
 
-			if (total_hema_count >= parameters.max_training_size * 9 / 20 && total_eosin_count >= parameters.max_training_size * 9 / 20 && total_background_count >= parameters.max_training_size / 10)
-			{
-				break;
-			}
+				if (total_hema_count >= parameters.max_training_size * 9 / 20 && total_eosin_count >= parameters.max_training_size * 9 / 20 && total_background_count >= parameters.max_training_size / 10)
+				{
+					break;
+				}
+			}		
 		}
 
 		if ((total_hema_count < parameters.max_training_size * 9 / 20 || total_eosin_count < parameters.max_training_size * 9 / 20 || total_background_count < parameters.max_training_size / 10))
@@ -193,9 +186,9 @@ namespace WSICS::Normalization
 		parameters.epoch_size = 3;
 		parameters.count_threshold = 4;
 
-		int sigma = 4;
-		int low_threshold = 45;
-		int high_threshold = 80;
+		int sigma			= 4;
+		int low_threshold	= 45;
+		int high_threshold	= 80;
 
 		// Prepares the logger and a string holding potential failure messages.
 		IO::Logging::LogHandler* logging_instance(IO::Logging::LogHandler::GetInstance());
@@ -205,11 +198,13 @@ namespace WSICS::Normalization
 		{
 			cv::Mat temporary_matrix;
 			hsd_image.density.convertTo(temporary_matrix, CV_8UC1);
-			cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(tile_id) + "_density.tif", temporary_matrix * 100);
+			temporary_matrix *= 100;
+			cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(tile_id) + "_density.tif", temporary_matrix);
 
 			HE_Staining::MaskGeneration::ApplyBlur(temporary_matrix, temporary_matrix, sigma);
 			HE_Staining::MaskGeneration::ApplyCannyEdge(temporary_matrix, temporary_matrix, low_threshold, high_threshold);
-			cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(tile_id) + "_binary.tif", temporary_matrix * 255);
+			temporary_matrix *= 255;
+			cv::imwrite(m_debug_dir_ + "/tile_" + std::to_string(tile_id) + "_binary.tif", temporary_matrix);
 		}
 
 		// Attempts to detect ellispes. Applies a blur and canny edge operation on the density matrix before detecting ellipses through a randomized Hough transform.
@@ -220,7 +215,7 @@ namespace WSICS::Normalization
 		std::pair<HE_Staining::HematoxylinMaskInformation, HE_Staining::EosinMaskInformation> mask_acquisition_results;
 
 		// If the min_ellipses variable has been set as positive, prefer it over a calculation.
-		double min_detected_ellipses = min_ellipses > 0 ? hsd_image.red_density.rows * hsd_image.red_density.rows * spacing[0] * spacing[0] * (150 / 247700.0) : min_ellipses;
+		double min_detected_ellipses = min_ellipses == 0 ? hsd_image.red_density.rows * hsd_image.red_density.rows * spacing[0] * spacing[0] * (150 / 247700.0) : min_ellipses;
 		if (detected_ellipses.size() > min_detected_ellipses || (detected_ellipses.size() > 10 && !is_multiresolution))
 		{
 			logging_instance->QueueFileLogging("Passed step 1: Number of nuclei " + std::to_string(detected_ellipses.size()), m_log_file_id_, IO::Logging::NORMAL);

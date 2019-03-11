@@ -124,7 +124,7 @@ namespace WSICS::Normalization
 			("hema_percentile", boost::program_options::value<float>()->default_value(0.1f), "Defines how conservative the algorithm is with its blue pixel classification.")
 			("eosin_percentile", boost::program_options::value<float>()->default_value(0.2f), "Defines how conservative the algorithm is with its red pixel classification.")
 			("background_threshold", boost::program_options::value<float>()->default_value(0.9f), "Defines the threshold between tissue and background pixels.")
-			("min_ellipses", boost::program_options::value<int32_t>()->default_value(false), "Allows for a custom value for the amount of ellipses on a tile.")
+			("min_ellipses", boost::program_options::value<int32_t>()->default_value(0), "Allows for a custom value for the amount of ellipses on a tile.")
 			("seed,s", boost::program_options::value<uint64_t>()->default_value(1000), "Defines the seed used for random processing.");
 	}
 
@@ -181,9 +181,9 @@ namespace WSICS::Normalization
 		prefix = variables["prefix"].as<std::string>();
 		postfix = variables["postfix"].as<std::string>();
 
-		image_output = boost::filesystem::path(variables["image_output"].as<std::string>());
-		lut_output = boost::filesystem::path(variables["lut_output"].as<std::string>());
-		template_input = boost::filesystem::path(variables["template_input"].as<std::string>());
+		image_output	= boost::filesystem::path(variables["image_output"].as<std::string>());
+		lut_output		= boost::filesystem::path(variables["lut_output"].as<std::string>());
+		template_input	= boost::filesystem::path(variables["template_input"].as<std::string>());
 		template_output = boost::filesystem::path(variables["template_output"].as<std::string>());
 
 		if (!image_output.empty())
@@ -211,30 +211,30 @@ namespace WSICS::Normalization
 
 		if (IO::Logging::LogHandler::GetInstance()->GetOutputLevel() == IO::Logging::DEBUG)
 		{
-			boost::filesystem::path debug_potential;
+			boost::filesystem::path potential_debug_dir;
 			if (!image_output.empty())
 			{
-				debug_potential = image_output;
+				potential_debug_dir = image_output;
 			}
 			else if (!lut_output.empty())
 			{
-				debug_potential = lut_output;
+				potential_debug_dir = lut_output;
 			}
 
-			if (input_is_directory && !debug_potential.empty())
+			if (input_is_directory && !potential_debug_dir.empty())
 			{
-				debug_dir = debug_potential.string() + "/debug";
+				debug_dir = boost::filesystem::absolute(potential_debug_dir).string() + "/debug";
 			}
 			else
 			{
-				debug_dir = debug_potential.parent_path().string() + "/debug";
+				debug_dir = boost::filesystem::absolute(potential_debug_dir.parent_path()).string() + "/debug";
 			}
 		}
 
 		parameters.hema_percentile		= variables["hema_percentile"].as<float>();
 		parameters.eosin_percentile		= variables["eosin_percentile"].as<float>();
 		parameters.background_threshold = variables["background_threshold"].as<float>();
-		parameters.minimum_ellipses		= variables["min_ellipses"].as<uint32_t>();
+		parameters.minimum_ellipses		= variables["min_ellipses"].as<int32_t>();
 
 		if (parameters.hema_percentile > 1.0f)
 		{

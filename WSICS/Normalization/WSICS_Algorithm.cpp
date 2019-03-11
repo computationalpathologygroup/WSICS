@@ -160,7 +160,7 @@ namespace WSICS::Normalization
 		//	Write sample images to Harddisk For testing
 		//===========================================================================
 		// Don't remove! usable for looking at samples of standardization
-		if (!m_debug_directory_.empty() && logging_instance->GetOutputLevel() == IO::Logging::DEBUG)
+		if (logging_instance->GetOutputLevel() == IO::Logging::DEBUG && !m_debug_directory_.empty() && normalized_lut.size() != cv::Size(0, 0))
 		{
 			logging_instance->QueueFileLogging("Writing sample standardized images to: " + m_debug_directory_.string(), m_log_file_id_, IO::Logging::NORMAL);
 
