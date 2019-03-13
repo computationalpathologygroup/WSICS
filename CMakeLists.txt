@@ -113,6 +113,9 @@ SOURCE_GROUP("Misc"				FILES ${GROUP_MISC})
 SOURCE_GROUP("ML"		FILES ${GROUP_ML})
 SOURCE_GROUP("Normalization"	FILES ${GROUP_NORMALIZATION})
 
+
+find_package(Threads REQUIRED)
+
 FIND_PACKAGE(Boost REQUIRED COMPONENTS filesystem program_options system)
 IF(Boost_FOUND)
 	INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
@@ -132,10 +135,10 @@ SET(ASAP_LIB_DIRS "ASAP_LIB_DIRECTORY" CACHE FILEPATH "The path to the ASAP libr
 IF (WIN32)
 	SET(ASAP_LIBRARIES ${ASAP_LIB_DIRS}/core.lib ${ASAP_LIB_DIRS}/multiresolutionimageinterface.lib)
 ELSE()
-	SET(ASAP_LIBRARIES ${ASAP_LIB_DIRS}/core.so ${ASAP_LIB_DIRS}/multiresolutionimageinterface.so)
+	SET(ASAP_LIBRARIES ${ASAP_LIB_DIRS}/libcore.so ${ASAP_LIB_DIRS}/libmultiresolutionimageinterface.so)
 ENDIF()
 
 
-TARGET_LINK_LIBRARIES(wsics ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${ASAP_LIBRARIES})
+TARGET_LINK_LIBRARIES(wsics ${Boost_LIBRARIES} ${OpenCV_LIBRARIES} ${ASAP_LIBRARIES} Threads::Threads)
 
 install(TARGETS wsics DESTINATION bin)
