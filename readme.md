@@ -5,8 +5,8 @@ This repository offers an implementation of the WSICS algorithm, as described in
 # Binaries #
 
 A precompiled binary is available for 64x Windows. Additionally a Docker Container can be build through the Dockerfile within the repository. These are both standalone, and don't require any additional work to function.
-* Windows: link
-* Docker: 
+* Windows: https://github.com/computationalpathologygroup/WSICS/releases
+* Docker: https://hub.docker.com/r/kgerbrands/wsics
 
 
 ## Compilation ##
