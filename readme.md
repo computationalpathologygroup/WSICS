@@ -71,7 +71,7 @@ If one or multiple whole-slide images contain ink or other heavily represented a
 
 Several steps of the normalization process are based on randomized processes. In order to still offer a deterministic execution, the BOOST Mersenne Twister implementation has been utilized as the random generator. Its seed can be set through the **seed** variable.
 ```
--s, --seed [unsigned integer]
+-s, --seed [positive integer]
 ```
 
 ## Training ##
@@ -102,4 +102,9 @@ The Eosin threshold is defined by collecting all pixels that aren’t considered
 
 ```
 --eosin_percentile [float value between 0 and 1]
+```
+
+Normally, tiles that contain few detected ellipses are skipped and ignored for the creation of the training set. However, it's possible to set a static lower limit for the amount of detection, such as when there's little actual tissue on the image. This can be done with the **min_ellipses** parameter.
+```
+--emin_ellipses [positive integer]
 ```
