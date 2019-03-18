@@ -1,5 +1,5 @@
 # Introduction #
-This repository offers an implementation of the WSICS algorithm, as described in "Stain Specific Standardization of Whole-Slide Histopathological Images"(10.1109/TMI.2015.2476509). WSICS can create templates from H&E stained images and use these to normalize other H&E stained images accordingly.
+This repository offers an implementation of the WSICS algorithm, as described in *"Stain Specific Standardization of Whole-Slide Histopathological Images"* (10.1109/TMI.2015.2476509). WSICS can create templates from H&E stained images and use these to normalize other H&E stained images accordingly.
 
 
 # Binaries #
@@ -21,13 +21,13 @@ Due to the utilization of the [ASAP](https://github.com/computationalpathologygr
 
 # Usage #
 
-WSICS can be called through a CLI and accepts whole slide images in a tiled image format, or as a flat patch. The image reading is provided by the [ASAP project](https://github.com/computationalpathologygroup/ASAP), and thus provides any format that it does as well. WSICS attempts to locate tiles or static images that don't just contain background, if no tiles or static images are discovered that can be utilized for processing, adjusting the "--background_threshold" parameter can make this process less or more strict.
+WSICS can be called through a CLI and accepts whole slide images in a tiled image format, or as a flat patch. The image reading is provided by the [ASAP project](https://github.com/computationalpathologygroup/ASAP), and thus provides any format that it does as well. WSICS attempts to locate tiles or static images that don't just contain background, if no tiles or static images are discovered that can be utilized for processing, adjusting the **--background_threshold** parameter can control the strictness of this process.
 
-The normalization process requires that a template image is converted to a CSV file with relevant paramaters. Using another WSI directly isn't supported yet. Please see the "--output_template" parameter for the creation of a template file.
+The normalization process requires that a template image is converted to a CSV file with relevant paramaters. Using another WSI directly isn't supported yet. Please see the **--output_template** parameter for the creation of a template file.
 
 ## Docker ##
 
-The containerized version of WSICS relies on volumes to access the required files and images. In order to access images and export results, a volume must be mounted through the "-v" option for docker. An example can be seen below:
+The containerized version of WSICS relies on volumes to access the required files and images. In order to access images and export results, a volume must be mounted through the **-v** option for docker. An example can be seen below:
 ```
 docker run -v [local directory]:/data/ wsics --input /data/[image] --template_output /data/[template name]
 ```
