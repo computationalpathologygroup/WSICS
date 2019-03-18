@@ -27,10 +27,12 @@ The normalization process requires that a template image is converted to a CSV f
 
 ## Docker ##
 
-The containerized version of WSICS relies on volumes to access the required files and images. WSICS statically utilizes the /mount/ folder as its mount location.
+The containerized version of WSICS relies on volumes to access the required files and images. In order to access images and export results, a volume must be mounted through the "-v" option for docker. An example can be seen below:
 ```
-docker run -v [host_directory:/mount/] [WSICS parameters]
+docker run -v [local directory]:/data/ wsics --input /data/[image] --template_output /data/[template name]
 ```
+It is possible for the algorithm to utilize a large amount of memory, which can result in a segfault error for Docker. To resolve this, the required training size can be diminished, or the pool of memory increased for Docker.
+
 
 ## Input and Output ##
 
@@ -86,6 +88,9 @@ The training pixels are selected from tiles that contain little to no background
 ```
 --background_threshold [positive float]
 ```
+
+Additionally, the amount of detected ellipses are also considered when selecting tiles to extract pixels from. Normally this is calculated based on the tile size. However, it can also be set through the **min_ellipses**
+
 
 The selection of Hematoxylin colored pixels is done by detecting ellipses within the tissue and then calculating the mean red density value of the HSD color space. The **hema_percentile** parameter then defines which ellipse mean is selected to serve as threshold for the selection of Hematoxylin pixels.
 
