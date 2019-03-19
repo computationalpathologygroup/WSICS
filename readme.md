@@ -29,7 +29,7 @@ The normalization process requires that a template image is converted to a CSV f
 
 The containerized version of WSICS relies on volumes to access the required files and images. In order to access images and export results, a volume must be mounted through the **-v** option for docker. An example can be seen below:
 ```
-docker run -v [local directory]:/data/ wsics --input /data/[image] --template_output /data/[template name]
+docker run -v [local directory]:/data/ kgerbrands/wsics --input /data/[image] --template_output /data/[template name]
 ```
 It is possible for the algorithm to utilize a large amount of memory, which can result in a segfault error for Docker. To resolve this, the required training size can be diminished, or the pool of memory increased for Docker.
 
