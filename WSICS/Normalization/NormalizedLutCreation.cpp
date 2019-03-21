@@ -87,7 +87,7 @@ namespace WSICS::Normalization::NormalizedLutCreation
 		}
 		catch (std::runtime_error& e)
 		{
-			throw std::runtime_error("Unable to generate LUT weights. Following error was detected:\n" + std::string(e.what()));
+			throw std::runtime_error(std::string("Unable to generate LUT weights. Following error was detected:\n") + std::string(e.what()));
 		}
 		logging_instance->QueueCommandLineLogging("All weights created...", IO::Logging::NORMAL);
 		logging_instance->QueueFileLogging("Weights generated", log_file_id, IO::Logging::NORMAL);

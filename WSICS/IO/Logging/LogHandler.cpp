@@ -158,7 +158,7 @@ namespace WSICS::IO::Logging
 
 		// Loops until the instance is destroyed.
 		m_end_operations_ = false;
-		while (!m_end_operations_)
+		while (!m_end_operations_ || !m_command_line_messages_.empty() || !m_file_messages_.empty())
 		{
 			m_notification_mutex_.lock_shared();
 
