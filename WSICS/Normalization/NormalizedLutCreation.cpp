@@ -53,21 +53,20 @@ namespace WSICS::Normalization::NormalizedLutCreation
 		//===========================================================================
 		// Downsample the number of samples for NB classifier
 		uint32_t downsample = 20;
-		if (max_training_size > 10000000 && max_training_size < 20000000)
-		{
-			downsample = 30;
-		}
-		else if (max_training_size >= 20000000 && max_training_size < 30000000)
-		{
-			downsample = 40;
-		}
-		else if (max_training_size >= 30000000)
+		if (max_training_size >= 30000000)
 		{
 			downsample = 50;
 		}
+		else if (max_training_size >= 20000000)
+		{
+			downsample = 40;
+		}
+		else if (max_training_size > 10000000)
+		{
+			downsample = 30;
+		}
 
 		logging_instance->QueueFileLogging("Down sampling the data for constructing NB classifier", log_file_id, IO::Logging::NORMAL);
-
 		TrainingSampleInformation sample_info_downsampled(DownsampleforNbClassifier(training_samples, downsample, max_training_size));
 
 		logging_instance->QueueFileLogging("Generating weights with NB classifier", log_file_id, IO::Logging::NORMAL);
@@ -81,9 +80,10 @@ namespace WSICS::Normalization::NormalizedLutCreation
 		//	Generates the weights
 		//===========================================================================
 		logging_instance->QueueCommandLineLogging("Generating posteriors (This will take some time...)", IO::Logging::NORMAL);
+		CxCyWeights::Weights weights;
 		try
 		{
-			CxCyWeights::Weights weights(CxCyWeights::GenerateWeights(lut_hsd.c_x, lut_hsd.c_y, lut_hsd.density, classifier));
+			weights = CxCyWeights::GenerateWeights(lut_hsd.c_x, lut_hsd.c_y, lut_hsd.density, classifier);
 		}
 		catch (std::runtime_error& e)
 		{
