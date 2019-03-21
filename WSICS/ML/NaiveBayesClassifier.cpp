@@ -68,7 +68,7 @@ namespace WSICS::ML
 		size_t features = input.cols;
 		if (features < 1 || features != m_feature_classifiers_.size())
 		{
-			throw std::runtime_error("Amount of features don't align with the trained features.");
+			throw std::runtime_error("Amount of features don't align with trained features - trained:" + std::to_string(m_feature_classifiers_.size()) + " | input: " + std::to_string(features));
 		}
 
 		// Aggregate the probabilities for all features
