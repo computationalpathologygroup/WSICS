@@ -81,7 +81,14 @@ namespace WSICS::Normalization::NormalizedLutCreation
 		//	Generates the weights
 		//===========================================================================
 		logging_instance->QueueCommandLineLogging("Generating posteriors (This will take some time...)", IO::Logging::NORMAL);
-		CxCyWeights::Weights weights(CxCyWeights::GenerateWeights(lut_hsd.c_x, lut_hsd.c_y, lut_hsd.density, classifier));
+		try
+		{
+			CxCyWeights::Weights weights(CxCyWeights::GenerateWeights(lut_hsd.c_x, lut_hsd.c_y, lut_hsd.density, classifier));
+		}
+		catch (std::runtime_error& e)
+		{
+			throw std::runtime_error("Unable to generate LUT weights.");
+		}
 		logging_instance->QueueCommandLineLogging("All weights created...", IO::Logging::NORMAL);
 		logging_instance->QueueFileLogging("Weights generated", log_file_id, IO::Logging::NORMAL);
 
