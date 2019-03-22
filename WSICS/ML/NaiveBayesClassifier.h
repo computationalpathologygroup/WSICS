@@ -23,11 +23,6 @@ namespace WSICS::ML
 			/// </summary>
 			NaiveBayesClassifier(const uint64_t bins = 100, const float blur = 3, const ProbabilityIntegration integration_type = MULTIPLICATION);
 
-			/// <summary>
-			/// Copy constructor
-			/// </summary>
-			NaiveBayesClassifier(const NaiveBayesClassifier& other);
-
 			const std::vector<uchar> GetClasses(void) const;
 			const std::vector<std::string>& GetFeatureNames(void) const;
 			const std::vector<double>& GetWeights(void) const;

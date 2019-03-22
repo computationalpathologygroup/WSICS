@@ -12,12 +12,6 @@ namespace WSICS::ML
 	{
 	}
 
-	NaiveBayesClassifier::NaiveBayesClassifier(const NaiveBayesClassifier& other)
-		: n_bins(other.n_bins), blur_sigma(other.blur_sigma), probability_integration_type(other.probability_integration_type),	m_is_trained_(other.m_is_trained_),
-		m_classes_(other.m_classes_), m_trained_feature_names_(other.m_trained_feature_names_), m_weights_(other.m_weights_)
-	{
-	}
-
 	const std::vector<uchar> NaiveBayesClassifier::GetClasses(void) const
 	{
 		return m_classes_;
@@ -68,7 +62,7 @@ namespace WSICS::ML
 		size_t features = input.cols;
 		if (features < 1 || features != m_feature_classifiers_.size())
 		{
-			throw std::runtime_error("Amount of features don't align with trained features - trained:" + std::to_string(m_feature_classifiers_.size()) + " | input: " + std::to_string(features));
+			throw std::runtime_error("Amount of features don't align with trained features - trained: " + std::to_string(m_feature_classifiers_.size()) + " | input: " + std::to_string(features));
 		}
 
 		// Aggregate the probabilities for all features
@@ -124,14 +118,12 @@ namespace WSICS::ML
 			throw std::runtime_error("The classifier requires row based samples.");
 		}
 
-		m_trained_feature_names_.clear();
 		if (!feature_names.empty())
 		{
 			m_trained_feature_names_ = feature_names;
 		}
 		else
 		{
-			m_trained_feature_names_.clear();
 			cv::Mat sample = train_data.getSamples().row(0);
 
 			for (size_t col = 0; col < sample.cols; ++col)
