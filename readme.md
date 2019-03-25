@@ -6,7 +6,7 @@ This repository offers an implementation of the WSICS algorithm, as described in
 
 A precompiled binary is available for 64x Windows. Additionally a Docker Container can be build through the Dockerfile within the repository. These are both standalone, and don't require any additional work to function.
 * Windows: https://github.com/computationalpathologygroup/WSICS/releases
-* Docker: https://hub.docker.com/r/kgerbrands/wsics
+* Docker: https://hub.docker.com/r/diagnijmegen/wsics
 
 
 ## Compilation ##
@@ -29,7 +29,7 @@ The normalization process requires that a template image is converted to a CSV f
 
 The containerized version of WSICS relies on volumes to access the required files and images. In order to access images and export results, a volume must be mounted through the **-v** option for docker. An example can be seen below:
 ```
-docker run -v [local directory]:/data/ kgerbrands/wsics --input /data/[image] --template_output /data/[template name]
+docker run -v [local directory]:/data/ diagnijmegen/wsics --input /data/[image] --template_output /data/[template name]
 ```
 It is possible for the algorithm to utilize a large amount of memory, which can result in a segfault error for Docker. To resolve this, the required training size can be diminished, or the pool of memory increased for Docker.
 
