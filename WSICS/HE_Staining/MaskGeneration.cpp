@@ -3,9 +3,9 @@
 #define _USE_MATH_DEFINES
 #include <iostream>
 #include <math.h>
-#include <random>
 
 #include "../Misc/MatrixOperations.h"
+#include "../Misc/MT_Singleton.hpp"
 
 namespace WSICS::HE_Staining::MaskGeneration
 {
@@ -125,7 +125,7 @@ namespace WSICS::HE_Staining::MaskGeneration
 		eosin_mask_info.full_mask = eosin_mask_candidate_one.mul(eosin_mask_candidate_two);
 		std::vector<cv::Point> eosin_non_zero_pixels;
 		cv::findNonZero(eosin_mask_info.full_mask, eosin_non_zero_pixels);
-		std::shuffle(eosin_non_zero_pixels.begin(), eosin_non_zero_pixels.end(), std::default_random_engine());
+		std::shuffle(eosin_non_zero_pixels.begin(), eosin_non_zero_pixels.end(), WSICS::Misc::MT_Singleton::GetGenerator());
 
 		// Creates a training mask, where each non-zero eosin mask pixel is set to 1 if there are more eosin pixels than hema pixels.
 		size_t red_mask_pixels_sum = cv::sum(hema_mask_info.training_mask)[0];
