@@ -75,8 +75,8 @@ namespace WSICS::Normalization
 		image_writer.setColorType(pathology::RGB);
 		image_writer.writeImageInformation(dimensions[0], dimensions[1]);
 
-		uint64_t y_amount_of_tiles = std::ceil((float)dimensions[0] / (float)tile_size);
-		uint64_t x_amount_of_tiles = std::ceil((float)dimensions[1] / (float)tile_size);
+		uint64_t x_amount_of_tiles = std::ceil((float)dimensions[0] / (float)tile_size);
+		uint64_t y_amount_of_tiles = std::ceil((float)dimensions[1] / (float)tile_size);
 		uint64_t total_amount_of_tiles = x_amount_of_tiles * y_amount_of_tiles;
 
 		std::vector<uint64_t> x_values, y_values;
