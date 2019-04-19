@@ -30,9 +30,11 @@ namespace WSICS::Normalization
 	/// </summary>
 	/// <param name="source">The source array.</param>
 	/// <param name="destination">The array to write the result to.</param>
-	/// <param name="lut">The LUT to apply.</param>
+	/// <param name="blue_lut">The blue LUT channel to apply.</param>
+	/// <param name="green_lut">The green LUT channel to apply.</param>
+	/// <param name="red_lut">The red LUT channel to apply.</param>
 	/// <param name="tile_size">The tile size of the original WSI.</param>
-	void ApplyLUT(const unsigned char* source, unsigned char* destination, const cv::Mat& lut, const size_t tile_size);
+	void ApplyLUT(const unsigned char* source, unsigned char* destination, const cv::Mat& blue_lut, const cv::Mat& green_lut, const cv::Mat& red_lut, const size_t tile_size);
 
 	/// <summary>
 	/// Writes a normalized WSI to the passed file path.

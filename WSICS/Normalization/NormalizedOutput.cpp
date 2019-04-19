@@ -1,7 +1,7 @@
 #include "NormalizedOutput.h"
 
-#include <multiresolutionimageinterface/MultiResolutionImageReader.h>
-#include <multiresolutionimageinterface/MultiResolutionImageWriter.h>
+#include "multiresolutionimageinterface/MultiResolutionImageReader.h"
+#include "multiresolutionimageinterface/MultiResolutionImageWriter.h"
 #include <opencv2/highgui.hpp>
 
 #include "../IO/Logging/LogHandler.h"
@@ -44,19 +44,16 @@ namespace WSICS::Normalization
 		cv::merge(source_channels, destination);
 	}
 
-	void ApplyLUT(const unsigned char* source, unsigned char* destination, const cv::Mat& lut, const size_t tile_size)
+	void ApplyLUT(const unsigned char* source, unsigned char* destination, const cv::Mat& blue_lut, const cv::Mat& green_lut, const cv::Mat& red_lut, const size_t tile_size)
 	{
-		std::vector<cv::Mat> lut_channels(SplitBGR(lut));
-
-		size_t source_index			= 0;
-		size_t destination_index	= 0;
+		size_t array_index = 0;
 		for (size_t pixel = 0; pixel < tile_size * tile_size; ++pixel)
 		{
-			size_t index = 256 * 256 * source[source_index] + 256 * source[source_index + 1] + source[source_index + 2];
-			destination[destination_index++] = lut_channels[2].at<unsigned char>(index, 0);
-			destination[destination_index++] = lut_channels[1].at<unsigned char>(index, 0);
-			destination[destination_index++] = lut_channels[0].at<unsigned char>(index, 0);
-			source_index += 3;
+			size_t matrix_index				= 256 * 256 * source[array_index] + 256 * source[array_index + 1] + source[array_index + 2];
+			destination[array_index]		= red_lut.at<unsigned char>(matrix_index, 0);
+			destination[array_index + 1]	= green_lut.at<unsigned char>(matrix_index, 0);
+			destination[array_index + 2]	= blue_lut.at<unsigned char>(matrix_index, 0);
+			array_index += 3;
 		}
 	}
 
@@ -68,10 +65,12 @@ namespace WSICS::Normalization
 		MultiResolutionImage* tiled_image = reader.open(input_file.string());
 		const std::vector<unsigned long long> dimensions = tiled_image->getLevelDimensions(0);
 
+		logging_instance->QueueCommandLineLogging("X and Y dimensions for lowest level: " + std::to_string(dimensions[0]) + " " + std::to_string(dimensions[1]), IO::Logging::NORMAL);
+
 		MultiResolutionImageWriter image_writer;
 		image_writer.openFile(output_file.string());
 		image_writer.setTileSize(tile_size);
-		image_writer.setCompression(pathology::LZW);
+		image_writer.setCompression(pathology::Compression::LZW);
 		image_writer.setDataType(pathology::UChar);
 		image_writer.setColorType(pathology::RGB);
 		image_writer.writeImageInformation(dimensions[0], dimensions[1]);
@@ -91,6 +90,9 @@ namespace WSICS::Normalization
 			}
 		}
 
+		std::vector<cv::Mat> lut_bgr;
+		cv::split(normalized_lut, lut_bgr);
+
 		size_t response_integer = total_amount_of_tiles / 20;
 		for (uint64_t tile = 0; tile < total_amount_of_tiles; ++tile)
 		{
@@ -99,14 +101,14 @@ namespace WSICS::Normalization
 				logging_instance->QueueCommandLineLogging("Completed: " + std::to_string((tile / response_integer) * 5) + "%", IO::Logging::NORMAL);
 			}
 
-			unsigned char* data = nullptr;
-			tiled_image->getRawRegion(y_values[tile] * tiled_image->getLevelDownsample(0), x_values[tile] * tiled_image->getLevelDownsample(0), tile_size, tile_size, 0, data);
+			uchar* data = nullptr;
+			tiled_image->getRawRegion(x_values[tile] * tiled_image->getLevelDownsample(0), y_values[tile] * tiled_image->getLevelDownsample(0), tile_size, tile_size, 0, data);
 
-			ApplyLUT(data, data, normalized_lut, tile_size);
+			ApplyLUT(data, data, lut_bgr[0], lut_bgr[1], lut_bgr[2], tile_size);
 			image_writer.writeBaseImagePart((void*)data);
-
 			delete[] data;
 		}
+		
 
 		logging_instance->QueueCommandLineLogging("Finalizing images", IO::Logging::NORMAL);
 		image_writer.finishImage();
